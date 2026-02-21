@@ -1,5 +1,13 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Naming Conventions
+
+- **Pages** (route segments): `kebab-case`
+- **Components**: `PascalCase`
+- **Custom functions** (services, DAOs, utils): `camelCase`
+- **Types/Interfaces**: `PascalCase`
+- **Constants**: `UPPER_SNAKE_CASE`
+
 ## Getting Started
 
 First, run the development server:
