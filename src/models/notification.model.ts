@@ -3,8 +3,9 @@ export interface Notification {
   user_id: string;
   stamp_card_id: string | null;
   gift_card_id: string | null;
-  type: string | null;
-  status: string | null;
+  location_id: string | null;
+  type: string;
+  status: string;
   sent_at: Date | null;
   subject: string | null;
   body: string | null;
@@ -15,16 +16,14 @@ export interface Notification {
 export type CreateNotificationInput = Omit<Notification,
   "id"
   | "user_id"
+  | "status"
+  | "sent_at"
   | "created_at"
   | "updated_at"
-  | "is_archived"
->
+>;
 
 type NotificationUpdateableFields = Pick<Notification,
-  "type"
-  | "status"
-  | "subject"
-  | "body"
+  "status"
 >
 
 export type UpdateNotificationInput = Partial<NotificationUpdateableFields>;

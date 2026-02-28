@@ -1,6 +1,7 @@
 import { stampCardDAO } from "@/src/composition";
 import { UpdateStampCardInput } from "@/src/models/stamp-card.model";
 import { NextResponse } from "next/server";
+import { validateUUID } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
@@ -74,7 +75,7 @@ export async function DELETE(
 
     await stampCardDAO.deleteByID(id);
 
-    return NextResponse.json(null, { status: 204 })
+    return new NextResponse(null, { status: 204 })
 
   } catch (error: any) {
     console.error("DELETE /api/v1/stamp-cards/[id] error:", error);
@@ -83,9 +84,3 @@ export async function DELETE(
 }
 
 
-const validateUUID = (id: string) => {
-  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  if (!uuidRegex.test(id)) {
-    throw new Error("Invalid ID format");
-  }
-};

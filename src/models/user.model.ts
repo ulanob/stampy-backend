@@ -5,14 +5,17 @@ export interface User {
   auth_provider_id: string | null;
   created_at: Date;
   updated_at: Date;
-  is_archived: boolean;
+  deleted: boolean;
+  deleted_at: Date | null;
 }
 
 export type CreateUserInput = Omit<User,
   "id"
   | "created_at"
   | "updated_at"
-  | "is_archived"
+  | "deleted"
+  | "deleted_at"
+
 >
 
 type UserUpdateableFields = Pick<User,
