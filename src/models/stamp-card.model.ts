@@ -1,13 +1,15 @@
+import { NotificationWindowDays } from "./shared.types";
+
 export interface StampCard {
   id: string;
   user_id: string;
   business_id: string;
-  location_id: string;
+  location_id: string | null;
   nickname: string | null;
   notes: string | null;
   stamps_needed: number;
-  stamps_acquired: number | 0;
-  notify_window_days: string[] | null;
+  stamps_acquired: number;
+  notify_window_days: NotificationWindowDays | null;
   notify_window_start_time: string | null; // TIME
   notify_window_end_time: string | null;   // TIME
   notification_time_sent: Date | null;

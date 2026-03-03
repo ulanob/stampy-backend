@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const stampCard = await stampCardDAO.getByID(id);
+    const stampCard = await stampCardDAO.getStampCardByID(id);
 
     if (!stampCard) {
       return NextResponse.json(
@@ -41,7 +41,7 @@ export async function PATCH(
 
     const updates: Partial<UpdateStampCardInput> = await request.json();
 
-    const updatedCard = await stampCardDAO.updateByID(id, updates);
+    const updatedCard = await stampCardDAO.updateStampCardByID(id, updates);
 
     if (!updatedCard) {
       return NextResponse.json({ error: "Cannot find stamp card/ no fields to update" }, { status: 404 })
@@ -64,7 +64,7 @@ export async function DELETE(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const card = await stampCardDAO.getByID(id);
+    const card = await stampCardDAO.getStampCardByID(id);
     if (!card) {
       return NextResponse.json({ error: 'Stamp card not found' }, { status: 404 });
     }
@@ -73,7 +73,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Stamp card already deleted' }, { status: 400 });
     }
 
-    await stampCardDAO.deleteByID(id);
+    await stampCardDAO.deleteStampCardByID(id);
 
     return new NextResponse(null, { status: 204 })
 

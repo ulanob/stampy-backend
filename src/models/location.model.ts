@@ -26,4 +26,4 @@ type LocationUpdateableFields = Pick<Location,
   | "geofence_radius"
 >
 
-export type UpdateLocation = Partial<LocationUpdateableFields>
+export type UpdateLocationInput = Partial<LocationUpdateableFields>
