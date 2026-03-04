@@ -20,8 +20,6 @@ export type CreateUserInput = Omit<User,
 
 type UserUpdateableFields = Pick<User,
   "display_name"
-  | "email"
-  | "auth_provider_id"
 >
 
 export type UpdateUserInput = Partial<UserUpdateableFields>;
