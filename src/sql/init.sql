@@ -1,3 +1,12 @@
+-- DROP TABLES
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS gift_cards;
+DROP TABLE IF EXISTS stamp_cards;
+DROP TABLE IF EXISTS locations;
+DROP TABLE IF EXISTS businesses;
+DROP TABLE IF EXISTS user_notification_preferences;
+DROP TABLE IF EXISTS users;
+
 -- USERS
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
