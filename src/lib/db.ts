@@ -1,5 +1,9 @@
 import { Pool } from "pg";
 
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
+console.log('DB_HOST:', process.env.DB_HOST);
+
 const pool = process.env.DATABASE_URL
   ? new Pool({ connectionString: process.env.DATABASE_URL })
   : new Pool({
@@ -11,3 +15,5 @@ const pool = process.env.DATABASE_URL
   });
 
 export default pool;
+
+

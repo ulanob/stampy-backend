@@ -9,7 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - C:/Users/ulano/Desktop/projects/stampy/src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - C:/Users/ulano/Desktop/projects/stampy-backend/src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   postgres_data:
