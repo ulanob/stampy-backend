@@ -6,7 +6,7 @@ const giftCardTableName = "gift_cards"
 
 export type GiftCardDAO = {
   createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard | null>;
-  getAllCards(includeDeleted?: boolean): Promise<GiftCard[]>;
+  getAllGiftCards(includeDeleted?: boolean): Promise<GiftCard[]>;
   getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard | null>;
   updateGiftCardByID(id: string, updates: UpdateGiftCardInput): Promise<GiftCard | null>;
   deleteGiftCardByID(id: string): Promise<void>
@@ -31,10 +31,8 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         notify_window_end_time,
         notification_time_sent,
         notification_cooldown_time,
-        expiration_date,
-        deleted,
-        deleted_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        expiration_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING
         ${giftCardColumns}`
 
@@ -44,7 +42,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         fields.location_id,
         fields.nickname,
         fields.notes,
-        fields.initial_balance,
+        fields.current_balance,
         fields.current_balance,
         fields.currency,
         fields.notify_window_days,
@@ -53,8 +51,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         fields.notification_time_sent,
         fields.notification_cooldown_time,
         fields.expiration_date,
-        false,
-        null
+
       ]
 
       const result = await pool.query(sqlString, inputs)
@@ -65,7 +62,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       return mapDbRowToGiftCard(row);
     },
 
-    async getAllCards(includeDeleted: boolean = false): Promise<GiftCard[]> {
+    async getAllGiftCards(includeDeleted: boolean = false): Promise<GiftCard[]> {
       const sqlString = `
         SELECT ${giftCardColumns}
         FROM ${giftCardTableName}
@@ -192,8 +189,8 @@ function mapDbRowToGiftCard(row: GiftCardRow): GiftCard {
     business_id: row.business_id,
     location_id: row.location_id,
     notes: row.notes ?? null,
-    initial_balance: row.initial_balance ?? 0,
-    current_balance: row.current_balance ?? 0,
+    initial_balance: row.initial_balance,
+    current_balance: row.current_balance,
     currency: row.currency,
     notify_window_days: row.notify_window_days ?? null,
     notify_window_start_time: row.notify_window_start_time,

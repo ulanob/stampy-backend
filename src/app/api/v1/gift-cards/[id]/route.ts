@@ -24,10 +24,8 @@ export async function GET(
 
   } catch (error) {
     console.error("GET /api/v1/gift-cards/[id] error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -39,7 +37,7 @@ export async function PATCH(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const updates: Partial<UpdateGiftCardInput> = await request.json();
+    const updates: UpdateGiftCardInput = await request.json();
 
     const updatedCard = await giftCardDAO.updateGiftCardByID(id, updates);
 
@@ -48,10 +46,10 @@ export async function PATCH(
     }
 
     return NextResponse.json(updatedCard, { status: 200 });
-  }
-  catch (error: any) {
+  } catch (error) {
     console.error("PATCH /api/v1/gift-cards/[id] error:", error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
 }
@@ -77,9 +75,10 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("DELETE /api/v1/gift-cards/[id] error:", error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

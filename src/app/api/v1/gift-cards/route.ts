@@ -7,7 +7,7 @@ export async function GET(
   _request: Request
 ) {
   try {
-    const giftCards = await giftCardDAO.getAllCards();
+    const giftCards = await giftCardDAO.getAllGiftCards();
 
     return NextResponse.json(giftCards, { status: 200 });
 
@@ -27,7 +27,6 @@ export async function POST(request: Request) {
     const requiredFields: (keyof CreateGiftCardInput)[] = [
       "user_id",
       "business_id",
-      "initial_balance",
       "current_balance",
       "currency"
     ];

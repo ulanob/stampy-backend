@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "seed": "tsx --env-file=.env.local src/scripts/seed.ts",
+    "db:reset": "docker compose down -v && docker compose up -d && npm run seed",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "next": "16.1.6",
     "pg": "^8.18.0",
     "react": "19.2.3",
