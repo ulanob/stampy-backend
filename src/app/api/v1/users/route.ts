@@ -1,4 +1,4 @@
-import { userDAO } from "@/src/composition";
+import { userDAO, userNotificationPreferencesDAO } from "@/src/composition";
 import { CreateUserInput } from "@/src/models/user.model";
 import { NextResponse } from "next/server";
 
@@ -11,11 +11,9 @@ export async function GET(
     return NextResponse.json(users, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/users/ error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error("GET /api/v1/users error:", error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -46,14 +44,24 @@ export async function POST(request: Request) {
       )
     }
 
+    // create user notification preferences
+    await userNotificationPreferencesDAO.createUserNotificationPreferences({
+      user_id: createdUser.id,
+      notifications_enabled: true,
+      quiet_hours_start: null,
+      quiet_hours_end: null,
+      general_notification_window_start: null,
+      general_notification_window_end: null,
+      notify_window_days: null, 
+      daily_notification_cap: 5
+    })
+
     return NextResponse.json(createdUser, { status: 201 })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST /api/v1/users error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
 }
