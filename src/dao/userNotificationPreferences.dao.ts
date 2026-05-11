@@ -21,7 +21,7 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
         general_notification_window_start,
         general_notification_window_end,
         notify_window_days,
-        daily_notification_cap,
+        daily_notification_cap
         )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING
@@ -63,10 +63,11 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
 
     async updateUserNotificationPreferencesByUserID(user_id: string, updates: UpdateUserNotificationPreferences) {
       const setArgs: string[] = [];
-      const values: any[] = [];
+      const values: (string | string[] | number | boolean | Date | null)[] = [];
 
       let i = 1;
 
+      // Safe: keys are derived from typed UpdateUserNotificationPreferences, not raw user input
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
           setArgs.push(`${key} = $${i}`);

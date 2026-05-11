@@ -1,44 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stampy
 
-## Naming Conventions
+A personal finance companion for tracking gift cards and stamp cards - and notifying you when you're near a vendor where you have rewards waiting.
 
-- **Pages** (route segments): `kebab-case`
-- **Components**: `PascalCase`
-- **Custom functions** (services, DAOs, utils): `camelCase`
-- **Types/Interfaces**: `PascalCase`
-- **Constants**: `UPPER_SNAKE_CASE`
+## The Problem
 
-## Getting Started
+Gift cards get forgotten in wallets. Stamp cards get lost. Rewards go unused and stamps are missed - not because people don't want to use them, but because they don't remember they have them until they're already somewhere else.
 
-First, run the development server:
+Stampy solves this with a simple idea: track your cards in one place, and get notified when you're physically close to a vendor where you have something to redeem.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Status
+
+> 🚧 Active development - learning project
+
+- [x] Database schema design
+- [x] CRUD API (users, vendors, cards)
+- [ ] Business logic layer (balance tracking, stamp progression)
+- [ ] Location-based notifications
+- [ ] Authentication
+- [ ] React web app
+- [ ] React Native mobile app (iOS + Android)
+- [ ] Docker + AWS deployment
+
+---
+
+## Tech Stack
+
+### Backend
+- **Next.js** (App Router) - REST API with file-based routing (`src/api/v1/...`)
+- **PostgreSQL** - Raw SQL, no ORM. Deliberate choice to build foundational understanding before abstracting it away
+- **TypeScript** throughout
+
+### Infrastructure (planned)
+- **Amazon RDS** - Managed PostgreSQL hosting
+- **AWS** - Deployment, storage, and notification services
+- **Docker** - Containerisation for local dev and deployment consistency
+
+### Frontend (planned)
+- **React** - Browser-based web app
+- **React Native** - iOS and Android mobile app
+
+---
+
+## Architecture
+
+The API follows a layered architecture:
+
+```
+src/
+└── api/
+    └── v1/
+        ├── users/
+        ├── businesses/
+        └── notifications/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Each route is kept thin - request validation and response shaping only. Business logic lives in a dedicated service layer, keeping concerns separated and the codebase testable.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Learning Goals
 
-## Learn More
+This project is intentionally a learning vehicle:
 
-To learn more about Next.js, take a look at the following resources:
+- **REST API design** - versioning, resource naming, consistent response patterns
+- **Clean code practices** - separation of concerns, meaningful naming, small focused functions
+- **Testing** - building the habit of writing tests alongside features
+- **Docker** - containerising the app for reproducible environments
+- **AWS** - hands-on experience toward the AWS Cloud Architect Associate certification
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Why Raw SQL?
 
-## Deploy on Vercel
+Deliberately skipping an ORM for now. Writing raw SQL builds a real understanding of what's happening at the database layer - joins, transactions, constraints - before reaching for an abstraction. An ORM will come later once the fundamentals are solid.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Running Locally
+
+> Setup instructions coming as the project stabilises.
+
+---
+
+## Roadmap
+
+- Business logic layer - stamp progression, gift card balance tracking
+- Authentication - evaluating options including Amazon Cognito
+- Location-based vendor proximity notifications
+- React web frontend
+- React Native mobile app
+- Docker Compose setup for local dev
+- AWS deployment pipeline

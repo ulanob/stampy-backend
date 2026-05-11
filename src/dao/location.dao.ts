@@ -23,10 +23,8 @@ export function createLocationDAO(pool: Pool): LocationDAO {
         address,
         lat,
         lng,
-        geofence_radius,
-        deleted,
-        deleted_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+        geofence_radius)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING
         ${locationColumns}`
 
@@ -35,9 +33,7 @@ export function createLocationDAO(pool: Pool): LocationDAO {
         fields.address,
         fields.lat,
         fields.lng,
-        fields.geofence_radius,
-        false,
-        null
+        fields.geofence_radius
       ]
 
       const result = await pool.query(sqlString, inputs)
@@ -96,10 +92,11 @@ export function createLocationDAO(pool: Pool): LocationDAO {
 
     async updateLocationByID(id: string, updates: UpdateLocationInput) {
       const setArgs: string[] = [];
-      const values: any[] = [];
+      const values: (string | number | boolean | Date | null)[] = [];
 
       let i = 1;
 
+      // Safe: keys are derived from typed UpdateLocationInput, not raw user input
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
           setArgs.push(`${key} = $${i}`);

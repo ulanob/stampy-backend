@@ -69,10 +69,11 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
 
     async updateBusinessByID(id: string, updates: UpdateBusinessInput) {
       const setArgs: string[] = [];
-      const values: any[] = [];
+      const values: (string | number | boolean | Date | null)[] = [];
 
       let i = 1;
 
+      // Safe: keys are derived from typed UpdateBusinessInput, not raw user input
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
           setArgs.push(`${key} = $${i}`);

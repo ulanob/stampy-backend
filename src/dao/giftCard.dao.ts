@@ -8,6 +8,7 @@ export type GiftCardDAO = {
   createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard | null>;
   getAllGiftCards(includeDeleted?: boolean): Promise<GiftCard[]>;
   getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard | null>;
+  getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
   updateGiftCardByID(id: string, updates: UpdateGiftCardInput): Promise<GiftCard | null>;
   deleteGiftCardByID(id: string): Promise<void>
 }
@@ -32,7 +33,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         notification_time_sent,
         notification_cooldown_time,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
         ${giftCardColumns}`
 
@@ -42,7 +43,6 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         fields.location_id,
         fields.nickname,
         fields.notes,
-        fields.current_balance,
         fields.current_balance,
         fields.currency,
         fields.notify_window_days,
@@ -90,12 +90,26 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       return mapDbRowToGiftCard(row)
     },
 
+    async getAllGiftCardsByUserID(user_id: string, includeDeleted: boolean = false): Promise<GiftCard[]> {
+          const sqlString = `
+            SELECT ${giftCardColumns}
+            FROM ${giftCardTableName}
+            WHERE user_id = $1
+            ${includeDeleted ? '' : 'AND deleted = false'}
+            ORDER BY created_at DESC
+          `;
+    
+          const result = await pool.query(sqlString, [user_id])
+          return result.rows.map(row => mapDbRowToGiftCard(row))
+        },
+
     async updateGiftCardByID(id: string, updates: UpdateGiftCardInput) {
       const setArgs: string[] = [];
-      const values: any[] = [];
+      const values: (string | number | boolean | Date | NotificationWindowDays| null)[] = [];
 
       let i = 1;
 
+      // Safe: keys are derived from typed UpdateGiftCardInput, not raw user input
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
           setArgs.push(`${key} = $${i}`);
