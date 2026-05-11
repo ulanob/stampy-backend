@@ -19,19 +19,15 @@ export function createUserDAO(pool: Pool): UserDAO {
       INSERT INTO ${userTableName}
         (display_name,
         email,
-        auth_provider_id,
-        deleted,
-        deleted_at)
-      VALUES ($1, $2, $3, $4, $5)
+        auth_provider_id)
+      VALUES ($1, $2, $3)
       RETURNING
         ${userColumns}`
 
       const inputs = [
         fields.display_name,
         fields.email,
-        fields.auth_provider_id,
-        false,
-        null
+        fields.auth_provider_id
       ]
 
       const result = await pool.query(sqlString, inputs)
@@ -73,10 +69,11 @@ export function createUserDAO(pool: Pool): UserDAO {
 
     async updateUserByID(id: string, updates: UpdateUserInput) {
       const setArgs: string[] = [];
-      const values: any[] = [];
+      const values: (string | Date | boolean | null)[] = [];
 
       let i = 1;
 
+      // Safe: keys are derived from typed UpdateUserInput, not raw user input
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
           setArgs.push(`${key} = $${i}`);

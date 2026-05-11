@@ -15,7 +15,6 @@ export interface Notification {
 
 export type CreateNotificationInput = Omit<Notification,
   "id"
-  | "user_id"
   | "status"
   | "sent_at"
   | "created_at"

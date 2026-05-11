@@ -57,10 +57,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(createdBusiness, { status: 201 })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST /api/v1/businesses error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

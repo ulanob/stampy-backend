@@ -49,9 +49,12 @@ export async function PATCH(
 
     return NextResponse.json(updatedBusiness, { status: 200 });
   }
-  catch (error: any) {
+  catch (error) {
     console.error("PATCH /api/v1/businesses/[id] error:", error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 
 }
@@ -77,8 +80,11 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("DELETE /api/v1/businesses/[id] error:", error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
