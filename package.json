@@ -9,7 +9,9 @@
     "db:reset": "docker compose down -v && docker compose up -d && npm run seed",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -27,9 +29,11 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jest": "^30.4.2",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   }
 }
