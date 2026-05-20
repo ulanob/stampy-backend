@@ -15,7 +15,7 @@ export const TEST_IDS = {
   notification2: 'a1b2c3d4-0000-0000-0000-000000000012',
 } as const;
 
-async function seed() {
+export async function seed() {
   const client = await pool.connect();
 
   try {
@@ -83,7 +83,6 @@ async function seed() {
     console.error("❌ Test seed failed, rolled back:", err);
   } finally {
     client.release();
-    await pool.end();
   }
 }
 
@@ -107,5 +106,3 @@ export async function clearAll() {
     client.release();
   }
 }
-
-seed();

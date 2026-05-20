@@ -1,7 +1,17 @@
 import request from 'supertest';
-import { TEST_IDS } from '../../scripts/testSeed';
+import { seed, clearAll, TEST_IDS } from '../../scripts/testSeed';
 
 const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:3001';
+
+beforeAll(async () => {
+  await clearAll();
+  await seed();
+});
+
+afterAll(async () => {
+  await clearAll();
+});
+
 
 describe('businesses', () => {
   test('GET /api/v1/businesses returns a list of businesses', async () => {
