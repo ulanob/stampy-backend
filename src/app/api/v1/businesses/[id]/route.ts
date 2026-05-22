@@ -1,7 +1,7 @@
 import { businessDAO } from "@/src/composition";
 import { UpdateBusinessInput } from "@/src/models/business.model";
 import { NextResponse } from "next/server";
-import { validateUUID } from "@/src/utils/validators";
+import { InvalidUUIDError, validateUUID } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
@@ -13,6 +13,8 @@ export async function GET(
 
     const business = await businessDAO.getBusinessByID(id);
 
+    console.log("business: ", business);
+
     if (!business) {
       return NextResponse.json(
         { error: 'Business not found' },
@@ -23,7 +25,15 @@ export async function GET(
     return NextResponse.json(business, { status: 200 });
 
   } catch (error) {
+    if (error instanceof InvalidUUIDError ) {
+      return NextResponse.json(
+      { error: "Invalid id format" },
+      { status: 400 }
+      );
+    }
+
     console.error("GET /api/v1/businesses/[id] error:", error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

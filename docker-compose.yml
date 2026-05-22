@@ -11,5 +11,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  db_test:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stampy_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
 volumes:
   postgres_data:
+  postgres_test_data:

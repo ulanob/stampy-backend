@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:test": "next dev -p 3001",
     "seed": "tsx --env-file=.env.local src/scripts/seed.ts",
     "db:reset": "docker compose down -v && docker compose up -d && npm run seed",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -20,16 +23,17 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/supertest": "^7.2.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "supertest": "^7.2.2",
     "tailwindcss": "^4",
-    "ts-jest": "^29.4.6",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   }
 }
