@@ -1,7 +1,7 @@
 import { businessDAO } from "@/src/composition";
-import { UpdateBusinessInput } from "@/src/models/business.model";
+import { BusinessType, UpdateBusinessInput } from "@/src/models/business.model";
 import { NextResponse } from "next/server";
-import { InvalidUUIDError, validateUUID } from "@/src/utils/validators";
+import { InvalidBusinessType, InvalidUUIDError, validateBusinessType, validateUUID } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
@@ -12,8 +12,6 @@ export async function GET(
     validateUUID(id.trim());
 
     const business = await businessDAO.getBusinessByID(id);
-
-    console.log("business: ", business);
 
     if (!business) {
       return NextResponse.json(
@@ -43,13 +41,17 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string}> }
 ) {
   try {
     const { id } = await params;
     validateUUID(id.trim());
 
     const updates: Partial<UpdateBusinessInput> = await request.json();
+
+    if (updates.type) {
+      validateBusinessType(updates.type);
+    } 
 
     const updatedBusiness = await businessDAO.updateBusinessByID(id, updates);
 
@@ -60,13 +62,27 @@ export async function PATCH(
     return NextResponse.json(updatedBusiness, { status: 200 });
   }
   catch (error) {
+    if (error instanceof InvalidUUIDError ) {
+      return NextResponse.json(
+      { error: "Invalid id format" },
+      { status: 400 }
+      );
+    }
+
+    if (error instanceof InvalidBusinessType ) {
+      return NextResponse.json(
+      { error: "Invalid Business Type" },
+      { status: 400 }
+      );
+    }
+
     console.error("PATCH /api/v1/businesses/[id] error:", error);
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   }
-
 }
 
 export async function DELETE(
@@ -77,20 +93,27 @@ export async function DELETE(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const business = await businessDAO.getBusinessByID(id);
-    if (!business) {
+    const business = await businessDAO.getBusinessByID(id, true);
+
+    if (business && business.deleted) {
+      return NextResponse.json({ error: 'Business already deleted' }, { status: 400 });
+    } else if (!business) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
     }
 
-    if (business.deleted) {
-      return NextResponse.json({ error: 'Business already deleted' }, { status: 400 });
-    }
 
     await businessDAO.deleteBusinessByID(id);
 
     return new NextResponse(null, { status: 204 })
 
   } catch (error) {
+    if (error instanceof InvalidUUIDError ) {
+      return NextResponse.json(
+      { error: "Invalid id format" },
+      { status: 400 }
+      );
+    }
+    
     console.error("DELETE /api/v1/businesses/[id] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

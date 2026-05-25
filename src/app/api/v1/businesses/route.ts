@@ -1,5 +1,6 @@
 import { businessDAO } from "@/src/composition";
-import { CreateBusinessInput, validTypes } from "@/src/models/business.model";
+import { CreateBusinessInput } from "@/src/models/business.model";
+import { validateBusinessType , InvalidBusinessType} from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
 
@@ -39,12 +40,7 @@ export async function POST(request: Request) {
     }
 
 
-    if (!validTypes.includes(body.type)) {
-      return NextResponse.json(
-        { error: `Invalid business type: ${body.type}` },
-        { status: 400 }
-      );
-    }
+    validateBusinessType(body.type)
 
     const createdBusiness = await businessDAO.createBusiness(body);
 
@@ -58,6 +54,14 @@ export async function POST(request: Request) {
     return NextResponse.json(createdBusiness, { status: 201 })
 
   } catch (error) {
+    if (error instanceof InvalidBusinessType ) {
+      return NextResponse.json(
+      { error: "Invalid Business Type" },
+      { status: 400 }
+      );
+    }
+
+
     console.error("POST /api/v1/businesses error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
