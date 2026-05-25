@@ -52,7 +52,6 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
     },
 
     async getBusinessByID(id: string, includeDeleted: boolean = false): Promise<Business | null> {
-      console.log("id: ", id);
       const sqlString = `
           SELECT
             ${businessColumns}
@@ -65,15 +64,13 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
       const row = result.rows[0]
       if (!row) return null;
 
-      console.log("row: ", row);
-
       return mapDbRowToBusiness(row);
     },
 
     async updateBusinessByID(id: string, updates: UpdateBusinessInput) {
       const setArgs: string[] = [];
       const values: (string | number | boolean | Date | null)[] = [];
-
+      
       let i = 1;
 
       // Safe: keys are derived from typed UpdateBusinessInput, not raw user input

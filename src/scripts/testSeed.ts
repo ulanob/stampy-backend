@@ -3,6 +3,7 @@ import pool from "../lib/db";
 export const TEST_IDS = {
   business1: 'a1b2c3d4-0000-0000-0000-000000000001',
   business2: 'a1b2c3d4-0000-0000-0000-000000000002',
+  businessNonExistent: 'f1b2c3d4-0000-0000-0000-000000000022',
   location1: 'a1b2c3d4-0000-0000-0000-000000000003',
   location2: 'a1b2c3d4-0000-0000-0000-000000000004',
   user1: 'a1b2c3d4-0000-0000-0000-000000000005',

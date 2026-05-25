@@ -1,4 +1,7 @@
+import { validTypes, BusinessType } from "../models/business.model";
+
 export class InvalidUUIDError extends Error {}
+export class InvalidBusinessType extends Error {}
 
 export function validateUUID(id: string): void {
   const uuidRegex =
@@ -8,3 +11,9 @@ export function validateUUID(id: string): void {
     throw new InvalidUUIDError("Invalid ID format");
   }
 }
+
+export function validateBusinessType(value: string): asserts value is BusinessType {
+    if (!validTypes.includes(value as BusinessType)) {
+      throw new InvalidBusinessType();
+    }
+} 
