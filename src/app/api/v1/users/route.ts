@@ -1,6 +1,7 @@
 import { userDAO, userNotificationPreferencesDAO } from "@/src/composition";
 import { CreateUserInput } from "@/src/models/user.model";
 import { NextResponse } from "next/server";
+import { handleRouteError } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request
@@ -11,9 +12,7 @@ export async function GET(
     return NextResponse.json(users, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/users error:", error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error, "GET /api/v1/users")
   }
 }
 
@@ -59,9 +58,6 @@ export async function POST(request: Request) {
     return NextResponse.json(createdUser, { status: 201 })
 
   } catch (error) {
-    console.error("POST /api/v1/users error:", error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error, "POST /api/v1/users")
   }
-
 }

@@ -9,14 +9,20 @@ export const TEST_IDS = {
   user1: 'a1b2c3d4-0000-0000-0000-000000000005',
   stampCard1: 'a1b2c3d4-0000-0000-0000-000000000006',
   stampCard2: 'a1b2c3d4-0000-0000-0000-000000000007',
+  stampCardNonExistent: 'f1b2c3d4-0000-0000-0000-000000000033',
   giftCard1: 'a1b2c3d4-0000-0000-0000-000000000008',
   giftCard2: 'a1b2c3d4-0000-0000-0000-000000000009',
+  giftCardNonExistent: 'f1b2c3d4-0000-0000-0000-000000000044',
   notificationPreferences1: 'a1b2c3d4-0000-0000-0000-000000000010',
   notification1: 'a1b2c3d4-0000-0000-0000-000000000011',
   notification2: 'a1b2c3d4-0000-0000-0000-000000000012',
+  stampEvent1: 'a1b2c3d4-0000-0000-0000-000000000013',
+  stampEvent2: 'a1b2c3d4-0000-0000-0000-000000000014'
 } as const;
 
 export async function seed() {
+  console.log("🌱 Starting seed...");
+
   const client = await pool.connect();
 
   try {
@@ -52,12 +58,23 @@ export async function seed() {
 
     // --- STAMP CARDS ---
     await client.query(`
-      INSERT INTO stamp_cards (id, user_id, business_id, location_id, stamps_needed, stamps_acquired)
+      INSERT INTO stamp_cards (id, user_id, business_id, location_id, stamps_needed, stamps_acquired, status)
       VALUES
-        ($1, $2, $3, $4, 10, 0),
-        ($5, $2, $6, $7, 8, 5)
+        ($1, $2, $3, $4, 10, 0, 'active'),
+        ($5, $2, $6, $7, 8, 5, 'active')
     `, [TEST_IDS.stampCard1, TEST_IDS.user1, TEST_IDS.business1, TEST_IDS.location1,
         TEST_IDS.stampCard2, TEST_IDS.business2, TEST_IDS.location2]);
+
+
+    /// --- STAMP EVENTS ---
+    await client.query(`
+        INSERT INTO stamp_events (id, stamp_card_id, user_id, quantity)
+        VALUES
+          ($1, $3, $5, 1),
+          ($2, $4, $5, 2)
+      `,
+      [TEST_IDS.stampEvent1, TEST_IDS.stampEvent2, TEST_IDS.stampCard1, TEST_IDS.stampCard2,  TEST_IDS.user1],
+    );
 
     // --- GIFT CARDS ---
     await client.query(`
@@ -93,6 +110,7 @@ export async function clearAll() {
     await client.query("BEGIN");
     await client.query("DELETE FROM notifications");
     await client.query("DELETE FROM gift_cards");
+    await client.query("DELETE FROM stamp_events");
     await client.query("DELETE FROM stamp_cards");
     await client.query("DELETE FROM user_notification_preferences");
     await client.query("DELETE FROM users");

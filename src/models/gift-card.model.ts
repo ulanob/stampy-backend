@@ -24,7 +24,6 @@ export interface GiftCard {
 
 export type CreateGiftCardInput = Omit<GiftCard,
   "id"
-  | "initial_balance"
   | "created_at"
   | "updated_at"
   | "deleted"

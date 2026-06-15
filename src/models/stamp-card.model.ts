@@ -9,6 +9,7 @@ export interface StampCard {
   notes: string | null;
   stamps_needed: number;
   stamps_acquired: number;
+  status: StampCardStatus;
   notify_window_days: NotificationWindowDays | null;
   notify_window_start_time: string | null; // TIME
   notify_window_end_time: string | null;   // TIME
@@ -20,6 +21,10 @@ export interface StampCard {
   created_at: Date;
   updated_at: Date;
 }
+
+export const STAMP_CARD_STATUSES = ['active', 'completed', 'redeemed', 'expired', 'cancelled'] as const;
+export type StampCardStatus = typeof STAMP_CARD_STATUSES[number];
+
 
 export type CreateStampCardInput = Omit<StampCard,
   "id"
@@ -36,6 +41,7 @@ type StampCardUpdateableFields = Pick<StampCard,
   | "notes"
   | "stamps_needed"
   | "stamps_acquired"
+  | "status"
   | "notify_window_days"
   | "notify_window_start_time"
   | "notify_window_end_time"

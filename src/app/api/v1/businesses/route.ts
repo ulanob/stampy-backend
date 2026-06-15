@@ -1,6 +1,6 @@
 import { businessDAO } from "@/src/composition";
 import { CreateBusinessInput } from "@/src/models/business.model";
-import { validateBusinessType , InvalidBusinessType} from "@/src/utils/validators";
+import { validateBusinessType, handleRouteError} from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
 
@@ -13,11 +13,7 @@ export async function GET(
     return NextResponse.json(businesses, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/businesses/ error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error, "GET /api/v1/businesses/")
   }
 }
 
@@ -54,19 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json(createdBusiness, { status: 201 })
 
   } catch (error) {
-    if (error instanceof InvalidBusinessType ) {
-      return NextResponse.json(
-      { error: "Invalid Business Type" },
-      { status: 400 }
-      );
-    }
-
-
-    console.error("POST /api/v1/businesses error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "POST /api/v1/businesses/")
   }
 
 }

@@ -1,6 +1,7 @@
 import { giftCardDAO } from "@/src/composition";
 import { CreateGiftCardInput } from "@/src/models/gift-card.model";
 import { NextResponse } from "next/server";
+import { handleRouteError } from "@/src/utils/validators";
 
 
 export async function GET(
@@ -12,11 +13,7 @@ export async function GET(
     return NextResponse.json(giftCards, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/gift-cards/ error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error, "GET /api/v1/gift-cards/")
   }
 }
 
@@ -27,7 +24,7 @@ export async function POST(request: Request) {
     const requiredFields: (keyof CreateGiftCardInput)[] = [
       "user_id",
       "business_id",
-      "current_balance",
+      "initial_balance",
       "currency"
     ];
 
@@ -40,7 +37,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const createdCard = await giftCardDAO.createGiftCard(body);
+    const createdCard = await giftCardDAO.createGiftCard({
+      ... body, 
+      current_balance: body.current_balance ?? body.initial_balance,
+    });
 
     if (!createdCard) {
       return NextResponse.json(
@@ -52,11 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json(createdCard, { status: 201 })
 
   } catch (error) {
-    console.error("POST /api/v1/gift-cards error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "POST /api/v1/gift-cards")
   }
 
 }

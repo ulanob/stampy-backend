@@ -1,6 +1,7 @@
 import { notificationDAO } from "@/src/composition";
 import { CreateNotificationInput } from "@/src/models/notification.model";
 import { NextResponse } from "next/server";
+import { handleRouteError } from "@/src/utils/validators";
 
 
 export async function POST(request: Request) {
@@ -36,9 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json(createdNotification, { status: 201 })
 
   } catch (error) {
-    console.error("POST /api/v1/notifications error:", error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error, "POST /api/v1/notifications")
   }
 }
 

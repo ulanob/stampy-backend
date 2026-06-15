@@ -39,7 +39,7 @@ CREATE TABLE user_notification_preferences (
 CREATE TABLE businesses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    type TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('restaurant', 'cafe', 'retail', 'other')),
     deleted BOOLEAN NOT NULL DEFAULT false,
     deleted_at TIMESTAMP WITH TIME ZONE NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -70,6 +70,7 @@ CREATE TABLE stamp_cards (
     notes TEXT NULL,
     stamps_needed INT NOT NULL DEFAULT 0,
     stamps_acquired INT NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'redeemed', 'expired', 'cancelled')),
     notify_window_days TEXT[] NULL,
     notify_window_start_time TIME NULL,
     notify_window_end_time TIME NULL,
@@ -80,6 +81,15 @@ CREATE TABLE stamp_cards (
     deleted_at TIMESTAMP WITH TIME ZONE NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- STAMP EVENTS (append-only log of stamp activity)
+CREATE TABLE stamp_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    stamp_card_id UUID NOT NULL REFERENCES stamp_cards(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    quantity INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 -- GIFT CARDS (user can have many)
@@ -113,7 +123,7 @@ CREATE TABLE notifications (
     gift_card_id UUID NULL REFERENCES gift_cards(id) ON DELETE SET NULL,
     location_id UUID NULL REFERENCES locations(id) ON DELETE SET NULL,
     type TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')), 
     sent_at TIMESTAMP WITH TIME ZONE NULL,
     subject TEXT NULL,
     body TEXT NULL,

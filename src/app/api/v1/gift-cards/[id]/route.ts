@@ -1,7 +1,7 @@
 import { giftCardDAO } from "@/src/composition";
 import { UpdateGiftCardInput } from "@/src/models/gift-card.model";
 import { NextResponse } from "next/server";
-import { validateUUID } from "@/src/utils/validators";
+import { validateUUID, handleRouteError } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
@@ -23,9 +23,7 @@ export async function GET(
     return NextResponse.json(giftCard, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/gift-cards/[id] error:", error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error, "GET /api/v1/gift-cards/[id]")
   }
 }
 
@@ -47,10 +45,8 @@ export async function PATCH(
 
     return NextResponse.json(updatedCard, { status: 200 });
   } catch (error) {
-    console.error("PATCH /api/v1/gift-cards/[id] error:", error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return handleRouteError(error, "PATCH /api/v1/gift-cards/[id]")
+    }
 
 }
 
@@ -62,7 +58,7 @@ export async function DELETE(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const card = await giftCardDAO.getGiftCardByID(id);
+    const card = await giftCardDAO.getGiftCardByID(id, true);
     if (!card) {
       return NextResponse.json({ error: 'Gift card not found' }, { status: 404 });
     }
@@ -76,9 +72,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 })
 
   } catch (error) {
-    console.error("DELETE /api/v1/gift-cards/[id] error:", error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error, "DELETE /api/v1/gift-cards/[id]")
   }
 }
 
