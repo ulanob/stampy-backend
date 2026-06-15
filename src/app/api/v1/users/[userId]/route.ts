@@ -1,17 +1,17 @@
 import { userDAO } from "@/src/composition";
 import { UpdateUserInput } from "@/src/models/user.model";
 import { NextResponse } from "next/server";
-import { validateUUID } from "@/src/utils/validators";
+import { validateUUID, handleRouteError } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { id } = await params;
-    validateUUID(id.trim());
+    const { userId } = await params;
+    validateUUID(userId.trim());
 
-    const user = await userDAO.getUserByID(id);
+    const user = await userDAO.getUserByID(userId);
 
     if (!user) {
       return NextResponse.json(
@@ -23,25 +23,21 @@ export async function GET(
     return NextResponse.json(user, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/users/[id] error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error, "GET /api/v1/users/[userId]")
   }
 }
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { id } = await params;
-    validateUUID(id.trim());
+    const { userId } = await params;
+    validateUUID(userId.trim());
 
     const updates: Partial<UpdateUserInput> = await request.json();
 
-    const updatedUser = await userDAO.updateUserByID(id, updates);
+    const updatedUser = await userDAO.updateUserByID(userId, updates);
 
     if (!updatedUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -50,24 +46,20 @@ export async function PATCH(
     return NextResponse.json(updatedUser, { status: 200 });
   }
   catch (error) {
-    console.error("PATCH /api/v1/users/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "PATCH /api/v1/users/[userId]")
   }
 
 }
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { id } = await params;
-    validateUUID(id.trim());
+    const { userId } = await params;
+    validateUUID(userId.trim());
 
-    const user = await userDAO.getUserByID(id);
+    const user = await userDAO.getUserByID(userId);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -76,15 +68,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'User already deleted' }, { status: 400 });
     }
 
-    await userDAO.deleteUserByID(id);
+    await userDAO.deleteUserByID(userId);
 
     return new NextResponse(null, { status: 204 })
 
   } catch (error) {
-    console.error("DELETE /api/v1/users/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "DELETE /api/v1/users/[userId]")
   }
 }

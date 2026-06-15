@@ -1,7 +1,7 @@
 import { businessDAO } from "@/src/composition";
-import { BusinessType, UpdateBusinessInput } from "@/src/models/business.model";
+import { UpdateBusinessInput } from "@/src/models/business.model";
 import { NextResponse } from "next/server";
-import { InvalidBusinessType, InvalidUUIDError, validateBusinessType, validateUUID } from "@/src/utils/validators";
+import { validateBusinessType, validateUUID, handleRouteError } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
@@ -23,19 +23,7 @@ export async function GET(
     return NextResponse.json(business, { status: 200 });
 
   } catch (error) {
-    if (error instanceof InvalidUUIDError ) {
-      return NextResponse.json(
-      { error: "Invalid id format" },
-      { status: 400 }
-      );
-    }
-
-    console.error("GET /api/v1/businesses/[id] error:", error);
-
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error, "GET /api/v1/businesses/[id]")
   }
 }
 
@@ -62,26 +50,7 @@ export async function PATCH(
     return NextResponse.json(updatedBusiness, { status: 200 });
   }
   catch (error) {
-    if (error instanceof InvalidUUIDError ) {
-      return NextResponse.json(
-      { error: "Invalid id format" },
-      { status: 400 }
-      );
-    }
-
-    if (error instanceof InvalidBusinessType ) {
-      return NextResponse.json(
-      { error: "Invalid Business Type" },
-      { status: 400 }
-      );
-    }
-
-    console.error("PATCH /api/v1/businesses/[id] error:", error);
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+      return handleRouteError(error, "PATCH /api/v1/businesses/[id]");
   }
 }
 
@@ -107,17 +76,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 })
 
   } catch (error) {
-    if (error instanceof InvalidUUIDError ) {
-      return NextResponse.json(
-      { error: "Invalid id format" },
-      { status: 400 }
-      );
-    }
-    
-    console.error("DELETE /api/v1/businesses/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "DELETE /api/v1/businesses/[id]");
+
   }
 }

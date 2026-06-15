@@ -1,57 +1,57 @@
 import { Pool } from "pg";
-import { GiftCard, CreateGiftCardInput, UpdateGiftCardInput } from "@/src/models/index.model";
+import { StampCard, CreateStampCardInput, UpdateStampCardInput, StampCardStatus } from "@/src/models/index.model";
 import { NotificationWindowDays } from "../models/shared.types";
 
-const giftCardTableName = "gift_cards"
+const stampCardTableName = "stamp_cards"
 
-export type GiftCardDAO = {
-  createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard | null>;
-  getAllGiftCards(includeDeleted?: boolean): Promise<GiftCard[]>;
-  getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard | null>;
-  getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
-  updateGiftCardByID(id: string, updates: UpdateGiftCardInput): Promise<GiftCard | null>;
-  deleteGiftCardByID(id: string): Promise<void>
+export type StampCardDAO = {
+  createStampCard(fields: CreateStampCardInput): Promise<StampCard | null>;
+  getAllCards(includeDeleted?: boolean): Promise<StampCard[]>;
+  getStampCardByID(id: string, includeDeleted?: boolean): Promise<StampCard | null>;
+  getAllStampCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<StampCard[]>
+  updateStampCardByID(id: string, updates: UpdateStampCardInput): Promise<StampCard | null>;
+  deleteStampCardByID(id: string): Promise<void>
 }
 
-export function createGiftCardDAO(pool: Pool): GiftCardDAO {
+export function createStampCardDAO(pool: Pool): StampCardDAO {
   return {
-    async createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard | null> {
+    async createStampCard(fields: CreateStampCardInput): Promise<StampCard | null> {
 
       const sqlString = `
-      INSERT INTO ${giftCardTableName}
+      INSERT INTO ${stampCardTableName}
         (user_id,
+        nickname,
         business_id,
         location_id,
-        nickname,
         notes,
-        initial_balance,
-        current_balance,
-        currency,
+        stamps_needed,
+        stamps_acquired,
+        status,
         notify_window_days,
         notify_window_start_time,
         notify_window_end_time,
         notification_time_sent,
         notification_cooldown_time,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11, $12, $13)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING
-        ${giftCardColumns}`
+        ${stampCardColumns}`
 
       const inputs = [
         fields.user_id,
+        fields.nickname,
         fields.business_id,
         fields.location_id,
-        fields.nickname,
         fields.notes,
-        fields.current_balance,
-        fields.currency,
+        fields.stamps_needed,
+        fields.stamps_acquired ?? 0,
+        fields.status ?? 'active',
         fields.notify_window_days,
         fields.notify_window_start_time,
         fields.notify_window_end_time,
         fields.notification_time_sent,
         fields.notification_cooldown_time,
-        fields.expiration_date,
-
+        fields.expiration_date
       ]
 
       const result = await pool.query(sqlString, inputs)
@@ -59,13 +59,13 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       if (!row) return null;
 
 
-      return mapDbRowToGiftCard(row);
+      return mapDbRowToStampCard(row);
     },
 
-    async getAllGiftCards(includeDeleted: boolean = false): Promise<GiftCard[]> {
+    async getAllCards(includeDeleted: boolean = false): Promise<StampCard[]> {
       const sqlString = `
-        SELECT ${giftCardColumns}
-        FROM ${giftCardTableName}
+        SELECT ${stampCardColumns}
+        FROM ${stampCardTableName}
         ${includeDeleted ? '' :
           'WHERE deleted = false'}
         ORDER BY created_at DESC;`
@@ -73,12 +73,13 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       const result = await pool.query(sqlString)
       const rows = result.rows
 
-      return rows.map(row => mapDbRowToGiftCard(row));
+      return rows.map(row => mapDbRowToStampCard(row));
     },
-    async getGiftCardByID(id: string, includeDeleted: boolean = false): Promise<GiftCard | null> {
+
+    async getStampCardByID(id: string, includeDeleted: boolean = false): Promise<StampCard | null> {
       const sqlString = `
-        SELECT ${giftCardColumns}
-        FROM ${giftCardTableName}
+        SELECT ${stampCardColumns}
+        FROM ${stampCardTableName}
         WHERE id = $1
         ${includeDeleted ? '' : 'AND deleted = false'}
       `;
@@ -87,29 +88,29 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       const row = result.rows[0]
       if (!row) return null;
 
-      return mapDbRowToGiftCard(row)
+      return mapDbRowToStampCard(row)
     },
 
-    async getAllGiftCardsByUserID(user_id: string, includeDeleted: boolean = false): Promise<GiftCard[]> {
-          const sqlString = `
-            SELECT ${giftCardColumns}
-            FROM ${giftCardTableName}
-            WHERE user_id = $1
-            ${includeDeleted ? '' : 'AND deleted = false'}
-            ORDER BY created_at DESC
-          `;
-    
-          const result = await pool.query(sqlString, [user_id])
-          return result.rows.map(row => mapDbRowToGiftCard(row))
-        },
+    async getAllStampCardsByUserID(user_id: string, includeDeleted: boolean = false): Promise<StampCard[]> {
+      const sqlString = `
+        SELECT ${stampCardColumns}
+        FROM ${stampCardTableName}
+        WHERE user_id = $1
+        ${includeDeleted ? '' : 'AND deleted = false'}
+        ORDER BY created_at DESC
+      `;
 
-    async updateGiftCardByID(id: string, updates: UpdateGiftCardInput) {
+      const result = await pool.query(sqlString, [user_id])
+      return result.rows.map(row => mapDbRowToStampCard(row))
+    },
+
+    async updateStampCardByID(id: string, updates: UpdateStampCardInput) {
       const setArgs: string[] = [];
-      const values: (string | number | boolean | Date | NotificationWindowDays| null)[] = [];
+      const values: (string | number | boolean | Date | StampCardStatus | NotificationWindowDays | null)[] = [];
 
       let i = 1;
 
-      // Safe: keys are derived from typed UpdateGiftCardInput, not raw user input
+      // Safe: keys are derived from typed UpdateStampCardInput, not raw user input
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
           setArgs.push(`${key} = $${i}`);
@@ -123,7 +124,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       }
 
       const sqlString = `
-      UPDATE ${giftCardTableName}
+      UPDATE ${stampCardTableName}
       SET ${setArgs.join(", ")},
       updated_at = NOW()
       WHERE id = $${i}
@@ -135,12 +136,12 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       const row = result.rows[0];
       if (!row) return null;
 
-      return mapDbRowToGiftCard(row);
+      return mapDbRowToStampCard(row);
     },
 
-    async deleteGiftCardByID(id: string): Promise<void> {
+    async deleteStampCardByID(id: string): Promise<void> {
       const sqlString = `
-      UPDATE ${giftCardTableName}
+      UPDATE ${stampCardTableName}
       SET
         deleted = true,
         deleted_at = NOW()
@@ -151,16 +152,16 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
   }
 }
 
-const giftCardColumns = `
+const stampCardColumns = `
   id,
   user_id,
   nickname,
   business_id,
   location_id,
   notes,
-  initial_balance,
-  current_balance,
-  currency,
+  stamps_needed,
+  stamps_acquired,
+  status,
   notify_window_days,
   notify_window_start_time,
   notify_window_end_time,
@@ -173,16 +174,16 @@ const giftCardColumns = `
   updated_at
 `
 
-type GiftCardRow = {
+type StampCardRow = {
   id: string;
   user_id: string;
   nickname: string | null;
   business_id: string;
   location_id: string | null;
   notes: string | null;
-  initial_balance: number;
-  current_balance: number;
-  currency: string;
+  stamps_needed: number;
+  stamps_acquired: number;
+  status: StampCardStatus;
   notify_window_days: NotificationWindowDays | null;
   notify_window_start_time: string | null; // TIME
   notify_window_end_time: string | null;   // TIME
@@ -195,7 +196,7 @@ type GiftCardRow = {
   updated_at: Date;
 };
 
-function mapDbRowToGiftCard(row: GiftCardRow): GiftCard {
+function mapDbRowToStampCard(row: StampCardRow): StampCard {
   return {
     id: row.id,
     user_id: row.user_id,
@@ -203,9 +204,9 @@ function mapDbRowToGiftCard(row: GiftCardRow): GiftCard {
     business_id: row.business_id,
     location_id: row.location_id,
     notes: row.notes ?? null,
-    initial_balance: row.initial_balance,
-    current_balance: row.current_balance,
-    currency: row.currency,
+    stamps_needed: row.stamps_needed ?? 0,
+    stamps_acquired: row.stamps_acquired ?? 0,
+    status: row.status ?? 'active',
     notify_window_days: row.notify_window_days ?? null,
     notify_window_start_time: row.notify_window_start_time,
     notify_window_end_time: row.notify_window_end_time,

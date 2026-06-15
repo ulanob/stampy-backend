@@ -1,7 +1,7 @@
 import { stampCardDAO } from "@/src/composition";
 import { UpdateStampCardInput } from "@/src/models/stamp-card.model";
 import { NextResponse } from "next/server";
-import { validateUUID } from "@/src/utils/validators";
+import { validateUUID, handleRouteError } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
@@ -23,11 +23,7 @@ export async function GET(
     return NextResponse.json(stampCard, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/stamp-cards/[id] error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error, "GET /api/v1/stamp-cards/[id]")
   }
 }
 
@@ -50,11 +46,7 @@ export async function PATCH(
     return NextResponse.json(updatedCard, { status: 200 });
   }
   catch (error) {
-    console.error("PATCH /api/v1/stamp-cards/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "PATCH /api/v1/stamp-cards/[id]")
   }
 
 }
@@ -81,11 +73,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 })
 
   } catch (error) {
-    console.error("DELETE /api/v1/stamp-cards/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "DELETE /api/v1/stamp-cards/[id]")
   }
 }
 

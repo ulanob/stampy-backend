@@ -8,8 +8,8 @@ export interface Business {
   updated_at: Date;
 }
 
-export const validTypes = ['restaurant', 'cafe', 'retail', 'other'] as const;
-export type BusinessType = typeof validTypes[number];
+export const VALID_TYPES = ['restaurant', 'cafe', 'retail', 'other'] as const;
+export type BusinessType = typeof VALID_TYPES[number];
 
 
 export type CreateBusinessInput = Omit<Business,

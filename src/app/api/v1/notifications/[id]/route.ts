@@ -1,7 +1,7 @@
 import { notificationDAO } from "@/src/composition";
 import { UpdateNotificationInput } from "@/src/models/notification.model";
 import { NextResponse } from "next/server";
-import { validateUUID } from "@/src/utils/validators";
+import { validateUUID, handleRouteError } from "@/src/utils/validators";
 
 export async function GET(
   _request: Request,
@@ -23,11 +23,7 @@ export async function GET(
     return NextResponse.json(notification, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/notifications/[id] error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error, "GET /api/v1/notifications/[id] ")
   }
 }
 
@@ -50,11 +46,7 @@ export async function PATCH(
     return NextResponse.json(updatedNotification, { status: 200 });
   }
   catch (error) {
-    console.error("PATCH /api/v1/notifications/[id] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "PATCH /api/v1/notifications/[id]")
   }
 
 }

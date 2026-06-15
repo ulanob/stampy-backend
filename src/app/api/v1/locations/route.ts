@@ -1,7 +1,7 @@
 import { locationDAO } from "@/src/composition";
 import { CreateLocationInput } from "@/src/models/location.model";
 import { NextResponse } from "next/server";
-import { validateUUID } from "@/src/utils/validators";
+import { validateUUID, handleRouteError } from "@/src/utils/validators";
 
 
 export async function GET(
@@ -20,11 +20,7 @@ export async function GET(
     return NextResponse.json(locations, { status: 200 });
 
   } catch (error) {
-    console.error("GET /api/v1/locations/ error:", error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error, "GET /api/v1/locations/")
   }
 }
 
@@ -61,11 +57,7 @@ export async function POST(request: Request) {
     return NextResponse.json(createdLocation, { status: 201 })
 
   } catch (error) {
-    console.error("POST /api/v1/locations error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleRouteError(error, "POST /api/v1/locations/ ")
   }
 
 }
