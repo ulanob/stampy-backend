@@ -21,7 +21,6 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       INSERT INTO ${giftCardTableName}
         (user_id,
         business_id,
-        location_id,
         nickname,
         notes,
         initial_balance,
@@ -33,14 +32,13 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         notification_time_sent,
         notification_cooldown_time,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
         ${giftCardColumns}`
 
       const inputs = [
         fields.user_id,
         fields.business_id,
-        fields.location_id,
         fields.nickname,
         fields.notes,
         fields.initial_balance,
@@ -157,7 +155,6 @@ const giftCardColumns = `
   user_id,
   nickname,
   business_id,
-  location_id,
   notes,
   initial_balance,
   current_balance,
@@ -179,7 +176,6 @@ type GiftCardRow = {
   user_id: string;
   nickname: string | null;
   business_id: string;
-  location_id: string | null;
   notes: string | null;
   initial_balance: number;
   current_balance: number;
@@ -202,7 +198,6 @@ function mapDbRowToGiftCard(row: GiftCardRow): GiftCard {
     user_id: row.user_id,
     nickname: row.nickname ?? null,
     business_id: row.business_id,
-    location_id: row.location_id,
     notes: row.notes ?? null,
     initial_balance: Number(row.initial_balance),
     current_balance: Number(row.current_balance),

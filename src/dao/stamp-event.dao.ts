@@ -18,14 +18,16 @@ export function createStampEventDAO(pool: Pool): StampEventDAO {
       INSERT INTO ${stampEventTableName}
         (user_id,
         stamp_card_id,
+        location_id,
         quantity)
-      VALUES ($1, $2, $3)
+      VALUES ($1, $2, $3, $4)
       RETURNING
         ${stampEventColumns}`
 
       const inputs = [
         fields.user_id,
         fields.stamp_card_id,
+        fields.location_id,
         fields.quantity
       ]
 
@@ -80,6 +82,7 @@ const stampEventColumns = `
   id,
   user_id,
   stamp_card_id,
+  location_id,
   quantity,
   created_at
 `
@@ -88,6 +91,7 @@ type StampEventRow = {
   id: string;
   user_id: string;
   stamp_card_id: string;
+  location_id: string | null;
   quantity: number;
   created_at: Date;
 };
@@ -97,6 +101,7 @@ function mapDbRowToStampEvent(row: StampEventRow): StampEvent {
     id: row.id,
     user_id: row.user_id,
     stamp_card_id: row.stamp_card_id,
+    location_id: row.location_id,
     quantity: row.quantity,
     created_at: new Date(row.created_at)
   };

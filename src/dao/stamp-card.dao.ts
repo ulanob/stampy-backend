@@ -22,7 +22,6 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         (user_id,
         nickname,
         business_id,
-        location_id,
         notes,
         stamps_needed,
         stamps_acquired,
@@ -33,7 +32,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         notification_time_sent,
         notification_cooldown_time,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
         ${stampCardColumns}`
 
@@ -41,7 +40,6 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         fields.user_id,
         fields.nickname,
         fields.business_id,
-        fields.location_id,
         fields.notes,
         fields.stamps_needed,
         fields.stamps_acquired ?? 0,
@@ -157,7 +155,6 @@ const stampCardColumns = `
   user_id,
   nickname,
   business_id,
-  location_id,
   notes,
   stamps_needed,
   stamps_acquired,
@@ -179,7 +176,6 @@ type StampCardRow = {
   user_id: string;
   nickname: string | null;
   business_id: string;
-  location_id: string | null;
   notes: string | null;
   stamps_needed: number;
   stamps_acquired: number;
@@ -202,7 +198,6 @@ function mapDbRowToStampCard(row: StampCardRow): StampCard {
     user_id: row.user_id,
     nickname: row.nickname ?? null,
     business_id: row.business_id,
-    location_id: row.location_id,
     notes: row.notes ?? null,
     stamps_needed: row.stamps_needed ?? 0,
     stamps_acquired: row.stamps_acquired ?? 0,
