@@ -1,0 +1,112 @@
+erDiagram
+  users ||--o| user_notification_preferences : "has"
+  users ||--o{ stamp_cards : "owns"
+  users ||--o{ gift_cards : "owns"
+  users ||--o{ stamp_events : "logs"
+  users ||--o{ notifications : "receives"
+  businesses ||--o{ locations : "has"
+  businesses ||--o{ stamp_cards : "linked to"
+  businesses ||--o{ gift_cards : "linked to"
+  locations ||--o{ stamp_cards : "optional"
+  locations ||--o{ gift_cards : "optional"
+  locations ||--o{ notifications : "triggered by"
+  stamp_cards ||--o{ stamp_events : "logged in"
+  stamp_cards ||--o{ notifications : "triggers"
+  gift_cards ||--o{ notifications : "triggers"
+
+  users {
+    uuid id PK
+    text display_name
+    text email
+    text auth_provider_id
+    timestamp created_at
+    timestamp updated_at
+    boolean deleted
+    timestamp deleted_at
+  }
+  user_notification_preferences {
+    uuid id PK
+    uuid user_id FK
+    boolean notifications_enabled
+    time quiet_hours_start
+    time quiet_hours_end
+    text[] notify_window_days
+    time general_window_start
+    time general_window_end
+    int daily_notification_cap
+    int daily_notification_counter
+  }
+  businesses {
+    uuid id PK
+    text name
+    text type
+    boolean deleted
+    timestamp deleted_at
+    timestamp created_at
+    timestamp updated_at
+  }
+  locations {
+    uuid id PK
+    uuid business_id FK
+    text address
+    float lat
+    float lng
+    float geofence_radius
+    boolean deleted
+    timestamp deleted_at
+  }
+  stamp_cards {
+    uuid id PK
+    uuid user_id FK
+    uuid business_id FK
+    uuid location_id FK
+    text nickname
+    text status
+    int stamps_needed
+    int stamps_acquired
+    text[] notify_window_days
+    time notify_window_start_time
+    time notify_window_end_time
+    timestamp notification_time_sent
+    int notification_cooldown_time
+    timestamp expiration_date
+    boolean deleted
+  }
+  stamp_events {
+    uuid id PK
+    uuid stamp_card_id FK
+    uuid user_id FK
+    int quantity
+    timestamp created_at
+  }
+  gift_cards {
+    uuid id PK
+    uuid user_id FK
+    uuid business_id FK
+    uuid location_id FK
+    text nickname
+    numeric initial_balance
+    numeric current_balance
+    text currency
+    text[] notify_window_days
+    time notify_window_start_time
+    time notify_window_end_time
+    timestamp notification_time_sent
+    int notification_cooldown_time
+    timestamp expiration_date
+    boolean deleted
+  }
+  notifications {
+    uuid id PK
+    uuid user_id FK
+    uuid stamp_card_id FK
+    uuid gift_card_id FK
+    uuid location_id FK
+    text type
+    text status
+    timestamp sent_at
+    text subject
+    text body
+    timestamp created_at
+    timestamp updated_at
+  }
