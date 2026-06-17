@@ -1,5 +1,5 @@
 erDiagram
-  users ||--|| user_notification_preferences : "has"
+  users ||--o| user_notification_preferences : "has"
   users ||--o{ stamp_cards : "owns"
   users ||--o{ gift_cards : "owns"
   users ||--o{ stamp_events : "logs"
