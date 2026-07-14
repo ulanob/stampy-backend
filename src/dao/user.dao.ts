@@ -4,7 +4,7 @@ import { User, CreateUserInput, UpdateUserInput } from "@/src/models/index.model
 const userTableName = "users"
 
 export type UserDAO = {
-  createUser(fields: CreateUserInput): Promise<User | null>;
+  createUser(fields: CreateUserInput): Promise<User>;
   getAllUsers(includeDeleted?: boolean): Promise<User[]>;
   getUserByID(id: string, includeDeleted?: boolean): Promise<User | null>;
   updateUserByID(id: string, updates: UpdateUserInput): Promise<User | null>;
@@ -13,7 +13,7 @@ export type UserDAO = {
 
 export function createUserDAO(pool: Pool): UserDAO {
   return {
-    async createUser(fields: CreateUserInput): Promise<User | null> {
+    async createUser(fields: CreateUserInput): Promise<User> {
 
       const sqlString = `
       INSERT INTO ${userTableName}
@@ -31,11 +31,8 @@ export function createUserDAO(pool: Pool): UserDAO {
       ]
 
       const result = await pool.query(sqlString, inputs)
-      const row = result.rows[0]
-      if (!row) return null;
-
-
-      return mapDbRowToUser(row);
+      
+      return mapDbRowToUser(result.rows[0]);
     },
 
     async getAllUsers(includeDeleted: boolean = false): Promise<User[]> {
@@ -126,18 +123,7 @@ const userColumns = `
   deleted_at
 `
 
-type UserRow = {
-  id: string;
-  display_name: string | null;
-  email: string;
-  auth_provider_id: string | null;
-  created_at: Date;
-  updated_at: Date;
-  deleted: boolean;
-  deleted_at: Date | null;
-};
-
-function mapDbRowToUser(row: UserRow): User {
+function mapDbRowToUser(row: User): User {
   return {
     id: row.id,
     display_name: row.display_name,

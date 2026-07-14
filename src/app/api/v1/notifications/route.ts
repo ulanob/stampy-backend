@@ -27,13 +27,6 @@ export async function POST(request: Request) {
 
     const createdNotification = await notificationDAO.createNotification(body);
 
-    if (!createdNotification) {
-      return NextResponse.json(
-        { error: "Failed to create notification" },
-        { status: 500 }
-      )
-    }
-
     return NextResponse.json(createdNotification, { status: 201 })
 
   } catch (error) {

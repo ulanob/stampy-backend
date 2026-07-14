@@ -42,13 +42,6 @@ export async function POST(request: Request) {
       current_balance: body.current_balance ?? body.initial_balance,
     });
 
-    if (!createdCard) {
-      return NextResponse.json(
-        { error: "Failed to create gift card" },
-        { status: 500 }
-      )
-    }
-
     return NextResponse.json(createdCard, { status: 201 })
 
   } catch (error) {

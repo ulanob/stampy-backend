@@ -31,13 +31,6 @@
         quantity: body.quantity ?? 1
       });
 
-      if (!createdStamp) {
-        return NextResponse.json(
-          { error: "Failed to stamp" },
-          { status: 500 }
-        )
-      }
-
       return NextResponse.json(createdStamp, { status: 201 })
 
     } catch (error) {
@@ -45,4 +38,3 @@
     }
 
   }
-

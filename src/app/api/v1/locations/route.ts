@@ -47,13 +47,6 @@ export async function POST(request: Request) {
 
     const createdLocation = await locationDAO.createLocation(body);
 
-    if (!createdLocation) {
-      return NextResponse.json(
-        { error: "Failed to create location" },
-        { status: 500 }
-      )
-    }
-
     return NextResponse.json(createdLocation, { status: 201 })
 
   } catch (error) {

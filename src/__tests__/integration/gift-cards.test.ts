@@ -7,7 +7,6 @@ const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:3001';
 const tempGiftCard: CreateGiftCardInput = {
   user_id: TEST_IDS.user1,
   business_id: TEST_IDS.business1,
-  location_id: TEST_IDS.location1,
   initial_balance: 500,
   current_balance: 500,
   currency: 'CAD',
