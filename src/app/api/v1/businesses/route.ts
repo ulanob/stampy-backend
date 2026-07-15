@@ -40,13 +40,6 @@ export async function POST(request: Request) {
 
     const createdBusiness = await businessDAO.createBusiness(body);
 
-    if (!createdBusiness) {
-      return NextResponse.json(
-        { error: "Failed to create business" },
-        { status: 500 }
-      )
-    }
-
     return NextResponse.json(createdBusiness, { status: 201 })
 
   } catch (error) {

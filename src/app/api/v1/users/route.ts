@@ -36,13 +36,6 @@ export async function POST(request: Request) {
 
     const createdUser = await userDAO.createUser(body);
 
-    if (!createdUser) {
-      return NextResponse.json(
-        { error: "Failed to create user" },
-        { status: 500 }
-      )
-    }
-
     // create user notification preferences
     await userNotificationPreferencesDAO.createUserNotificationPreferences({
       user_id: createdUser.id,

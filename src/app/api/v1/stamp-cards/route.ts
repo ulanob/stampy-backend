@@ -8,7 +8,7 @@ export async function GET(
   _request: Request
 ) {
   try {
-    const stampCards = await stampCardDAO.getAllCards();
+    const stampCards = await stampCardDAO.getAllStampCards();
 
     return NextResponse.json(stampCards ?? [], { status: 200 });
 
@@ -36,13 +36,6 @@ export async function POST(request: Request) {
     }
 
     const createdCard = await stampCardDAO.createStampCard(body);
-
-    if (!createdCard) {
-      return NextResponse.json(
-        { error: "Failed to create stamp card" },
-        { status: 500 }
-      )
-    }
 
     return NextResponse.json(createdCard, { status: 201 })
 

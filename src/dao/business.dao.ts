@@ -4,7 +4,7 @@ import { Business, BusinessType, CreateBusinessInput, UpdateBusinessInput } from
 const businessTableName = "businesses"
 
 export type BusinessDAO = {
-  createBusiness(fields: CreateBusinessInput): Promise<Business | null>;
+  createBusiness(fields: CreateBusinessInput): Promise<Business>;
   getAllBusinesses(includeDeleted?: boolean): Promise<Business[]>;
   getBusinessByID(id: string, includeDeleted?: boolean): Promise<Business | null>;
   updateBusinessByID(id: string, updates: UpdateBusinessInput): Promise<Business | null>;
@@ -13,7 +13,7 @@ export type BusinessDAO = {
 
 export function createBusinessDAO(pool: Pool): BusinessDAO {
   return {
-    async createBusiness(fields: CreateBusinessInput): Promise<Business | null> {
+    async createBusiness(fields: CreateBusinessInput): Promise<Business> {
       const sqlString = `
       INSERT INTO ${businessTableName}
         (name,
@@ -28,11 +28,8 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
       ]
 
       const result = await pool.query(sqlString, inputs);
-      const row = result.rows[0]
 
-      if (!row) return null;
-
-      return mapDbRowToBusiness(row);
+      return mapDbRowToBusiness(result.rows[0]);
     },
 
     async getAllBusinesses(includeDeleted: boolean = false): Promise<Business[]> {
@@ -125,17 +122,7 @@ const businessColumns = `
   updated_at
 `
 
-type BusinessRow = {
-  id: string;
-  name: string;
-  type: BusinessType;
-  deleted: boolean;
-  deleted_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
-}
-
-function mapDbRowToBusiness(row: BusinessRow): Business {
+function mapDbRowToBusiness(row: Business): Business {
   return {
     id: row.id,
     name: row.name,

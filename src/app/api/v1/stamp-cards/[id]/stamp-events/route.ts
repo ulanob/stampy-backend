@@ -10,7 +10,7 @@ export async function GET(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const stampEvents = await stampEventDAO.getStampEventsByCard(id);
+    const stampEvents = await stampEventDAO.getStampEventsByStampCardID(id);
 
     return NextResponse.json(stampEvents, { status: 200 });
 

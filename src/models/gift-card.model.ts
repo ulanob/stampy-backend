@@ -4,7 +4,6 @@ export interface GiftCard {
   id: string;
   user_id: string;
   business_id: string;
-  location_id: string | null;
   nickname: string | null;
   notes: string | null;
   initial_balance: number;
@@ -32,7 +31,6 @@ export type CreateGiftCardInput = Omit<GiftCard,
 
 type GiftCardUpdateableFields = Pick<GiftCard,
   "business_id"
-  | "location_id"
   | "nickname"
   | "notes"
   | "current_balance"

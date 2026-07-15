@@ -5,7 +5,7 @@ import { NotificationWindowDays } from "../models/shared.types";
 const giftCardTableName = "gift_cards"
 
 export type GiftCardDAO = {
-  createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard | null>;
+  createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard>;
   getAllGiftCards(includeDeleted?: boolean): Promise<GiftCard[]>;
   getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard | null>;
   getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
@@ -15,13 +15,12 @@ export type GiftCardDAO = {
 
 export function createGiftCardDAO(pool: Pool): GiftCardDAO {
   return {
-    async createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard | null> {
+    async createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard> {
 
       const sqlString = `
       INSERT INTO ${giftCardTableName}
         (user_id,
         business_id,
-        location_id,
         nickname,
         notes,
         initial_balance,
@@ -33,14 +32,13 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         notification_time_sent,
         notification_cooldown_time,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
         ${giftCardColumns}`
 
       const inputs = [
         fields.user_id,
         fields.business_id,
-        fields.location_id,
         fields.nickname,
         fields.notes,
         fields.initial_balance,
@@ -56,11 +54,8 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       ]
 
       const result = await pool.query(sqlString, inputs)
-      const row = result.rows[0]
-      if (!row) return null;
-
-
-      return mapDbRowToGiftCard(row);
+     
+      return mapDbRowToGiftCard(result.rows[0]);
     },
 
     async getAllGiftCards(includeDeleted: boolean = false): Promise<GiftCard[]> {
@@ -157,7 +152,6 @@ const giftCardColumns = `
   user_id,
   nickname,
   business_id,
-  location_id,
   notes,
   initial_balance,
   current_balance,
@@ -174,35 +168,12 @@ const giftCardColumns = `
   updated_at
 `
 
-type GiftCardRow = {
-  id: string;
-  user_id: string;
-  nickname: string | null;
-  business_id: string;
-  location_id: string | null;
-  notes: string | null;
-  initial_balance: number;
-  current_balance: number;
-  currency: string;
-  notify_window_days: NotificationWindowDays | null;
-  notify_window_start_time: string | null; // TIME
-  notify_window_end_time: string | null;   // TIME
-  notification_time_sent: Date | null;
-  notification_cooldown_time: number | null;
-  expiration_date: Date | null;
-  deleted: boolean;
-  deleted_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
-function mapDbRowToGiftCard(row: GiftCardRow): GiftCard {
+function mapDbRowToGiftCard(row: GiftCard): GiftCard {
   return {
     id: row.id,
     user_id: row.user_id,
     nickname: row.nickname ?? null,
     business_id: row.business_id,
-    location_id: row.location_id,
     notes: row.notes ?? null,
     initial_balance: Number(row.initial_balance),
     current_balance: Number(row.current_balance),

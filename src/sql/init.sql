@@ -65,7 +65,6 @@ CREATE TABLE stamp_cards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-    location_id UUID NULL REFERENCES locations(id) ON DELETE CASCADE,
     nickname TEXT NULL,
     notes TEXT NULL,
     stamps_needed INT NOT NULL DEFAULT 0,
@@ -88,6 +87,7 @@ CREATE TABLE stamp_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     stamp_card_id UUID NOT NULL REFERENCES stamp_cards(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    location_id UUID NULL REFERENCES locations(id) ON DELETE CASCADE,
     quantity INT NOT NULL DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
@@ -97,7 +97,6 @@ CREATE TABLE gift_cards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-    location_id UUID NULL REFERENCES locations(id) ON DELETE CASCADE,
     nickname TEXT NULL,
     notes TEXT NULL,
     initial_balance NUMERIC NOT NULL,

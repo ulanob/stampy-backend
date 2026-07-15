@@ -4,7 +4,7 @@ import { Notification, CreateNotificationInput, UpdateNotificationInput } from "
 const notificationTableName = "notifications"
 
 export type NotificationDAO = {
-  createNotification(fields: CreateNotificationInput): Promise<Notification | null>;
+  createNotification(fields: CreateNotificationInput): Promise<Notification>;
   getNotificationByID(id: string): Promise<Notification | null>;
   getAllNotificationsByUserID(user_id: string): Promise<Notification[]>;
   updateNotificationByID(id: string, updates: UpdateNotificationInput): Promise<Notification | null>;
@@ -12,7 +12,7 @@ export type NotificationDAO = {
 
 export function createNotificationDAO(pool: Pool): NotificationDAO {
   return {
-    async createNotification(fields: CreateNotificationInput): Promise<Notification | null> {
+    async createNotification(fields: CreateNotificationInput): Promise<Notification> {
 
       const sqlString = `
       INSERT INTO ${notificationTableName}
@@ -40,11 +40,8 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
       ]
 
       const result = await pool.query(sqlString, inputs)
-      const row = result.rows[0]
-      if (!row) return null;
-
-
-      return mapDbRowToNotification(row);
+      
+      return mapDbRowToNotification(result.rows[0]);
     },
 
     async getNotificationByID(id: string): Promise<Notification | null> {
@@ -127,22 +124,7 @@ const notificationColumns = `
   updated_at
 `
 
-type NotificationRow = {
-  id: string;
-  user_id: string;
-  stamp_card_id: string | null;
-  gift_card_id: string | null;
-  location_id: string | null;
-  type: string;
-  status: string;
-  sent_at: Date | null;
-  subject: string | null;
-  body: string | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
-function mapDbRowToNotification(row: NotificationRow): Notification {
+function mapDbRowToNotification(row: Notification): Notification {
   return {
     id: row.id,
     user_id: row.user_id,

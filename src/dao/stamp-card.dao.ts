@@ -5,8 +5,8 @@ import { NotificationWindowDays } from "../models/shared.types";
 const stampCardTableName = "stamp_cards"
 
 export type StampCardDAO = {
-  createStampCard(fields: CreateStampCardInput): Promise<StampCard | null>;
-  getAllCards(includeDeleted?: boolean): Promise<StampCard[]>;
+  createStampCard(fields: CreateStampCardInput): Promise<StampCard>;
+  getAllStampCards(includeDeleted?: boolean): Promise<StampCard[]>;
   getStampCardByID(id: string, includeDeleted?: boolean): Promise<StampCard | null>;
   getAllStampCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<StampCard[]>
   updateStampCardByID(id: string, updates: UpdateStampCardInput): Promise<StampCard | null>;
@@ -15,14 +15,13 @@ export type StampCardDAO = {
 
 export function createStampCardDAO(pool: Pool): StampCardDAO {
   return {
-    async createStampCard(fields: CreateStampCardInput): Promise<StampCard | null> {
+    async createStampCard(fields: CreateStampCardInput): Promise<StampCard> {
 
       const sqlString = `
       INSERT INTO ${stampCardTableName}
         (user_id,
         nickname,
         business_id,
-        location_id,
         notes,
         stamps_needed,
         stamps_acquired,
@@ -33,7 +32,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         notification_time_sent,
         notification_cooldown_time,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
         ${stampCardColumns}`
 
@@ -41,7 +40,6 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         fields.user_id,
         fields.nickname,
         fields.business_id,
-        fields.location_id,
         fields.notes,
         fields.stamps_needed,
         fields.stamps_acquired ?? 0,
@@ -55,14 +53,11 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
       ]
 
       const result = await pool.query(sqlString, inputs)
-      const row = result.rows[0]
-      if (!row) return null;
 
-
-      return mapDbRowToStampCard(row);
+      return mapDbRowToStampCard(result.rows[0]);
     },
 
-    async getAllCards(includeDeleted: boolean = false): Promise<StampCard[]> {
+    async getAllStampCards(includeDeleted: boolean = false): Promise<StampCard[]> {
       const sqlString = `
         SELECT ${stampCardColumns}
         FROM ${stampCardTableName}
@@ -157,7 +152,6 @@ const stampCardColumns = `
   user_id,
   nickname,
   business_id,
-  location_id,
   notes,
   stamps_needed,
   stamps_acquired,
@@ -174,35 +168,12 @@ const stampCardColumns = `
   updated_at
 `
 
-type StampCardRow = {
-  id: string;
-  user_id: string;
-  nickname: string | null;
-  business_id: string;
-  location_id: string | null;
-  notes: string | null;
-  stamps_needed: number;
-  stamps_acquired: number;
-  status: StampCardStatus;
-  notify_window_days: NotificationWindowDays | null;
-  notify_window_start_time: string | null; // TIME
-  notify_window_end_time: string | null;   // TIME
-  notification_time_sent: Date | null;
-  notification_cooldown_time: number | null;
-  expiration_date: Date | null;
-  deleted: boolean;
-  deleted_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
-function mapDbRowToStampCard(row: StampCardRow): StampCard {
+function mapDbRowToStampCard(row: StampCard): StampCard {
   return {
     id: row.id,
     user_id: row.user_id,
     nickname: row.nickname ?? null,
     business_id: row.business_id,
-    location_id: row.location_id,
     notes: row.notes ?? null,
     stamps_needed: row.stamps_needed ?? 0,
     stamps_acquired: row.stamps_acquired ?? 0,

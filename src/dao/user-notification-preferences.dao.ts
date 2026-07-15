@@ -4,14 +4,14 @@ import { UserNotificationPreferences, CreateUserNotificationPreferencesInput, Up
 const userNotificationPreferencesTableName = "user_notification_preferences"
 
 export type UserNotificationPreferencesDAO = {
-  createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput): Promise<UserNotificationPreferences | null>;
+  createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput): Promise<UserNotificationPreferences>;
   getUserNotificationPreferencesByUserID(user_id: string): Promise<UserNotificationPreferences | null>;
   updateUserNotificationPreferencesByUserID(user_id: string, updates: UpdateUserNotificationPreferences): Promise<UserNotificationPreferences | null>;
 }
 
 export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificationPreferencesDAO {
   return {
-    async createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput): Promise<UserNotificationPreferences | null> {
+    async createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput): Promise<UserNotificationPreferences> {
       const sqlString = `
       INSERT INTO ${userNotificationPreferencesTableName}
         (user_id,
@@ -39,11 +39,8 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
       ]
 
       const result = await pool.query(sqlString, inputs);
-      const row = result.rows[0]
 
-      if (!row) return null;
-
-      return mapDbRowToUserNotificationPreferences(row);
+      return mapDbRowToUserNotificationPreferences(result.rows[0]);
     },
 
     async getUserNotificationPreferencesByUserID(user_id: string, ): Promise<UserNotificationPreferences | null> {
@@ -113,22 +110,7 @@ const userNotificationPreferencesColumns = `
   updated_at
 `
 
-type UserNotificationPreferencesRow = {
-  id: string;
-  user_id: string;
-  notifications_enabled: boolean;
-  quiet_hours_start: string | null; // TIME
-  quiet_hours_end: string | null;   // TIME
-  notify_window_days: string[] | null;
-  general_notification_window_start: string | null; // TIME
-  general_notification_window_end: string | null;   // TIME
-  daily_notification_cap: number;
-  daily_notification_counter: number;
-  created_at: Date;
-  updated_at: Date;
-}
-
-function mapDbRowToUserNotificationPreferences(row: UserNotificationPreferencesRow): UserNotificationPreferences {
+function mapDbRowToUserNotificationPreferences(row: UserNotificationPreferences): UserNotificationPreferences {
   return {
     id: row.id,
     user_id: row.user_id,

@@ -4,7 +4,6 @@ export interface StampCard {
   id: string;
   user_id: string;
   business_id: string;
-  location_id: string | null;
   nickname: string | null;
   notes: string | null;
   stamps_needed: number;
@@ -36,7 +35,6 @@ export type CreateStampCardInput = Omit<StampCard,
 
 type StampCardUpdateableFields = Pick<StampCard,
   "business_id"
-  | "location_id"
   | "nickname"
   | "notes"
   | "stamps_needed"
