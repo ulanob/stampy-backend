@@ -1,4 +1,4 @@
-import { userDAO, userNotificationPreferencesDAO } from "@/src/composition";
+import { userService } from "@/src/composition";
 import { CreateUserInput } from "@/src/models/user.model";
 import { NextResponse } from "next/server";
 import { handleRouteError } from "@/src/utils/validators";
@@ -7,7 +7,7 @@ export async function GET(
   _request: Request
 ) {
   try {
-    const users = await userDAO.getAllUsers();
+    const users = await userService.getAllUsers();
 
     return NextResponse.json(users, { status: 200 });
 
@@ -20,33 +20,7 @@ export async function POST(request: Request) {
   try {
     const body: CreateUserInput = await request.json();
 
-    // TODO: set from Cognito
-    const requiredFields: (keyof CreateUserInput)[] = [
-      "email"
-    ];
-
-    for (const field of requiredFields) {
-      if (body[field] === undefined || body[field] === null) {
-        return NextResponse.json(
-          { error: `Missing required field: ${field}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    const createdUser = await userDAO.createUser(body);
-
-    // create user notification preferences
-    await userNotificationPreferencesDAO.createUserNotificationPreferences({
-      user_id: createdUser.id,
-      notifications_enabled: true,
-      quiet_hours_start: null,
-      quiet_hours_end: null,
-      general_notification_window_start: null,
-      general_notification_window_end: null,
-      notify_window_days: null, 
-      daily_notification_cap: 5
-    })
+    const createdUser = await userService.createUser(body);
 
     return NextResponse.json(createdUser, { status: 201 })
 
