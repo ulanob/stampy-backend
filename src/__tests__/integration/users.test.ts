@@ -1,6 +1,10 @@
 import request from 'supertest';
 import { seed, clearAll, TEST_IDS } from '../../scripts/testSeed';
 import { CreateUserInput } from '../../models/user.model';
+import { createUserService } from '../../services/user.service';
+import { createUserDAO } from '../../dao';
+import pool from '../../lib/db';
+import type { UserNotificationPreferencesDAO } from '../../dao';
 
 const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:3001';
 
@@ -184,5 +188,35 @@ describe('users', () => {
       .expect(400);
 
     expect(response.body.error).toBeDefined();
+  });
+
+
+  // exception: test atomicity of createUser in user.service.ts
+  describe('createUser — transaction rollback', () => {
+    test('does not persist a user when the preferences insert fails', async () => {
+      const userDAO = createUserDAO(pool);
+      const brokenPreferencesDAO: UserNotificationPreferencesDAO = {
+        createUserNotificationPreferences: async () => {
+          throw new Error('forced failure');
+        },
+        getUserNotificationPreferencesByUserID: async () => null,
+        updateUserNotificationPreferencesByUserID: async () => null,
+      };
+      const service = createUserService(userDAO, brokenPreferencesDAO, pool);
+
+      await expect(
+        service.createUser({
+          email: 'rollback-test@example.com',
+          display_name: null,
+          auth_provider_id: null,
+        })
+      ).rejects.toThrow('forced failure');
+
+      const result = await pool.query(
+        'SELECT * FROM users WHERE email = $1',
+        ['rollback-test@example.com']
+      );
+      expect(result.rows.length).toBe(0);
+    });
   });
 });

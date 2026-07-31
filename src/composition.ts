@@ -11,4 +11,4 @@ export const userDAO = createUserDAO(pool);
 export const userNotificationPreferencesDAO = createUserNotificationPreferencesDAO(pool);
 export const notificationDAO = createNotificationDAO(pool);
 
-export const userService = createUserService(userDAO, userNotificationPreferencesDAO)
+export const userService = createUserService(userDAO, userNotificationPreferencesDAO, pool)

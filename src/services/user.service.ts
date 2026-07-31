@@ -2,6 +2,8 @@ import { UserDAO , UserNotificationPreferencesDAO,  } from "../dao";
 import { CreateUserInput, User, UpdateUserInput } from "../models/user.model";
 import { CreateUserNotificationPreferencesInput } from "../models/user-notification-preferences.model";
 import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
+import { withTransaction } from "../lib/db";
+import { Pool } from "pg";
 
 export type UserService = {
   createUser(fields: CreateUserInput): Promise<User>;
@@ -13,14 +15,13 @@ export type UserService = {
 
 export function createUserService(
   userDAO: UserDAO,
-  userNotificationPreferencesDAO: UserNotificationPreferencesDAO
+  userNotificationPreferencesDAO: UserNotificationPreferencesDAO,
+  pool: Pool
 ): UserService {
   return {
     async createUser(fields): Promise<User> {
         // TODO: set from Cognito
-        const requiredFields: (keyof CreateUserInput)[] = [
-        "email"
-        ];
+        const requiredFields: (keyof CreateUserInput)[] = [ "email" ];
 
         for (const field of requiredFields) {
             if (fields[field] === undefined || fields[field] === null) {
@@ -28,7 +29,8 @@ export function createUserService(
             }
         }
 
-        const newUser = await userDAO.createUser(fields);
+      return withTransaction(pool, async (client) => {
+        const newUser = await userDAO.createUser(fields, client);
         const defaultPreferences:CreateUserNotificationPreferencesInput = {
             user_id: newUser.id,
             notifications_enabled: true,
@@ -39,9 +41,9 @@ export function createUserService(
             notify_window_days: null,
             daily_notification_cap: 5
         }
-        await userNotificationPreferencesDAO.createUserNotificationPreferences(defaultPreferences);
-
-      return newUser;
+        await userNotificationPreferencesDAO.createUserNotificationPreferences(defaultPreferences, client);
+        return newUser;
+      });
     },
 
     async getAllUsers(includeDeleted = false): Promise<User[]> {

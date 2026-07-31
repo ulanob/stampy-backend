@@ -1,17 +1,18 @@
 import { Pool } from "pg";
 import { UserNotificationPreferences, CreateUserNotificationPreferencesInput, UpdateUserNotificationPreferences } from "../models/user-notification-preferences.model";
+import { Executor } from "./types";
 
 const userNotificationPreferencesTableName = "user_notification_preferences"
 
 export type UserNotificationPreferencesDAO = {
-  createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput): Promise<UserNotificationPreferences>;
+  createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput, executor: Executor): Promise<UserNotificationPreferences>;
   getUserNotificationPreferencesByUserID(user_id: string): Promise<UserNotificationPreferences | null>;
   updateUserNotificationPreferencesByUserID(user_id: string, updates: UpdateUserNotificationPreferences): Promise<UserNotificationPreferences | null>;
 }
 
 export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificationPreferencesDAO {
   return {
-    async createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput): Promise<UserNotificationPreferences> {
+    async createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput, executor: Executor = pool): Promise<UserNotificationPreferences> {
       const sqlString = `
       INSERT INTO ${userNotificationPreferencesTableName}
         (user_id,
@@ -38,7 +39,7 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
         fields.daily_notification_cap,
       ]
 
-      const result = await pool.query(sqlString, inputs);
+      const result = await executor.query(sqlString, inputs);
 
       return mapDbRowToUserNotificationPreferences(result.rows[0]);
     },
