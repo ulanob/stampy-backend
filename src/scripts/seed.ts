@@ -59,13 +59,12 @@ async function seed() {
 
     /// --- STAMP EVENTS ---
     await client.query(`
-        INSERT INTO stamp_events (id, stamp_card_id, user_id, quantity)
-        VALUES
-          (gen_random_uuid(), $1, $2, 1),
-          (gen_random_uuid(), $3, $2, 2)
-        RETURNING id
-      `,
-      [stampCardId1, userId, stampCardId2],
+      INSERT INTO stamp_events (id, stamp_card_id, user_id, location_id, request_id, type, quantity)
+      VALUES
+        (gen_random_uuid(), $1, $2, $3, gen_random_uuid(), 'stamp_added', 1),
+        (gen_random_uuid(), $4, $2, $5, gen_random_uuid(), 'stamp_added', 2)
+    `,
+      [stampCardId1, userId, locationId1, stampCardId2, locationId2],
     );
 
     // --- GIFT CARDS ---

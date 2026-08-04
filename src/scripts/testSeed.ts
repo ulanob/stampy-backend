@@ -68,14 +68,20 @@ export async function seed() {
         TEST_IDS.stampCard2, TEST_IDS.business2, TEST_IDS.location2]);
 
 
-    /// --- STAMP EVENTS ---
+    // --- STAMP EVENTS ---
     await client.query(`
-        INSERT INTO stamp_events (id, stamp_card_id, user_id, quantity)
-        VALUES
-          ($1, $3, $5, 1),
-          ($2, $4, $5, 2)
-      `,
-      [TEST_IDS.stampEvent1, TEST_IDS.stampEvent2, TEST_IDS.stampCard1, TEST_IDS.stampCard2,  TEST_IDS.user1],
+      INSERT INTO stamp_events (id, stamp_card_id, user_id, location_id, request_id, type, quantity)
+      VALUES
+        ($1, $3, $5, $6, $8, 'stamp_added', 1),
+        ($2, $4, $5, $7, $9, 'stamp_added', 2)
+    `,
+      [
+        TEST_IDS.stampEvent1, TEST_IDS.stampEvent2,
+        TEST_IDS.stampCard1, TEST_IDS.stampCard2,
+        TEST_IDS.user1,
+        TEST_IDS.location1, TEST_IDS.location2,
+        crypto.randomUUID(), crypto.randomUUID(), // fresh request_ids for seed rows
+      ]
     );
 
     // --- GIFT CARDS ---

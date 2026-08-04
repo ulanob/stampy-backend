@@ -1,5 +1,5 @@
-import { stampEventDAO } from "@/src/composition";
-import { validateUUID, handleRouteError } from "@/src/utils/validators";
+import { stampEventService } from "@/src/composition";
+import { handleRouteError } from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -8,11 +8,10 @@ export async function GET(
 ) {
   try {
     const { userId } = await params;
-    validateUUID(userId.trim());
 
-    const stampEvents = await stampEventDAO.getAllStampEventsByUserID(userId);
+    const userStampEvents = await stampEventService.getAllStampEventsByUserID(userId)
 
-    return NextResponse.json(stampEvents, { status: 200 });
+    return NextResponse.json(userStampEvents, { status: 200 });
 
   } catch (error) {
     return handleRouteError(error, "GET /api/v1/users/[userId]/stamp-events")
