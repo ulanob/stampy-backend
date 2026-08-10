@@ -1,10 +1,11 @@
 import { Pool } from "pg";
 import { User, CreateUserInput, UpdateUserInput } from "@/src/models/index.model";
+import { Executor } from "./types";
 
 const userTableName = "users"
 
 export type UserDAO = {
-  createUser(fields: CreateUserInput): Promise<User>;
+  createUser(fields: CreateUserInput, executor: Executor): Promise<User>;
   getAllUsers(includeDeleted?: boolean): Promise<User[]>;
   getUserByID(id: string, includeDeleted?: boolean): Promise<User | null>;
   updateUserByID(id: string, updates: UpdateUserInput): Promise<User | null>;
@@ -13,7 +14,7 @@ export type UserDAO = {
 
 export function createUserDAO(pool: Pool): UserDAO {
   return {
-    async createUser(fields: CreateUserInput): Promise<User> {
+    async createUser(fields: CreateUserInput, executor: Executor = pool): Promise<User> {
 
       const sqlString = `
       INSERT INTO ${userTableName}
@@ -30,7 +31,7 @@ export function createUserDAO(pool: Pool): UserDAO {
         fields.auth_provider_id
       ]
 
-      const result = await pool.query(sqlString, inputs)
+      const result = await executor.query(sqlString, inputs)
       
       return mapDbRowToUser(result.rows[0]);
     },

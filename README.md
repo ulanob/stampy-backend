@@ -45,18 +45,31 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 
 ## Architecture
 
-The API follows a layered architecture:
+The API follows a layered architecture with specific services, data access objects (DAOs), and utility classes:
 
 ```
 src/
-└── api/
-    └── v1/
-        ├── users/
-        ├── businesses/
-        └── notifications/
+├── api/
+│   └── v1/
+│       ├── users/
+│       ├── vendors/
+│       ├── cards/
+├── composition.ts
+├── dao/
+│   ├── stampCardDAO.ts
+│   ├── stampEventDAO.ts
+│   ├── businessDAO.ts
+│   ├── locationDAO.ts
+│   ├── giftCardDAO.ts
+│   ├── userDAO.ts
+│   └── notificationDAO.ts
+├── services/
+│   ├── userService.ts
+│   ├── notificationService.ts
+│   └── preferencesService.ts
+└── utils/
+    └── validators.ts
 ```
-
-Each route is kept thin - request validation and response shaping only. Business logic lives in a dedicated service layer, keeping concerns separated and the codebase testable.
 
 ---
 
