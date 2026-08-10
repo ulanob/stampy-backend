@@ -1,21 +1,21 @@
 import { Pool } from "pg";
 import { StampCard, CreateStampCardInput, UpdateStampCardInput, StampCardStatus } from "@/src/models/index.model";
 import { NotificationWindowDays } from "../models/shared.types";
-
+import { Executor } from "./types";
 const stampCardTableName = "stamp_cards"
 
 export type StampCardDAO = {
-  createStampCard(fields: CreateStampCardInput): Promise<StampCard>;
+  createStampCard(fields: CreateStampCardInput, executor: Executor): Promise<StampCard>;
   getAllStampCards(includeDeleted?: boolean): Promise<StampCard[]>;
-  getStampCardByID(id: string, includeDeleted?: boolean): Promise<StampCard | null>;
+  getStampCardByID(id: string, includeDeleted?: boolean, executor?: Executor): Promise<StampCard | null>;
   getAllStampCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<StampCard[]>
-  updateStampCardByID(id: string, updates: UpdateStampCardInput): Promise<StampCard | null>;
+  updateStampCardByID(id: string, updates: UpdateStampCardInput, executor?: Executor): Promise<StampCard | null>;
   deleteStampCardByID(id: string): Promise<void>
 }
 
 export function createStampCardDAO(pool: Pool): StampCardDAO {
   return {
-    async createStampCard(fields: CreateStampCardInput): Promise<StampCard> {
+    async createStampCard(fields: CreateStampCardInput, executor: Executor): Promise<StampCard> {
 
       const sqlString = `
       INSERT INTO ${stampCardTableName}
@@ -52,7 +52,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         fields.expiration_date
       ]
 
-      const result = await pool.query(sqlString, inputs)
+      const result = await executor.query(sqlString, inputs)
 
       return mapDbRowToStampCard(result.rows[0]);
     },
@@ -71,7 +71,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
       return rows.map(row => mapDbRowToStampCard(row));
     },
 
-    async getStampCardByID(id: string, includeDeleted: boolean = false): Promise<StampCard | null> {
+    async getStampCardByID(id: string, includeDeleted: boolean = false, executor: Executor = pool): Promise<StampCard | null> {
       const sqlString = `
         SELECT ${stampCardColumns}
         FROM ${stampCardTableName}
@@ -79,7 +79,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         ${includeDeleted ? '' : 'AND deleted = false'}
       `;
 
-      const result = await pool.query(sqlString, [id])
+      const result = await executor.query(sqlString, [id])
       const row = result.rows[0]
       if (!row) return null;
 
@@ -99,7 +99,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
       return result.rows.map(row => mapDbRowToStampCard(row))
     },
 
-    async updateStampCardByID(id: string, updates: UpdateStampCardInput) {
+    async updateStampCardByID(id: string, updates: UpdateStampCardInput, executor: Executor = pool) {
       const setArgs: string[] = [];
       const values: (string | number | boolean | Date | StampCardStatus | NotificationWindowDays | null)[] = [];
 
@@ -119,15 +119,15 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
       }
 
       const sqlString = `
-      UPDATE ${stampCardTableName}
-      SET ${setArgs.join(", ")},
-      updated_at = NOW()
-      WHERE id = $${i}
-      RETURNING *;
-    `;
+        UPDATE ${stampCardTableName}
+        SET ${setArgs.join(", ")},
+        updated_at = NOW()
+        WHERE id = $${i}
+        RETURNING *;
+      `;
       values.push(id);
 
-      const result = await pool.query(sqlString, values);
+      const result = await executor.query(sqlString, values);
       const row = result.rows[0];
       if (!row) return null;
 

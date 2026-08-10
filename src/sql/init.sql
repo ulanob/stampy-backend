@@ -1,6 +1,7 @@
 -- DROP TABLES
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS gift_cards;
+DROP TABLE IF EXISTS stamp_events;
 DROP TABLE IF EXISTS stamp_cards;
 DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS businesses;
@@ -65,6 +66,7 @@ CREATE TABLE stamp_cards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    location_id UUID NULL REFERENCES locations(id) ON DELETE SET NULL,
     nickname TEXT NULL,
     notes TEXT NULL,
     stamps_needed INT NOT NULL DEFAULT 0,
@@ -88,15 +90,20 @@ CREATE TABLE stamp_events (
     stamp_card_id UUID NOT NULL REFERENCES stamp_cards(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     location_id UUID NULL REFERENCES locations(id) ON DELETE CASCADE,
+    request_id UUID NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('stamp_added', 'stamp_removed', 'reward_redeemed', 'card_expired', 'card_deleted')),
     quantity INT NOT NULL DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX stamp_events_request_id_idx ON stamp_events (request_id);
 
 -- GIFT CARDS (user can have many)
 CREATE TABLE gift_cards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    location_id UUID NULL REFERENCES locations(id) ON DELETE SET NULL,
     nickname TEXT NULL,
     notes TEXT NULL,
     initial_balance NUMERIC NOT NULL,
@@ -122,7 +129,7 @@ CREATE TABLE notifications (
     gift_card_id UUID NULL REFERENCES gift_cards(id) ON DELETE SET NULL,
     location_id UUID NULL REFERENCES locations(id) ON DELETE SET NULL,
     type TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')), 
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
     sent_at TIMESTAMP WITH TIME ZONE NULL,
     subject TEXT NULL,
     body TEXT NULL,

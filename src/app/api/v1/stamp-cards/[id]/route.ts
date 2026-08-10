@@ -1,4 +1,4 @@
-import { stampCardDAO } from "@/src/composition";
+import { stampCardService } from "@/src/composition";
 import { UpdateStampCardInput } from "@/src/models/stamp-card.model";
 import { NextResponse } from "next/server";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
@@ -11,14 +11,7 @@ export async function GET(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const stampCard = await stampCardDAO.getStampCardByID(id);
-
-    if (!stampCard) {
-      return NextResponse.json(
-        { error: 'Stamp card not found' },
-        { status: 404 }
-      );
-    }
+    const stampCard = await stampCardService.getStampCardByID(id);
 
     return NextResponse.json(stampCard, { status: 200 });
 
@@ -37,11 +30,7 @@ export async function PATCH(
 
     const updates: Partial<UpdateStampCardInput> = await request.json();
 
-    const updatedCard = await stampCardDAO.updateStampCardByID(id, updates);
-
-    if (!updatedCard) {
-      return NextResponse.json({ error: "Cannot find stamp card/ no fields to update" }, { status: 404 })
-    }
+    const updatedCard = await stampCardService.updateStampCardByID(id, updates);
 
     return NextResponse.json(updatedCard, { status: 200 });
   }
@@ -59,16 +48,7 @@ export async function DELETE(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const card = await stampCardDAO.getStampCardByID(id);
-    if (!card) {
-      return NextResponse.json({ error: 'Stamp card not found' }, { status: 404 });
-    }
-
-    if (card.deleted) {
-      return NextResponse.json({ error: 'Stamp card already deleted' }, { status: 400 });
-    }
-
-    await stampCardDAO.deleteStampCardByID(id);
+    await stampCardService.deleteStampCardByID(id);
 
     return new NextResponse(null, { status: 204 })
 

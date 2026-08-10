@@ -1,6 +1,8 @@
 import pool from "./lib/db";
 import { createStampCardDAO, createStampEventDAO, createBusinessDAO, createLocationDAO, createGiftCardDAO, createUserDAO, createUserNotificationPreferencesDAO, createNotificationDAO } from "./dao";
 import { createUserService } from "./services/user.service";
+import { createStampEventService } from "./services/stampEvent.service";
+import { createStampCardService } from "./services/stampCard.service";
 
 export const stampCardDAO = createStampCardDAO(pool);
 export const stampEventDAO = createStampEventDAO(pool);
@@ -11,4 +13,6 @@ export const userDAO = createUserDAO(pool);
 export const userNotificationPreferencesDAO = createUserNotificationPreferencesDAO(pool);
 export const notificationDAO = createNotificationDAO(pool);
 
-export const userService = createUserService(userDAO, userNotificationPreferencesDAO, pool)
+export const userService = createUserService(userDAO, userNotificationPreferencesDAO, pool);
+export const stampEventService = createStampEventService(stampEventDAO, stampCardDAO, pool);
+export const stampCardService = createStampCardService(stampCardDAO, userDAO, businessDAO, pool);
