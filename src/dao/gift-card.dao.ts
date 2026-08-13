@@ -1,11 +1,12 @@
 import { Pool } from "pg";
 import { GiftCard, CreateGiftCardInput, UpdateGiftCardInput } from "@/src/models/index.model";
 import { NotificationWindowDays } from "../models/shared.types";
+import { Executor } from "./types";
 
 const giftCardTableName = "gift_cards"
 
 export type GiftCardDAO = {
-  createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard>;
+  createGiftCard(fields: CreateGiftCardInput, executor: Executor): Promise<GiftCard>;
   getAllGiftCards(includeDeleted?: boolean): Promise<GiftCard[]>;
   getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard | null>;
   getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
@@ -15,7 +16,7 @@ export type GiftCardDAO = {
 
 export function createGiftCardDAO(pool: Pool): GiftCardDAO {
   return {
-    async createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard> {
+    async createGiftCard(fields: CreateGiftCardInput, executor: Executor = pool): Promise<GiftCard> {
 
       const sqlString = `
       INSERT INTO ${giftCardTableName}
@@ -42,7 +43,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         fields.nickname,
         fields.notes,
         fields.initial_balance,
-        fields.current_balance,
+        fields.current_balance, 
         fields.currency,
         fields.notify_window_days,
         fields.notify_window_start_time,
@@ -53,7 +54,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
 
       ]
 
-      const result = await pool.query(sqlString, inputs)
+      const result = await executor.query(sqlString, inputs)
      
       return mapDbRowToGiftCard(result.rows[0]);
     },

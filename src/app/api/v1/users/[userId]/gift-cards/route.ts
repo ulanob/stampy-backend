@@ -1,4 +1,4 @@
-import { giftCardDAO } from "@/src/composition";
+import { giftCardService } from "@/src/composition";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
@@ -10,7 +10,7 @@ export async function GET(
     const { userId } = await params;
     validateUUID(userId.trim());
 
-    const giftCards = await giftCardDAO.getAllGiftCardsByUserID(userId);
+    const giftCards = await giftCardService.getAllGiftCardsByUserId(userId);
 
     return NextResponse.json(giftCards, { status: 200 });
 

@@ -1,4 +1,4 @@
-import { giftCardDAO } from "@/src/composition";
+import { giftCardService } from "@/src/composition";
 import { UpdateGiftCardInput } from "@/src/models/gift-card.model";
 import { NextResponse } from "next/server";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
@@ -11,14 +11,7 @@ export async function GET(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const giftCard = await giftCardDAO.getGiftCardByID(id);
-
-    if (!giftCard) {
-      return NextResponse.json(
-        { error: 'Gift card not found' },
-        { status: 404 }
-      );
-    }
+    const giftCard = await giftCardService.getGiftCardByID(id);
 
     return NextResponse.json(giftCard, { status: 200 });
 
@@ -37,16 +30,12 @@ export async function PATCH(
 
     const updates: UpdateGiftCardInput = await request.json();
 
-    const updatedCard = await giftCardDAO.updateGiftCardByID(id, updates);
-
-    if (!updatedCard) {
-      return NextResponse.json({ error: "Gift card not found" }, { status: 404 })
-    }
+    const updatedCard = await giftCardService.updateGiftCardByID(id, updates);
 
     return NextResponse.json(updatedCard, { status: 200 });
   } catch (error) {
     return handleRouteError(error, "PATCH /api/v1/gift-cards/[id]")
-    }
+  }
 
 }
 
@@ -58,16 +47,7 @@ export async function DELETE(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const card = await giftCardDAO.getGiftCardByID(id, true);
-    if (!card) {
-      return NextResponse.json({ error: 'Gift card not found' }, { status: 404 });
-    }
-
-    if (card.deleted) {
-      return NextResponse.json({ error: 'Gift card already deleted' }, { status: 400 });
-    }
-
-    await giftCardDAO.deleteGiftCardByID(id);
+    await giftCardService.deleteGiftCardByID(id);
 
     return new NextResponse(null, { status: 204 })
 

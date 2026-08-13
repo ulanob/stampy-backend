@@ -23,17 +23,18 @@ export interface GiftCard {
 
 export type CreateGiftCardInput = Omit<GiftCard,
   "id"
+  | "current_balance"
   | "created_at"
   | "updated_at"
   | "deleted"
   | "deleted_at"
->
+> & {
+  current_balance?: number;
+};
 
 type GiftCardUpdateableFields = Pick<GiftCard,
-  "business_id"
-  | "nickname"
+  "nickname"
   | "notes"
-  | "current_balance"
   | "notify_window_days"
   | "notify_window_start_time"
   | "notify_window_end_time"
