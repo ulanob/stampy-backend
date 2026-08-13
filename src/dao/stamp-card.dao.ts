@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { StampCard, CreateStampCardInput, UpdateStampCardInput, StampCardStatus } from "@/src/models/index.model";
 import { NotificationWindowDays } from "../models/shared.types";
 import { Executor } from "./types";
+
 const stampCardTableName = "stamp_cards"
 
 export type StampCardDAO = {
