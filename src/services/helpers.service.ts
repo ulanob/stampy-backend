@@ -15,3 +15,17 @@ export function requireFields<T extends object>(fields: T, required: (keyof T)[]
     }
   }
 }
+
+export function validateCoordinates(lat: number, lng: number): void {
+  if (lat < -90 || lat > 90) {
+    throw new ValidationError('Latitude must be between -90 and 90');
+  }
+
+  if (lng < -180 || lng > 180) {
+    throw new ValidationError('Longitude must be between -180 and 180');
+  }
+}
+
+export function validateRadius(radius: number): void {
+  if (radius <= 0) throw new ValidationError('geofence_radius must be positive');
+}

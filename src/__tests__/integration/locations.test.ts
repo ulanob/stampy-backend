@@ -35,6 +35,46 @@ describe('locations', () => {
     );
   });
 
+  test('GET /api/v1/locations?business_id= filters by business', async () => {
+    const response = await request(BASE_URL)
+      .get(`/api/v1/locations?business_id=${TEST_IDS.business1}`)
+      .expect(200);
+
+    expect(response.body).toEqual(
+      expect.arrayContaining([expect.objectContaining({ business_id: TEST_IDS.business1 })])
+    );
+    for (const location of response.body) {
+      expect(location.business_id).toBe(TEST_IDS.business1);
+    }
+  });
+
+  test('GET /api/v1/locations?business_id= returns 400 for a malformed business_id', async () => {
+    await request(BASE_URL)
+      .get('/api/v1/locations?business_id=not-a-uuid')
+      .expect(400);
+  });
+
+  test('GET /api/v1/locations?business_id= returns 404 for a non-existent business', async () => {
+    const response = await request(BASE_URL)
+      .get(`/api/v1/locations?business_id=${TEST_IDS.businessNonExistent}`)
+      .expect(404);
+
+    expect(response.body.error).toBeDefined();
+  });
+
+  test('GET /api/v1/locations?business_id= returns 404 when the business has no locations', async () => {
+    const { body: business } = await request(BASE_URL)
+      .post('/api/v1/businesses')
+      .send({ name: 'No Locations Yet', type: 'retail' })
+      .expect(201);
+
+    const response = await request(BASE_URL)
+      .get(`/api/v1/locations?business_id=${business.id}`)
+      .expect(404);
+
+    expect(response.body.error).toBeDefined();
+  });
+
   test('GET /api/v1/locations/:id returns a location', async () => {
     const response = await request(BASE_URL)
       .get(`/api/v1/locations/${TEST_IDS.location1}`)

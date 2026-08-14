@@ -1,4 +1,4 @@
-import { locationDAO } from "@/src/composition";
+import { locationService } from "@/src/composition";
 import { UpdateLocationInput } from "@/src/models/location.model";
 import { NextResponse } from "next/server";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const location = await locationDAO.getLocationByID(id);
+    const location = await locationService.getLocationByID(id);
 
     if (!location) {
       return NextResponse.json(
@@ -37,7 +37,7 @@ export async function PATCH(
 
     const updates: Partial<UpdateLocationInput> = await request.json();
 
-    const updatedLocation = await locationDAO.updateLocationByID(id, updates);
+    const updatedLocation = await locationService.updateLocationByID(id, updates);
 
     if (!updatedLocation) {
       return NextResponse.json({ error: "Location not found" }, { status: 404 })
@@ -59,7 +59,7 @@ export async function DELETE(
     const { id } = await params;
     validateUUID(id.trim());
 
-    const location = await locationDAO.getLocationByID(id, true);
+    const location = await locationService.getLocationByID(id, true);
     if (!location) {
       return NextResponse.json({ error: 'Location not found' }, { status: 404 });
     }
@@ -68,7 +68,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Location already deleted' }, { status: 400 });
     }
 
-    await locationDAO.deleteLocationByID(id);
+    await locationService.deleteLocationByID(id);
 
     return new NextResponse(null, { status: 204 })
 
