@@ -2,7 +2,7 @@ import { BusinessDAO, GiftCardDAO, UserDAO } from '../dao';
 import { GiftCard, CreateGiftCardInput, UpdateGiftCardInput, } from '../models/gift-card.model';
 import { NotFoundError, validateUUID, ValidationError, } from '../utils/validators';
 import { Pool } from 'pg';
-import { assertExists } from './helpers.service';
+import { assertExists, requireFields } from './helpers.service';
 
 export type GiftCardService = {
   createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard>;
@@ -21,17 +21,7 @@ export function createGiftCardService(
   return {
     async createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard> {
       // check required fields
-      const requiredFields: (keyof CreateGiftCardInput)[] = [
-        'user_id',
-        'business_id',
-        'initial_balance',
-        'currency'
-      ];
-      for (const field of requiredFields) {
-        if (fields[field] === undefined || fields[field] === null) {
-          throw new ValidationError(`Missing required field: ${field}`);
-        }
-      }
+      requireFields(fields, ['user_id', 'business_id', 'initial_balance', 'currency'])
 
       // validate user_id, business_id
       validateUUID(fields.user_id);

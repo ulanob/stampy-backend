@@ -2,7 +2,7 @@ import { BusinessDAO, StampCardDAO, UserDAO } from "../dao";
 import { StampCard, CreateStampCardInput, UpdateStampCardInput } from "../models/stamp-card.model";
 import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
 import { Pool } from "pg";
-import { assertExists } from "./helpers.service";
+import { assertExists, requireFields } from "./helpers.service";
 
 export type StampCardService = {
   createStampCard(fields: CreateStampCardInput): Promise<StampCard>;
@@ -21,17 +21,8 @@ export function createStampCardService(
   return {
     async createStampCard(fields: CreateStampCardInput): Promise<StampCard> {
       // check required fields
-      const requiredFields: (keyof CreateStampCardInput)[] = [
-        "user_id",
-        "business_id",
-        "stamps_needed",
-      ];
-      for (const field of requiredFields) {
-        if (fields[field] === undefined || fields[field] === null) {
-          throw new ValidationError(`Missing required field: ${field}`);
-        }
-      }
-
+      requireFields(fields, ['user_id', 'business_id', 'stamps_needed'])
+      
       // validate user_id, business_id
       validateUUID(fields.user_id)
       validateUUID(fields.business_id)
