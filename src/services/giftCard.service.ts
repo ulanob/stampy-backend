@@ -1,28 +1,14 @@
 import { BusinessDAO, GiftCardDAO, UserDAO } from '../dao';
-import {
-  GiftCard,
-  CreateGiftCardInput,
-  UpdateGiftCardInput,
-} from '../models/gift-card.model';
-import {
-  NotFoundError,
-  validateUUID,
-  ValidationError,
-} from '../utils/validators';
+import { GiftCard, CreateGiftCardInput, UpdateGiftCardInput, } from '../models/gift-card.model';
+import { NotFoundError, validateUUID, ValidationError, } from '../utils/validators';
 import { Pool } from 'pg';
 import { assertExists } from './helpers.service';
 
 export type GiftCardService = {
   createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard>;
-  getAllGiftCardsByUserId(
-    user_id: string,
-    includeDeleted?: boolean
-  ): Promise<GiftCard[]>;
+  getAllGiftCardsByUserId(user_id: string,includeDeleted?: boolean): Promise<GiftCard[]>;
   getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard>;
-  updateGiftCardByID(
-    id: string,
-    updates: UpdateGiftCardInput
-  ): Promise<GiftCard>;
+  updateGiftCardByID(id: string,updates: UpdateGiftCardInput): Promise<GiftCard>;
   deleteGiftCardByID(id: string): Promise<void>;
 };
 
