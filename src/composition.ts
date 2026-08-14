@@ -4,6 +4,7 @@ import { createUserService } from "./services/user.service";
 import { createStampEventService } from "./services/stampEvent.service";
 import { createStampCardService } from "./services/stampCard.service";
 import { createGiftCardService } from "./services/giftCard.service";
+import { createBusinessService } from "./services/business.service";
 
 export const stampCardDAO = createStampCardDAO(pool);
 export const stampEventDAO = createStampEventDAO(pool);
@@ -18,3 +19,4 @@ export const userService = createUserService(userDAO, userNotificationPreference
 export const stampEventService = createStampEventService(stampEventDAO, stampCardDAO, pool);
 export const stampCardService = createStampCardService(stampCardDAO, userDAO, businessDAO, pool);
 export const giftCardService = createGiftCardService(giftCardDAO, userDAO, businessDAO, pool)
+export const businessService = createBusinessService(businessDAO);
