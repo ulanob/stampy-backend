@@ -35,6 +35,46 @@ describe('locations', () => {
     );
   });
 
+  test('GET /api/v1/locations?business_id= filters by business', async () => {
+    const response = await request(BASE_URL)
+      .get(`/api/v1/locations?business_id=${TEST_IDS.business1}`)
+      .expect(200);
+
+    expect(response.body).toEqual(
+      expect.arrayContaining([expect.objectContaining({ business_id: TEST_IDS.business1 })])
+    );
+    for (const location of response.body) {
+      expect(location.business_id).toBe(TEST_IDS.business1);
+    }
+  });
+
+  test('GET /api/v1/locations?business_id= returns 400 for a malformed business_id', async () => {
+    await request(BASE_URL)
+      .get('/api/v1/locations?business_id=not-a-uuid')
+      .expect(400);
+  });
+
+  test('GET /api/v1/locations?business_id= returns 404 for a non-existent business', async () => {
+    const response = await request(BASE_URL)
+      .get(`/api/v1/locations?business_id=${TEST_IDS.businessNonExistent}`)
+      .expect(404);
+
+    expect(response.body.error).toBeDefined();
+  });
+
+  test('GET /api/v1/locations?business_id= returns 404 when the business has no locations', async () => {
+    const { body: business } = await request(BASE_URL)
+      .post('/api/v1/businesses')
+      .send({ name: 'No Locations Yet', type: 'retail' })
+      .expect(201);
+
+    const response = await request(BASE_URL)
+      .get(`/api/v1/locations?business_id=${business.id}`)
+      .expect(404);
+
+    expect(response.body.error).toBeDefined();
+  });
+
   test('GET /api/v1/locations/:id returns a location', async () => {
     const response = await request(BASE_URL)
       .get(`/api/v1/locations/${TEST_IDS.location1}`)
@@ -72,8 +112,8 @@ describe('locations', () => {
     const body: CreateLocationInput = {
       business_id: TEST_IDS.business1,
       address: '1234 Test Location',
-      lat: 123,
-      lng: 234,
+      lat: 80,
+      lng: 170,
       geofence_radius: 127,
     };
 
@@ -87,8 +127,8 @@ describe('locations', () => {
       expect.objectContaining({
         business_id: TEST_IDS.business1,
         address: '1234 Test Location',
-        lat: 123,
-        lng: 234,
+        lat: 80,
+        lng: 170,
         geofence_radius: 127,
       })
     );
@@ -103,7 +143,7 @@ describe('locations', () => {
     expect(response.body.error).toBeDefined();
   });
 
-  test('PATCH /api/v1/locations/:id updates lat value', async () => {
+  test('PATCH /api/v1/locations/:id updates lat and lng together', async () => {
     const { body: created } = await request(BASE_URL)
       .post('/api/v1/locations')
       .send(tempLocation)
@@ -111,12 +151,40 @@ describe('locations', () => {
 
     const response = await request(BASE_URL)
       .patch(`/api/v1/locations/${created.id}`)
-      .send({ lat: 500 })
+      .send({ lat: 45.5, lng: -122.6 })
       .expect(200);
 
     expect(response.body).toEqual(
-      expect.objectContaining({ lat: 500 })
+      expect.objectContaining({ lat: 45.5, lng: -122.6 })
     );
+  });
+
+  test('PATCH /api/v1/locations/:id rejects updating lat without lng', async () => {
+    const { body: created } = await request(BASE_URL)
+      .post('/api/v1/locations')
+      .send(tempLocation)
+      .expect(201);
+
+    const response = await request(BASE_URL)
+      .patch(`/api/v1/locations/${created.id}`)
+      .send({ lat: 45.5 })
+      .expect(400);
+
+    expect(response.body.error).toBeDefined();
+  });
+
+  test('PATCH /api/v1/locations/:id rejects updating lng without lat', async () => {
+    const { body: created } = await request(BASE_URL)
+      .post('/api/v1/locations')
+      .send(tempLocation)
+      .expect(201);
+
+    const response = await request(BASE_URL)
+      .patch(`/api/v1/locations/${created.id}`)
+      .send({ lng: -122.6 })
+      .expect(400);
+
+    expect(response.body.error).toBeDefined();
   });
 
   test('PATCH /api/v1/locations/:id returns 400 for invalid ID format', async () => {
@@ -129,7 +197,7 @@ describe('locations', () => {
   test('PATCH /api/v1/locations/:id returns 404 for location not found', async () => {
     const response = await request(BASE_URL)
       .patch(`/api/v1/locations/${TEST_IDS.locationNonExistent}`)
-      .send({ lat: 500 })
+      .send({ lat: 80, lng: 80 })
       .expect(404);
 
     expect(response.body.error).toBeDefined();
