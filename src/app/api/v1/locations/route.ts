@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json(createdLocation, { status: 201 })
 
   } catch (error) {
+    console.log(error);
     return handleRouteError(error, "POST /api/v1/locations/")
   }
 

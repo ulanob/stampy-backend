@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createLocationService } from "../../services/location.service";
 import type { LocationDAO, BusinessDAO } from "../../dao";
-import { NotFoundError, ValidationError } from "../../utils/validators";
+import { NotFoundError, ValidationError, InvalidUUIDError } from "../../utils/validators";
 
 describe("locationService", () => {
   let locationDAO: LocationDAO;
@@ -74,10 +74,10 @@ describe("locationService", () => {
       expect(locationDAO.createLocation).not.toHaveBeenCalled();
     });
 
-    it("throws ValidationError when business_id is not a valid UUID", async () => {
+    it("throws InvalidUUIDError when business_id is not a valid UUID", async () => {
       await expect(
         service().createLocation({ ...validFields, business_id: "not-a-uuid" })
-      ).rejects.toThrow(ValidationError);
+      ).rejects.toThrow(InvalidUUIDError);
       expect(businessDAO.getBusinessByID).not.toHaveBeenCalled();
       expect(locationDAO.createLocation).not.toHaveBeenCalled();
     });
@@ -135,8 +135,8 @@ describe("locationService", () => {
       expect(result).toEqual(baseLocation);
     });
 
-    it("throws ValidationError for an invalid UUID", async () => {
-      await expect(service().getLocationByID("not-a-uuid")).rejects.toThrow(ValidationError);
+    it("throws InvalidUUIDError for an invalid UUID", async () => {
+      await expect(service().getLocationByID("not-a-uuid")).rejects.toThrow(InvalidUUIDError);
       expect(locationDAO.getLocationByID).not.toHaveBeenCalled();
     });
 
@@ -153,8 +153,8 @@ describe("locationService", () => {
       expect(businessDAO.getBusinessByID).toHaveBeenCalledWith(validBusinessId);
     });
 
-    it("throws ValidationError for an invalid UUID", async () => {
-      await expect(service().getLocationsByBusinessID("not-a-uuid")).rejects.toThrow(ValidationError);
+    it("throws InvalidUUIDError for an invalid UUID", async () => {
+      await expect(service().getLocationsByBusinessID("not-a-uuid")).rejects.toThrow(InvalidUUIDError);
       expect(businessDAO.getBusinessByID).not.toHaveBeenCalled();
     });
 

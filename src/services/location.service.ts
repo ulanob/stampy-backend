@@ -74,14 +74,8 @@ export function createLocationService(locationDAO: LocationDAO, businessDAO: Bus
         throw new ValidationError('No fields to update');
       }
 
-      // validate lat & lng, 0 value edge case
-      const latProvided = updates.lat !== undefined;
-      const lngProvided = updates.lng !== undefined;
-
-      if (latProvided && lngProvided) {
+      if (updates.lat !== undefined || updates.lng !== undefined) {
         validateCoordinates(updates.lat!, updates.lng!)
-      } else if (latProvided || lngProvided) {
-        throw new ValidationError('lat & lng need to be updated at the same time')
       }
 
       if (updates.geofence_radius !== undefined) {

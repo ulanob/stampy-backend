@@ -17,6 +17,11 @@ export function requireFields<T extends object>(fields: T, required: (keyof T)[]
 }
 
 export function validateCoordinates(lat: number, lng: number): void {
+  // validate lat & lng, 0 value edge case
+  if (lat === undefined || lng === undefined) {
+    throw new ValidationError('lat & lng need to be updated at the same time')
+  }
+  
   if (lat < -90 || lat > 90) {
     throw new ValidationError('Latitude must be between -90 and 90');
   }
