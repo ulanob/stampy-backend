@@ -1,5 +1,5 @@
-import { userNotificationPreferencesDAO } from "@/src/composition";
-import { UpdateUserNotificationPreferences } from "@/src/models/user-notification-preferences.model";
+import { userNotificationPreferencesService } from "@/src/composition";
+import { UpdateUserNotificationPreferencesInput } from "@/src/models/user-notification-preferences.model";
 import { NextResponse } from "next/server";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
 
@@ -11,19 +11,11 @@ export async function GET(
     const { userId } = await params;
     validateUUID(userId.trim());
 
-    const userNotificationPreferences = await userNotificationPreferencesDAO.getUserNotificationPreferencesByUserID(userId);
-
-    if (!userNotificationPreferences) {
-      return NextResponse.json(
-        { error: 'UserNotificationPreferences not found' },
-        { status: 404 }
-      );
-    }
+    const userNotificationPreferences = await userNotificationPreferencesService.getUserNotificationPreferencesByUserID(userId);
 
     return NextResponse.json(userNotificationPreferences, { status: 200 });
-
   } catch (error) {
-    return handleRouteError(error, "GET /api/v1/users/[userId]/preferences")
+    return handleRouteError(error, "GET /api/v1/users/[userId]/preferences");
   }
 }
 
@@ -35,18 +27,12 @@ export async function PATCH(
     const { userId } = await params;
     validateUUID(userId.trim());
 
-    const updates: UpdateUserNotificationPreferences = await request.json();
+    const updates: UpdateUserNotificationPreferencesInput = await request.json();
 
-    const updatedUserNotificationPreferences = await userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID(userId, updates);
-
-    if (!updatedUserNotificationPreferences) {
-      return NextResponse.json({ error: "UserNotificationPreferences not found" }, { status: 404 })
-    }
+    const updatedUserNotificationPreferences = await userNotificationPreferencesService.updateUserNotificationPreferencesByUserID(userId, updates);
 
     return NextResponse.json(updatedUserNotificationPreferences, { status: 200 });
-  }
-  catch (error) {
+  } catch (error) {
     return handleRouteError(error, "PATCH /api/v1/users/[userId]/preferences")
   }
-
 }

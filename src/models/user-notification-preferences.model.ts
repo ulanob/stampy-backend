@@ -9,6 +9,7 @@ export interface UserNotificationPreferences {
   general_notification_window_end: string | null;   // TIME
   daily_notification_cap: number;
   daily_notification_counter: number;
+  last_notified_date: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -16,6 +17,8 @@ export interface UserNotificationPreferences {
 export type CreateUserNotificationPreferencesInput = Omit<UserNotificationPreferences,
   "id"
   | "daily_notification_counter"
+  | "daily_notification_cap"
+  | "last_notified_date"
   | "created_at"
   | "updated_at"
 >
@@ -30,4 +33,4 @@ type UserNotificationPreferencesUpdateableFields = Pick<UserNotificationPreferen
   | "daily_notification_cap"
 >
 
-export type UpdateUserNotificationPreferences = Partial<UserNotificationPreferencesUpdateableFields>
+export type UpdateUserNotificationPreferencesInput = Partial<UserNotificationPreferencesUpdateableFields>

@@ -34,7 +34,6 @@ export function createUserService(
           general_notification_window_start: null,
           general_notification_window_end: null,
           notify_window_days: null,
-          daily_notification_cap: 5
         }
 
         await userNotificationPreferencesDAO.createUserNotificationPreferences(defaultPreferences, client);
