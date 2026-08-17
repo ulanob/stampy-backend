@@ -55,7 +55,7 @@ export async function seed() {
     // --- USER NOTIFICATION PREFERENCES ---
     await client.query(`
       INSERT INTO user_notification_preferences (id, user_id, notifications_enabled, daily_notification_cap, daily_notification_counter)
-      VALUES ($1, $2, true, 5, 0)
+      VALUES ($1, $2, true, 3, 0)
     `, [TEST_IDS.notificationPreferences1, TEST_IDS.user1]);
 
     // --- STAMP CARDS ---
@@ -65,7 +65,7 @@ export async function seed() {
         ($1, $2, $3, $4, 10, 0, 'active'),
         ($5, $2, $6, $7, 8, 5, 'active')
     `, [TEST_IDS.stampCard1, TEST_IDS.user1, TEST_IDS.business1, TEST_IDS.location1,
-        TEST_IDS.stampCard2, TEST_IDS.business2, TEST_IDS.location2]);
+      TEST_IDS.stampCard2, TEST_IDS.business2, TEST_IDS.location2]);
 
 
     // --- STAMP EVENTS ---
@@ -91,7 +91,7 @@ export async function seed() {
         ($1, $2, $3, $4, 5000, 5000, 'CAD'),
         ($5, $2, $6, $7, 2500, 2500, 'CAD')
     `, [TEST_IDS.giftCard1, TEST_IDS.user1, TEST_IDS.business1, TEST_IDS.location1,
-        TEST_IDS.giftCard2, TEST_IDS.business2, TEST_IDS.location2]);
+      TEST_IDS.giftCard2, TEST_IDS.business2, TEST_IDS.location2]);
 
     // --- NOTIFICATIONS ---
     await client.query(`
@@ -100,7 +100,7 @@ export async function seed() {
         ($1, $2, $3, null, $4, 'stamp_reminder', 'pending', 'You have stamps!', 'Come back and earn more stamps.'),
         ($5, $2, null, $6, $7, 'gift_card_expiry', 'pending', 'Gift card expiring soon', 'Your gift card expires soon.')
     `, [TEST_IDS.notification1, TEST_IDS.user1, TEST_IDS.stampCard1, TEST_IDS.location1,
-        TEST_IDS.notification2, TEST_IDS.giftCard1, TEST_IDS.location2]);
+      TEST_IDS.notification2, TEST_IDS.giftCard1, TEST_IDS.location2]);
 
     await client.query("COMMIT");
     console.log("✅ Test seed complete");

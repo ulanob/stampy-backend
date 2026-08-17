@@ -105,6 +105,7 @@ export function createUserDAO(pool: Pool): UserDAO {
       UPDATE ${userTableName}
       SET
         deleted = true,
+        updated_at = NOW(),
         deleted_at = NOW()
       WHERE id = $1;`
 

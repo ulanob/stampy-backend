@@ -30,8 +30,9 @@ CREATE TABLE user_notification_preferences (
     notify_window_days TEXT[] NULL,
     general_notification_window_start TIME NULL,
     general_notification_window_end TIME NULL,
-    daily_notification_cap INT NULL,
+    daily_notification_cap INT NOT NULL DEFAULT 3,
     daily_notification_counter INT NOT NULL DEFAULT 0,
+    last_notified_date TIMESTAMP WITH TIME ZONE NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
