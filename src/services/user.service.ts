@@ -63,6 +63,7 @@ export function createUserService(
 
       const safeUpdates: UpdateUserInput = {
         display_name: updates.display_name,
+        timezone: updates.timezone
       };
 
       const updatedUser = await userDAO.updateUserByID(user_id, safeUpdates);

@@ -14,6 +14,7 @@ CREATE TABLE users (
     display_name TEXT NULL,
     email TEXT NOT NULL UNIQUE,
     auth_provider_id TEXT NULL,
+    timezone TEXT NOT NULL DEFAULT 'UTC',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     deleted BOOLEAN NOT NULL DEFAULT false,

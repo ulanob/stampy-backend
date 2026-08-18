@@ -20,15 +20,17 @@ export function createUserDAO(pool: Pool): UserDAO {
       INSERT INTO ${userTableName}
         (display_name,
         email,
-        auth_provider_id)
-      VALUES ($1, $2, $3)
+        auth_provider_id,
+        timezone)
+      VALUES ($1, $2, $3, $4)
       RETURNING
         ${userColumns}`
 
       const inputs = [
         fields.display_name,
         fields.email,
-        fields.auth_provider_id
+        fields.auth_provider_id,
+        fields.timezone
       ]
 
       const result = await executor.query(sqlString, inputs)
@@ -119,6 +121,7 @@ const userColumns = `
   display_name,
   email,
   auth_provider_id,
+  timezone,
   created_at,
   updated_at,
   deleted,
@@ -131,6 +134,7 @@ function mapDbRowToUser(row: User): User {
     display_name: row.display_name,
     email: row.email,
     auth_provider_id: row.auth_provider_id,
+    timezone: row.timezone,
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at),
     deleted: !!row.deleted,
