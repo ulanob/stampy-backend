@@ -1,7 +1,7 @@
 import { UserDAO, UserNotificationPreferencesDAO, } from "../dao";
 import { CreateUserInput, User, UpdateUserInput } from "../models/user.model";
 import { CreateUserNotificationPreferencesInput } from "../models/user-notification-preferences.model";
-import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
+import { NotFoundError, validateUUID, validateTimezone, validateEmail, ValidationError } from "../utils/validators";
 import { withTransaction } from "../lib/db";
 import { Pool } from "pg";
 import { requireFields } from "./helpers.service";
@@ -22,7 +22,9 @@ export function createUserService(
   return {
     async createUser(fields): Promise<User> {
       // TODO: set from Cognito
-      requireFields(fields, ['email'])
+      requireFields(fields, ['email', 'timezone']);
+      validateEmail(fields.email);
+      validateTimezone(fields.timezone);
 
       return withTransaction(pool, async (client) => {
         const newUser = await userDAO.createUser(fields, client);
@@ -60,6 +62,10 @@ export function createUserService(
 
     async updateUserByID(user_id: string, updates: UpdateUserInput): Promise<User> {
       validateUUID(user_id);
+
+      if(updates.timezone) {
+        validateTimezone(updates.timezone);
+      }
 
       const safeUpdates: UpdateUserInput = {
         display_name: updates.display_name,
