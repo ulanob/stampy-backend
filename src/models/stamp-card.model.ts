@@ -34,8 +34,7 @@ export type CreateStampCardInput = Omit<StampCard,
 >
 
 type StampCardUpdateableFields = Pick<StampCard,
-  "business_id"
-  | "nickname"
+  "nickname"
   | "notes"
   | "stamps_needed"
   | "stamps_acquired"

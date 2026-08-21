@@ -22,6 +22,7 @@ export function createGiftCardEventService(
     async createGiftCardEvent(fields): Promise<GiftCardEvent> {
       requireFields(fields, ['user_id', 'gift_card_id', 'request_id', 'type', 'amount']);
       validateUUID(fields.gift_card_id);
+      validateUUID(fields.user_id);
 
       return withTransaction(pool, async (client) => {
         // idempotency check

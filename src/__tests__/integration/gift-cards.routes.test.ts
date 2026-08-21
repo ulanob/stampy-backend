@@ -22,7 +22,7 @@ describe('gift-cards routes', () => {
     const response = await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.business1,
-      initial_balance: 3000,
+      initial_balance: 30.00,
       currency: 'CAD',
     }).expect(201);
 
@@ -30,8 +30,8 @@ describe('gift-cards routes', () => {
       expect.objectContaining({
         user_id: TEST_IDS.user1,
         business_id: TEST_IDS.business1,
-        initial_balance: 3000,
-        current_balance: 3000,
+        initial_balance: 30.00,
+        current_balance: 30.00,
       })
     );
   });
@@ -39,7 +39,7 @@ describe('gift-cards routes', () => {
   test('POST rejects missing required field', async () => {
     const response = await createGiftCard({
       business_id: TEST_IDS.business1,
-      initial_balance: 3000,
+      initial_balance: 30.00,
     }).expect(400);
 
     expect(response.body.error).toBeDefined();
@@ -49,7 +49,7 @@ describe('gift-cards routes', () => {
     await createGiftCard({
       user_id: TEST_IDS.userNonExistent,
       business_id: TEST_IDS.business1,
-      initial_balance: 3000,
+      initial_balance: 30.00,
       currency: 'CAD',
     }).expect(404);
   });
@@ -58,7 +58,7 @@ describe('gift-cards routes', () => {
     await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.businessNonExistent,
-      initial_balance: 3000,
+      initial_balance: 30.00,
       currency: 'CAD',
     }).expect(404);
   });
@@ -95,11 +95,24 @@ describe('gift-cards routes', () => {
     expect(response.body.current_balance).not.toBe(999999);
   });
 
+  test('PATCH ignores status even if included in the body', async () => {
+    const before = await request(BASE_URL)
+      .get(`/api/v1/gift-cards/${TEST_IDS.giftCard1}`)
+      .expect(200);
+
+    const response = await request(BASE_URL)
+      .patch(`/api/v1/gift-cards/${TEST_IDS.giftCard1}`)
+      .send({ status: 'cancelled', nickname: 'Still updating' })
+      .expect(200);
+
+    expect(response.body.status).toBe(before.body.status);
+  });
+
   test('DELETE /:id deletes a gift card', async () => {
     const created = await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.business1,
-      initial_balance: 1000,
+      initial_balance: 10.00,
       currency: 'CAD',
     }).expect(201);
 
@@ -116,7 +129,7 @@ describe('gift-cards routes', () => {
     const created = await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.business1,
-      initial_balance: 1000,
+      initial_balance: 10.00,
       currency: 'CAD',
     }).expect(201);
 
