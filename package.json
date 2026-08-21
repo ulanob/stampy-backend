@@ -7,7 +7,7 @@
     "dev": "next dev",
     "dev:test": "NODE_ENV=test next dev -p 3001",
     "seed": "tsx --env-file=.env.local src/scripts/seed.ts",
-    "db:reset": "docker compose down -v && docker compose up -d && sleep 3 && npm run seed",
+    "db:reset": "docker compose down -v && docker compose up -d --wait && npm run seed",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

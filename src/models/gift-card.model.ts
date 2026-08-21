@@ -9,17 +9,21 @@ export interface GiftCard {
   initial_balance: number;
   current_balance: number;
   currency: string;
+  status: GiftCardStatus;
   notify_window_days: NotificationWindowDays | null;
   notify_window_start_time: string | null;
   notify_window_end_time: string | null;
   notification_time_sent: Date | null;
-  notification_cooldown_time: number | null;
+  notification_cooldown_seconds: number | null;
   expiration_date: Date | null;
   created_at: Date;
   updated_at: Date;
   deleted: boolean;
   deleted_at: Date | null;
 }
+
+export const GIFT_CARD_STATUSES = ['active', 'cancelled', 'expired'] as const;
+export type GiftCardStatus = typeof GIFT_CARD_STATUSES[number];
 
 export type CreateGiftCardInput = Omit<GiftCard,
   "id"
@@ -35,11 +39,13 @@ export type CreateGiftCardInput = Omit<GiftCard,
 type GiftCardUpdateableFields = Pick<GiftCard,
   "nickname"
   | "notes"
+  | "status"
+  | "current_balance"
   | "notify_window_days"
   | "notify_window_start_time"
   | "notify_window_end_time"
   | "notification_time_sent"
-  | "notification_cooldown_time"
+  | "notification_cooldown_seconds"
   | "expiration_date"
 >
 

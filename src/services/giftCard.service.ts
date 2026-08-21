@@ -38,7 +38,9 @@ export function createGiftCardService(
 
       // set current_balance to be the initial_balance on card creation
       return await giftCardDAO.createGiftCard(
-        { ...fields, current_balance: fields.initial_balance },
+        { ...fields, 
+          current_balance: fields.initial_balance, 
+          status: 'active' },
         pool
       );
     },
@@ -78,7 +80,7 @@ export function createGiftCardService(
         notify_window_start_time: updates.notify_window_start_time,
         notify_window_end_time: updates.notify_window_end_time,
         notification_time_sent: updates.notification_time_sent,
-        notification_cooldown_time: updates.notification_cooldown_time,
+        notification_cooldown_seconds: updates.notification_cooldown_seconds,
         expiration_date: updates.expiration_date,
       };
 

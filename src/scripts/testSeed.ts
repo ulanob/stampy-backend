@@ -18,8 +18,10 @@ export const TEST_IDS = {
   notificationPreferences1: 'a1b2c3d4-0000-0000-0000-000000000010',
   notification1: 'a1b2c3d4-0000-0000-0000-000000000011',
   notification2: 'a1b2c3d4-0000-0000-0000-000000000012',
-  stampEvent1: 'a1b2c3d4-0000-0000-0000-000000000013',
-  stampEvent2: 'a1b2c3d4-0000-0000-0000-000000000014'
+  stampCardEvent1: 'a1b2c3d4-0000-0000-0000-000000000013',
+  stampCardEvent2: 'a1b2c3d4-0000-0000-0000-000000000014',
+  giftCardEvent1: 'a1b2c3d4-0000-0000-0000-000000000015',
+  giftCardEvent2: 'a1b2c3d4-0000-0000-0000-000000000016',
 } as const;
 
 export async function seed() {
@@ -60,38 +62,54 @@ export async function seed() {
 
     // --- STAMP CARDS ---
     await client.query(`
-      INSERT INTO stamp_cards (id, user_id, business_id, location_id, stamps_needed, stamps_acquired, status)
+      INSERT INTO stamp_cards (id, user_id, business_id, stamps_needed, stamps_acquired, status)
       VALUES
-        ($1, $2, $3, $4, 10, 0, 'active'),
-        ($5, $2, $6, $7, 8, 5, 'active')
-    `, [TEST_IDS.stampCard1, TEST_IDS.user1, TEST_IDS.business1, TEST_IDS.location1,
-      TEST_IDS.stampCard2, TEST_IDS.business2, TEST_IDS.location2]);
+        ($1, $2, $3, 10, 0, 'active'),
+        ($4, $2, $5, 8, 5, 'active')
+    `, [TEST_IDS.stampCard1, TEST_IDS.user1, TEST_IDS.business1,
+        TEST_IDS.stampCard2, TEST_IDS.business2]);
 
 
-    // --- STAMP EVENTS ---
+    // --- STAMP CARD EVENTS ---
     await client.query(`
-      INSERT INTO stamp_events (id, stamp_card_id, user_id, location_id, request_id, type, quantity)
+      INSERT INTO stamp_card_events (id, stamp_card_id, user_id, location_id, request_id, type, quantity)
       VALUES
         ($1, $3, $5, $6, $8, 'stamp_added', 1),
         ($2, $4, $5, $7, $9, 'stamp_added', 2)
     `,
       [
-        TEST_IDS.stampEvent1, TEST_IDS.stampEvent2,
+        TEST_IDS.stampCardEvent1, TEST_IDS.stampCardEvent2,
         TEST_IDS.stampCard1, TEST_IDS.stampCard2,
         TEST_IDS.user1,
         TEST_IDS.location1, TEST_IDS.location2,
-        crypto.randomUUID(), crypto.randomUUID(), // fresh request_ids for seed rows
+        crypto.randomUUID(), crypto.randomUUID(), 
       ]
     );
 
     // --- GIFT CARDS ---
     await client.query(`
-      INSERT INTO gift_cards (id, user_id, business_id, location_id, current_balance, initial_balance, currency)
+      INSERT INTO gift_cards (id, user_id, business_id, current_balance, initial_balance, currency, status)
       VALUES
-        ($1, $2, $3, $4, 5000, 5000, 'CAD'),
-        ($5, $2, $6, $7, 2500, 2500, 'CAD')
-    `, [TEST_IDS.giftCard1, TEST_IDS.user1, TEST_IDS.business1, TEST_IDS.location1,
-      TEST_IDS.giftCard2, TEST_IDS.business2, TEST_IDS.location2]);
+        ($1, $2, $3, 50.00, 50.00, 'CAD', 'active'),
+        ($4, $2, $5, 25.00, 25.00, 'CAD', 'active')
+    `, [TEST_IDS.giftCard1, TEST_IDS.user1, TEST_IDS.business1,
+        TEST_IDS.giftCard2, TEST_IDS.business2]);
+
+    // --- GIFT CARD EVENTS ---
+    await client.query(`
+      INSERT INTO gift_card_events (id, gift_card_id, user_id, location_id, request_id, type, amount)
+      VALUES
+        ($1, $3, $5, $6, $8, 'balance_added', 50.00),
+        ($2, $4, $5, $7, $9, 'balance_added', 25.00)
+    `,
+      [
+        TEST_IDS.giftCardEvent1, TEST_IDS.giftCardEvent2,
+        TEST_IDS.giftCard1, TEST_IDS.giftCard2,
+        TEST_IDS.user1,
+        TEST_IDS.location1, TEST_IDS.location2,
+        crypto.randomUUID(), crypto.randomUUID(),
+      ]
+    );
 
     // --- NOTIFICATIONS ---
     await client.query(`
@@ -117,8 +135,9 @@ export async function clearAll() {
   try {
     await client.query("BEGIN");
     await client.query("DELETE FROM notifications");
+    await client.query("DELETE FROM gift_card_events");
     await client.query("DELETE FROM gift_cards");
-    await client.query("DELETE FROM stamp_events");
+    await client.query("DELETE FROM stamp_card_events");
     await client.query("DELETE FROM stamp_cards");
     await client.query("DELETE FROM user_notification_preferences");
     await client.query("DELETE FROM users");

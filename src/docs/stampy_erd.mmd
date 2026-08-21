@@ -2,7 +2,7 @@ erDiagram
   users ||--o| user_notification_preferences : "has"
   users ||--o{ stamp_cards : "owns"
   users ||--o{ gift_cards : "owns"
-  users ||--o{ stamp_events : "logs"
+  users ||--o{ stamp_card_events : "logs"
   users ||--o{ notifications : "receives"
   businesses ||--o{ locations : "has"
   businesses ||--o{ stamp_cards : "linked to"
@@ -10,7 +10,7 @@ erDiagram
   locations ||--o{ stamp_cards : "optional"
   locations ||--o{ gift_cards : "optional"
   locations ||--o{ notifications : "triggered by"
-  stamp_cards ||--o{ stamp_events : "logged in"
+  stamp_cards ||--o{ stamp_card_events : "logged in"
   stamp_cards ||--o{ notifications : "triggers"
   gift_cards ||--o{ notifications : "triggers"
 
@@ -68,11 +68,11 @@ erDiagram
     time notify_window_start_time
     time notify_window_end_time
     timestamp notification_time_sent
-    int notification_cooldown_time
+    int notification_cooldown_seconds
     timestamp expiration_date
     boolean deleted
   }
-  stamp_events {
+  stamp_card_events {
     uuid id PK
     uuid stamp_card_id FK
     uuid user_id FK
@@ -92,7 +92,7 @@ erDiagram
     time notify_window_start_time
     time notify_window_end_time
     timestamp notification_time_sent
-    int notification_cooldown_time
+    int notification_cooldown_seconds
     timestamp expiration_date
     boolean deleted
   }

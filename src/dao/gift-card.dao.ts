@@ -8,9 +8,9 @@ const giftCardTableName = "gift_cards"
 export type GiftCardDAO = {
   createGiftCard(fields: CreateGiftCardInput, executor: Executor): Promise<GiftCard>;
   getAllGiftCards(includeDeleted?: boolean): Promise<GiftCard[]>;
-  getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard | null>;
+  getGiftCardByID(id: string, includeDeleted?: boolean, executor?: Executor): Promise<GiftCard | null>;
   getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
-  updateGiftCardByID(id: string, updates: UpdateGiftCardInput): Promise<GiftCard | null>;
+  updateGiftCardByID(id: string, updates: UpdateGiftCardInput, executor?: Executor): Promise<GiftCard | null>;
   deleteGiftCardByID(id: string): Promise<void>
 }
 
@@ -27,13 +27,14 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         initial_balance,
         current_balance,
         currency,
+        status,
         notify_window_days,
         notify_window_start_time,
         notify_window_end_time,
         notification_time_sent,
-        notification_cooldown_time,
+        notification_cooldown_seconds,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING
         ${giftCardColumns}`
 
@@ -45,11 +46,12 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         fields.initial_balance,
         fields.current_balance, 
         fields.currency,
+        fields.status,
         fields.notify_window_days,
         fields.notify_window_start_time,
         fields.notify_window_end_time,
         fields.notification_time_sent,
-        fields.notification_cooldown_time,
+        fields.notification_cooldown_seconds,
         fields.expiration_date,
 
       ]
@@ -72,7 +74,8 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
 
       return rows.map(row => mapDbRowToGiftCard(row));
     },
-    async getGiftCardByID(id: string, includeDeleted: boolean = false): Promise<GiftCard | null> {
+    
+    async getGiftCardByID(id: string, includeDeleted: boolean = false, executor: Executor = pool): Promise<GiftCard | null> {
       const sqlString = `
         SELECT ${giftCardColumns}
         FROM ${giftCardTableName}
@@ -80,7 +83,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         ${includeDeleted ? '' : 'AND deleted = false'}
       `;
 
-      const result = await pool.query(sqlString, [id])
+      const result = await executor.query(sqlString, [id])
       const row = result.rows[0]
       if (!row) return null;
 
@@ -100,7 +103,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
           return result.rows.map(row => mapDbRowToGiftCard(row))
         },
 
-    async updateGiftCardByID(id: string, updates: UpdateGiftCardInput) {
+    async updateGiftCardByID(id: string, updates: UpdateGiftCardInput, executor: Executor = pool) {
       const setArgs: string[] = [];
       const values: (string | number | boolean | Date | NotificationWindowDays| null)[] = [];
 
@@ -128,7 +131,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
     `;
       values.push(id);
 
-      const result = await pool.query(sqlString, values);
+      const result = await executor.query(sqlString, values);
       const row = result.rows[0];
       if (!row) return null;
 
@@ -157,11 +160,12 @@ const giftCardColumns = `
   initial_balance,
   current_balance,
   currency,
+  status,
   notify_window_days,
   notify_window_start_time,
   notify_window_end_time,
   notification_time_sent,
-  notification_cooldown_time,
+  notification_cooldown_seconds,
   expiration_date,
   deleted,
   deleted_at,
@@ -179,11 +183,12 @@ function mapDbRowToGiftCard(row: GiftCard): GiftCard {
     initial_balance: Number(row.initial_balance),
     current_balance: Number(row.current_balance),
     currency: row.currency,
+    status: row.status,
     notify_window_days: row.notify_window_days ?? null,
     notify_window_start_time: row.notify_window_start_time,
     notify_window_end_time: row.notify_window_end_time,
     notification_time_sent: row.notification_time_sent ?? null,
-    notification_cooldown_time: row.notification_cooldown_time ?? null,
+    notification_cooldown_seconds: row.notification_cooldown_seconds ?? null,
     expiration_date: row.expiration_date ? new Date(row.expiration_date) : null,
     deleted: !!row.deleted,
     deleted_at: row.deleted_at ? new Date(row.deleted_at) : null,

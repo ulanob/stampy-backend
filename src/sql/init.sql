@@ -1,7 +1,7 @@
 -- DROP TABLES
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS gift_cards;
-DROP TABLE IF EXISTS stamp_events;
+DROP TABLE IF EXISTS stamp_card_events;
 DROP TABLE IF EXISTS stamp_cards;
 DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS businesses;
@@ -68,7 +68,6 @@ CREATE TABLE stamp_cards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-    location_id UUID NULL REFERENCES locations(id) ON DELETE SET NULL,
     nickname TEXT NULL,
     notes TEXT NULL,
     stamps_needed INT NOT NULL DEFAULT 0,
@@ -78,7 +77,7 @@ CREATE TABLE stamp_cards (
     notify_window_start_time TIME NULL,
     notify_window_end_time TIME NULL,
     notification_time_sent TIMESTAMP WITH TIME ZONE NULL,
-    notification_cooldown_time INT NULL,
+    notification_cooldown_seconds INT NULL,
     expiration_date TIMESTAMP WITH TIME ZONE NULL,
     deleted BOOLEAN NOT NULL DEFAULT false,
     deleted_at TIMESTAMP WITH TIME ZONE NULL,
@@ -86,8 +85,8 @@ CREATE TABLE stamp_cards (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
--- STAMP EVENTS (append-only log of stamp activity)
-CREATE TABLE stamp_events (
+-- STAMP CARD EVENTS (append-only log of stamp activity)
+CREATE TABLE stamp_card_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     stamp_card_id UUID NOT NULL REFERENCES stamp_cards(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -98,30 +97,44 @@ CREATE TABLE stamp_events (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX stamp_events_request_id_idx ON stamp_events (request_id);
+CREATE UNIQUE INDEX stamp_card_events_request_id_idx ON stamp_card_events (request_id);
 
 -- GIFT CARDS (user can have many)
 CREATE TABLE gift_cards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-    location_id UUID NULL REFERENCES locations(id) ON DELETE SET NULL,
     nickname TEXT NULL,
     notes TEXT NULL,
-    initial_balance NUMERIC NOT NULL,
-    current_balance NUMERIC NOT NULL,
+    initial_balance NUMERIC(10,2) NOT NULL,
+    current_balance NUMERIC(10,2) NOT NULL,
     currency TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('active', 'cancelled', 'expired')),
     notify_window_days TEXT[] NULL,
     notify_window_start_time TIME NULL,
     notify_window_end_time TIME NULL,
     notification_time_sent TIMESTAMP WITH TIME ZONE NULL,
-    notification_cooldown_time INT NULL,
+    notification_cooldown_seconds INT NULL,
     expiration_date TIMESTAMP WITH TIME ZONE NULL,
     deleted BOOLEAN NOT NULL DEFAULT false,
     deleted_at TIMESTAMP WITH TIME ZONE NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
+
+-- GIFT CARD EVENTS
+CREATE TABLE gift_card_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    gift_card_id UUID NOT NULL REFERENCES gift_cards(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    location_id UUID NULL REFERENCES locations(id) ON DELETE CASCADE,
+    request_id UUID NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('balance_added', 'balance_redeemed', 'card_expired', 'card_deleted')),
+    amount NUMERIC(10,2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX gift_card_events_request_id_idx ON gift_card_events (request_id);
 
 -- NOTIFICATIONS (tied to a user and optionally a card and location)
 CREATE TABLE notifications (

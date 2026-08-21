@@ -57,7 +57,7 @@ src/
 ├── composition.ts
 ├── dao/
 │   ├── stampCardDAO.ts
-│   ├── stampEventDAO.ts
+│   ├── stampCardEventDAO.ts
 │   ├── businessDAO.ts
 │   ├── locationDAO.ts
 │   ├── giftCardDAO.ts

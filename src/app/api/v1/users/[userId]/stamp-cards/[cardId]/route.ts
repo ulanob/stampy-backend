@@ -10,9 +10,9 @@ export async function GET(
     const { cardId } = await params;
     validateUUID(cardId.trim());
 
-    const stampEvents = await stampCardDAO.getStampCardByID(cardId);
+    const stampCardEvents = await stampCardDAO.getStampCardByID(cardId);
 
-    return NextResponse.json(stampEvents, { status: 200 });
+    return NextResponse.json(stampCardEvents, { status: 200 });
 
   } catch (error) {
     return handleRouteError(error, "GET /api/v1/users/[userId]/stamp-cards/[cardId]")
