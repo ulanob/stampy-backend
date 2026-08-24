@@ -181,7 +181,7 @@ const stampsAcquiredExpr = `
       WHEN 'stamp_removed' THEN -e.quantity
       ELSE 0
     END
-  ), 0) AS stamps_acquired
+  ), 0)::int AS stamps_acquired
 `;
 
 

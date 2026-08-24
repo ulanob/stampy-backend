@@ -23,7 +23,7 @@ export function createStampCardEventService(
     async createStampCardEvent(fields, executor?: Executor): Promise<StampCardEvent> {
       validateUUID(fields.stamp_card_id)
       requireFields(fields, ['user_id', 'stamp_card_id', 'request_id', 'type', 'quantity']);
-      
+
       const run = async (client: Executor): Promise<StampCardEvent> => {
         // idempotency check
         if (fields.request_id) {
@@ -41,6 +41,8 @@ export function createStampCardEventService(
 
         let newStatus = card.status;
 
+        let eventQuantity = fields.quantity;
+
         switch (fields.type) {
           case 'stamp_added': {
             if (NO_ADD_STATUSES.includes(card.status)) {
@@ -53,6 +55,7 @@ export function createStampCardEventService(
 
             const newAcquired = card.stamps_acquired + fillAmount;
             if (newAcquired >= card.stamps_needed) newStatus = 'completed';
+            eventQuantity = fillAmount;
 
             if (overflowAmount > 0) {
               const newCard = await stampCardDAO.createStampCard(
@@ -120,7 +123,10 @@ export function createStampCardEventService(
           }
         }
 
-        const event = await stampCardEventDAO.createStampCardEvent(fields, client);
+        const event = await stampCardEventDAO.createStampCardEvent(
+          { ...fields, quantity: eventQuantity },
+          client
+        );
 
         await stampCardDAO.updateStampCardByID(
           card.id,

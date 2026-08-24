@@ -1,4 +1,4 @@
-import { stampCardDAO, stampCardService } from "@/src/composition";
+import { stampCardService } from "@/src/composition";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
