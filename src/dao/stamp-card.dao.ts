@@ -31,7 +31,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         notify_window_start_time,
         notify_window_end_time,
         notification_time_sent,
-        notification_cooldown_time,
+        notification_cooldown_seconds,
         expiration_date)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
@@ -49,7 +49,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         fields.notify_window_start_time,
         fields.notify_window_end_time,
         fields.notification_time_sent,
-        fields.notification_cooldown_time,
+        fields.notification_cooldown_seconds,
         fields.expiration_date
       ]
 
@@ -161,7 +161,7 @@ const stampCardColumns = `
   notify_window_start_time,
   notify_window_end_time,
   notification_time_sent,
-  notification_cooldown_time,
+  notification_cooldown_seconds,
   expiration_date,
   deleted,
   deleted_at,
@@ -183,7 +183,7 @@ function mapDbRowToStampCard(row: StampCard): StampCard {
     notify_window_start_time: row.notify_window_start_time,
     notify_window_end_time: row.notify_window_end_time,
     notification_time_sent: row.notification_time_sent ?? null,
-    notification_cooldown_time: row.notification_cooldown_time ?? null,
+    notification_cooldown_seconds: row.notification_cooldown_seconds ?? null,
     expiration_date: row.expiration_date ? new Date(row.expiration_date) : null,
     deleted: !!row.deleted,
     deleted_at: row.deleted_at ? new Date(row.deleted_at) : null,

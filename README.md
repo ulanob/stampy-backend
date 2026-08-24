@@ -15,12 +15,16 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 > 🚧 Active development - learning project
 
 - [x] Database schema design
-- [x] CRUD API (users, vendors, cards)
-- [ ] Business logic layer (balance tracking, stamp progression)
-- [ ] Location-based notifications
+- [x] CRUD API (users, businesses, locations, stamp cards, gift cards)
+- [x] Event-sourced business logic layer (stamp progression via `stamp_card_events`, gift card balance via `gift_card_events`)
+- [x] Idempotent, transactional event processing (request-id based replay safety)
+- [x] Derive gift card `current_balance` from the event log (SUM-based, no cached column)
+- [ ] Derive stamp card `stamps_acquired` from the event log (same pattern, pending `reward_redeemed` semantics decision)
+- [ ] Location-based notification eligibility pipeline (in progress — checks scaffolded, pipeline wiring pending)
+- [ ] Location-based notifications (geofence check-in → eligibility → send)
 - [ ] Authentication
 - [ ] React web app
-- [ ] React Native mobile app (iOS + Android)
+- [ ] React Native (Expo) mobile app (iOS + Android)
 - [ ] Docker + AWS deployment
 
 ---
@@ -28,48 +32,143 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 ## Tech Stack
 
 ### Backend
-- **Next.js** (App Router) - REST API with file-based routing (`src/api/v1/...`)
-- **PostgreSQL** - Raw SQL, no ORM. Deliberate choice to build foundational understanding before abstracting it away
+- **Next.js** (App Router) - REST API with file-based routing (`src/app/api/v1/...`)
+- **PostgreSQL** - Raw SQL via `pg`, no ORM. Deliberate choice to build foundational understanding before abstracting it away
 - **TypeScript** throughout
+- **Docker Compose** - separate local dev and test database containers
+- **Vitest** - unit tests; **Supertest** - integration tests against a running dev server
 
 ### Infrastructure (planned)
 - **Amazon RDS** - Managed PostgreSQL hosting
-- **AWS** - Deployment, storage, and notification services
+- **Amazon Cognito** - Authentication
+- **EventBridge + Lambda + SNS** - Scheduled push notifications to APNs/FCM
 - **Docker** - Containerisation for local dev and deployment consistency
 
 ### Frontend (planned)
-- **React** - Browser-based web app
-- **React Native** - iOS and Android mobile app
+- **React** - browser-based web app
+- **React Native (Expo)** - iOS and Android mobile app, from a single codebase
+
+Both deferred until the backend is complete.
 
 ---
 
 ## Architecture
 
-The API follows a layered architecture with specific services, data access objects (DAOs), and utility classes:
+Layered architecture: thin route handlers → services (validation + business logic) → DAOs (raw SQL) → PostgreSQL.
 
 ```
 src/
-├── api/
-│   └── v1/
-│       ├── users/
-│       ├── vendors/
-│       ├── cards/
-├── composition.ts
+├── app/
+│   └── api/
+│       └── v1/
+│           ├── businesses/
+│           │   ├── [id]/route.ts
+│           │   └── route.ts
+│           ├── gift-cards/
+│           │   ├── [id]/
+│           │   │   ├── route.ts
+│           │   │   └── gift-card-events/route.ts
+│           │   └── route.ts
+│           ├── locations/
+│           │   ├── [id]/route.ts
+│           │   └── route.ts
+│           ├── notifications/
+│           │   ├── [id]/route.ts
+│           │   └── route.ts
+│           ├── stamp-cards/
+│           │   ├── [id]/
+│           │   │   ├── route.ts
+│           │   │   └── stamp-card-events/route.ts
+│           │   └── route.ts
+│           └── users/
+│               ├── [userId]/
+│               │   ├── gift-cards/route.ts
+│               │   ├── notifications/route.ts
+│               │   ├── preferences/route.ts
+│               │   ├── stamp-cards/
+│               │   │   ├── [cardId]/route.ts
+│               │   │   └── route.ts
+│               │   └── stamp-events/route.ts
+│               └── route.ts
+├── composition.ts          # wires DAOs → services, exported as singletons
 ├── dao/
-│   ├── stampCardDAO.ts
-│   ├── stampEventDAO.ts
-│   ├── businessDAO.ts
-│   ├── locationDAO.ts
-│   ├── giftCardDAO.ts
-│   ├── userDAO.ts
-│   └── notificationDAO.ts
+│   ├── business.dao.ts
+│   ├── gift-card-event.dao.ts
+│   ├── gift-card.dao.ts
+│   ├── location.dao.ts
+│   ├── notification.dao.ts
+│   ├── stamp-card-event.dao.ts
+│   ├── stamp-card.dao.ts
+│   ├── user-notification-preferences.dao.ts
+│   ├── user.dao.ts
+│   ├── types.ts             # shared Executor type (Pool | PoolClient)
+│   └── index.ts             # barrel export
 ├── services/
-│   ├── userService.ts
-│   ├── notificationService.ts
-│   └── preferencesService.ts
-└── utils/
-    └── validators.ts
+│   ├── business.service.ts
+│   ├── giftCard.service.ts
+│   ├── giftCardEvent.service.ts
+│   ├── helpers.service.ts   # requireFields, assertExists, validateCoordinates, validateRadius
+│   ├── location.service.ts
+│   ├── notification.service.ts
+│   ├── stampCard.service.ts
+│   ├── stampCardEvent.service.ts
+│   ├── user.service.ts
+│   ├── userNotificationPreferences.service.ts
+│   └── notification-eligibility/     # Chain of Responsibility pipeline (in progress)
+│       ├── checks/
+│       ├── utils/
+│       ├── pipeline.ts
+│       └── index.ts
+├── models/
+│   ├── business.model.ts
+│   ├── gift-card-event.model.ts
+│   ├── gift-card.model.ts
+│   ├── location.model.ts
+│   ├── notification.model.ts
+│   ├── shared.types.ts
+│   ├── stamp-card-event.model.ts
+│   ├── stamp-card.model.ts
+│   ├── user-notification-preferences.model.ts
+│   ├── user.model.ts
+│   └── index.model.ts       # barrel export
+├── lib/
+│   └── db.ts                 # Pool + NUMERIC type parser + withTransaction helper
+├── sql/
+│   └── init.sql
+├── scripts/
+│   ├── seed.ts               # random-UUID dev seed
+│   └── testSeed.ts           # fixed-UUID test seed (TEST_IDS)
+├── docs/
+│   └── stampy_erd.mmd
+├── utils/
+│   └── validators.ts          # error classes, validateUUID, handleRouteError
+└── __tests__/
+    ├── integration/           # Supertest, real DB, one file per resource + events
+    ├── unit/                  # Vitest, mocked DAOs, one file per service
+    └── smoke.test.ts
 ```
+
+> Note: file naming is mixed between kebab-case (DAOs and models, e.g. `stamp-card.dao.ts`) and camelCase (services, e.g. `stampCardEvent.service.ts`). Worth standardizing in a future cleanup pass — not urgent, but easy to lose track of which convention applies where.
+
+---
+
+## Design Decisions
+
+A few decisions worth explaining, since they shape a lot of the codebase:
+
+**Event sourcing for card state.** Stamp counts and gift card balances aren't stored as mutable columns — every change (`stamp_added`, `balance_redeemed`, `card_expired`, etc.) is written as an immutable row in `stamp_card_events` / `gift_card_events`, and the card's current value is derived by summing its event log on every read (`COALESCE(SUM(...), 0)` over a `LEFT JOIN`), rather than cached and incrementally updated. Combined with a `request_id` idempotency key on every event, this makes retried requests safe — a dropped connection and a client retry won't double-charge a stamp or double-deduct a balance — and removes cache-drift risk entirely, since there's no stored value that could ever disagree with the log.
+
+> Gift cards (`current_balance`) are fully derived as of this pass. Stamp cards (`stamps_acquired`) are still on the older incremental-cache model and are next in line for the same treatment.
+
+**Notification eligibility as Chain of Responsibility.** Rather than one large conditional, notification eligibility is a sequence of independent, individually testable checks (`NotificationsEnabledCheck`, `QuietHoursCheck`, `DailyCapCheck`, `CardWindowCheck`, `CooldownCheck`, `ExpirationCheck`), each implementing a shared `EligibilityCheck` interface. A card is only notified if it passes every check in order.
+
+**Cooldown stored in seconds.** `notification_cooldown_seconds` (not minutes) keeps the unit unambiguous and avoids a conversion step in the eligibility check math, even though the UI will likely present it in coarser units.
+
+**Timezone handling.** `users.timezone` (IANA string, e.g. `America/Vancouver`) is set client-side at signup via `Intl.DateTimeFormat().resolvedOptions().timeZone` — no location permission required. It's lazily corrected at geofence check-in using `geo-tz` to resolve lat/lng drift.
+
+**Server-controlled status.** Card `status` (`active`/`completed`/`redeemed`/`expired`/`cancelled` for stamp cards; `active`/`expired`/`cancelled` for gift cards) is never client-settable via the generic `PATCH` route — it only changes as a side effect of processing an event. This keeps the event log the single source of truth for *why* a card reached a given state.
+
+**Raw SQL, no ORM.** Deliberately skipping an ORM for now. Writing raw SQL builds real understanding of the database layer — joins, transactions, constraints — before reaching for an abstraction.
 
 ---
 
@@ -78,16 +177,11 @@ src/
 This project is intentionally a learning vehicle:
 
 - **REST API design** - versioning, resource naming, consistent response patterns
-- **Clean code practices** - separation of concerns, meaningful naming, small focused functions
-- **Testing** - building the habit of writing tests alongside features
+- **Clean code & design patterns** - separation of concerns, SOLID principles, Chain of Responsibility (notification eligibility), meaningful naming, small focused functions
+- **Event-driven data modeling** - append-only logs, idempotency, transactional consistency
+- **Testing** - unit tests (mocked DAOs) alongside integration tests (real DB, real HTTP)
 - **Docker** - containerising the app for reproducible environments
 - **AWS** - hands-on experience toward the AWS Cloud Architect Associate certification
-
----
-
-## Why Raw SQL?
-
-Deliberately skipping an ORM for now. Writing raw SQL builds a real understanding of what's happening at the database layer - joins, transactions, constraints - before reaching for an abstraction. An ORM will come later once the fundamentals are solid.
 
 ---
 
@@ -99,10 +193,12 @@ Deliberately skipping an ORM for now. Writing raw SQL builds a real understandin
 
 ## Roadmap
 
-- Business logic layer - stamp progression, gift card balance tracking
-- Authentication - evaluating options including Amazon Cognito
-- Location-based vendor proximity notifications
-- React web frontend
-- React Native mobile app
-- Docker Compose setup for local dev
-- AWS deployment pipeline
+- [ ] `users.timezone` column + client-side timezone capture at signup
+- [ ] Derive stamp card `stamps_acquired` from the event log (pending `reward_redeemed` semantics decision — does redemption reset the counter, or is it a non-quantity-affecting marker event like `card_expired`/`card_deleted`?)
+- [ ] Complete notification eligibility pipeline (remaining checks + tests)
+- [ ] Wire `notificationService` to the eligibility pipeline; synchronous geofence check-in evaluation
+- [ ] Shared transaction/idempotency helper (deferred — revisit if a third event-creation flow emerges)
+- [ ] Authentication - evaluating Amazon Cognito
+- [ ] React Native (Expo) mobile app
+- [ ] Docker Compose refinements for local dev
+- [ ] AWS deployment pipeline (RDS, EventBridge, Lambda, SNS)

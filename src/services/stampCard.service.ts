@@ -55,7 +55,18 @@ export function createStampCardService(
     async updateStampCardByID(id: string, updates: UpdateStampCardInput): Promise<StampCard> {
       validateUUID(id);
 
-      const updatedStampCard = await stampCardDAO.updateStampCardByID(id, updates);
+      const safeUpdates: UpdateStampCardInput = {
+        nickname: updates.nickname,
+        notes: updates.notes,
+        notify_window_days: updates.notify_window_days,
+        notify_window_start_time: updates.notify_window_start_time,
+        notify_window_end_time: updates.notify_window_end_time,
+        notification_time_sent: updates.notification_time_sent,
+        notification_cooldown_seconds: updates.notification_cooldown_seconds,
+        expiration_date: updates.expiration_date,
+      };
+
+      const updatedStampCard = await stampCardDAO.updateStampCardByID(id, safeUpdates);
 
       if (!updatedStampCard) {
         throw new NotFoundError('Could not update StampCard');

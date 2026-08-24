@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createStampEventService } from "../../services/stampEvent.service";
-import type { StampCardDAO, StampEventDAO } from "../../dao";
+import { createStampCardEventService } from "../../services/stampCardEvent.service";
+import type { StampCardDAO, StampCardEventDAO } from "../../dao";
 import type { Pool, PoolClient } from "pg";
 import { ValidationError, NotFoundError } from "../../utils/validators";
 
-describe("stampEventService.createStampEvent", () => {
+describe("stampCardEventService.createStampCardEvent", () => {
   let mockClient: Partial<PoolClient>;
   let mockPool: Partial<Pool>;
   let stampCardDAO: StampCardDAO;
-  let stampEventDAO: StampEventDAO;
+  let stampCardEventDAO: StampCardEventDAO;
 
   const baseCard = {
     id: "a1b2c3d4-0000-0000-0000-000000000006",
@@ -30,13 +30,13 @@ describe("stampEventService.createStampEvent", () => {
     mockClient = { query: vi.fn().mockResolvedValue({ rows: [] }), release: vi.fn() };
     mockPool = { connect: vi.fn().mockResolvedValue(mockClient) };
 
-    stampEventDAO = {
-      createStampEvent: vi.fn().mockResolvedValue({ id: "event-1", type: "stamp_added" }),
-      getStampEventByRequestID: vi.fn().mockResolvedValue(null),
-      getStampEventsByStampCardID: vi.fn(),
-      getAllStampEventsByUserID: vi.fn(),
-      getAllStampEvents: vi.fn(),
-    } as unknown as StampEventDAO;
+    stampCardEventDAO = {
+      createStampCardEvent: vi.fn().mockResolvedValue({ id: "event-1", type: "stamp_added" }),
+      getStampCardEventByRequestID: vi.fn().mockResolvedValue(null),
+      getStampCardEventsByStampCardID: vi.fn(),
+      getAllStampCardEventsByUserID: vi.fn(),
+      getAllStampCardEvents: vi.fn(),
+    } as unknown as StampCardEventDAO;
 
     stampCardDAO = {
       getStampCardByID: vi.fn().mockResolvedValue(baseCard),
@@ -49,14 +49,14 @@ describe("stampEventService.createStampEvent", () => {
   });
 
   function service() {
-    return createStampEventService(stampEventDAO, stampCardDAO, mockPool as Pool);
+    return createStampCardEventService(stampCardEventDAO, stampCardDAO, mockPool as Pool);
   }
 
   it("returns the existing event when request_id was already processed", async () => {
     const existing = { id: "existing-event" };
-    (stampEventDAO.getStampEventByRequestID as any).mockResolvedValue(existing);
+    (stampCardEventDAO.getStampCardEventByRequestID as any).mockResolvedValue(existing);
 
-    const result = await service().createStampEvent({
+    const result = await service().createStampCardEvent({
       ...baseFields, request_id: "req-1", type: "stamp_added", quantity: 1,
     });
 
@@ -67,7 +67,7 @@ describe("stampEventService.createStampEvent", () => {
   it("throws NotFoundError when the card doesn't exist", async () => {
     (stampCardDAO.getStampCardByID as any).mockResolvedValue(null);
 
-    await expect(service().createStampEvent({
+    await expect(service().createStampCardEvent({
       ...baseFields, request_id: "req-2", type: "stamp_added", quantity: 1,
     })).rejects.toThrow(NotFoundError);
   });
@@ -76,7 +76,7 @@ describe("stampEventService.createStampEvent", () => {
     it("rejects on completed/redeemed/expired/cancelled cards", async () => {
       for (const status of ["completed", "redeemed", "expired", "cancelled"] as const) {
         (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status });
-        await expect(service().createStampEvent({
+        await expect(service().createStampCardEvent({
           ...baseFields, request_id: `req-${status}`, type: "stamp_added", quantity: 1,
         })).rejects.toThrow(ValidationError);
       }
@@ -85,7 +85,7 @@ describe("stampEventService.createStampEvent", () => {
     it("marks the card completed when it reaches stamps_needed exactly", async () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, stamps_acquired: 9 });
 
-      await service().createStampEvent({
+      await service().createStampCardEvent({
         ...baseFields, request_id: "req-3", type: "stamp_added", quantity: 1,
       });
 
@@ -100,7 +100,7 @@ describe("stampEventService.createStampEvent", () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, stamps_acquired: 9 });
       (stampCardDAO.createStampCard as any).mockResolvedValue({ id: "overflow-card" });
 
-      await service().createStampEvent({
+      await service().createStampCardEvent({
         ...baseFields, request_id: "req-4", type: "stamp_added", quantity: 4,
       });
 
@@ -108,18 +108,18 @@ describe("stampEventService.createStampEvent", () => {
         expect.objectContaining({ stamps_acquired: 3, status: "active" }),
         mockClient
       );
-      expect(stampEventDAO.createStampEvent).toHaveBeenCalledTimes(2);
+      expect(stampCardEventDAO.createStampCardEvent).toHaveBeenCalledTimes(2);
     });
 
     it("does not create an overflow card when quantity exactly fills the card", async () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, stamps_acquired: 9 });
 
-      await service().createStampEvent({
+      await service().createStampCardEvent({
         ...baseFields, request_id: "req-5", type: "stamp_added", quantity: 1,
       });
 
       expect(stampCardDAO.createStampCard).not.toHaveBeenCalled();
-      expect(stampEventDAO.createStampEvent).toHaveBeenCalledTimes(1);
+      expect(stampCardEventDAO.createStampCardEvent).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -127,7 +127,7 @@ describe("stampEventService.createStampEvent", () => {
     it("rejects on redeemed/expired/cancelled cards", async () => {
       for (const status of ["redeemed", "expired", "cancelled"] as const) {
         (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status });
-        await expect(service().createStampEvent({
+        await expect(service().createStampCardEvent({
           ...baseFields, request_id: `req-rm-${status}`, type: "stamp_removed", quantity: 1,
         })).rejects.toThrow(ValidationError);
       }
@@ -136,7 +136,7 @@ describe("stampEventService.createStampEvent", () => {
     it("allows removal on a completed card (correction)", async () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status: "completed", stamps_acquired: 10 });
 
-      await service().createStampEvent({
+      await service().createStampCardEvent({
         ...baseFields, request_id: "req-6", type: "stamp_removed", quantity: 2,
       });
 
@@ -150,14 +150,14 @@ describe("stampEventService.createStampEvent", () => {
     it("rejects removal that would go below 0", async () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, stamps_acquired: 2 });
 
-      await expect(service().createStampEvent({
+      await expect(service().createStampCardEvent({
         ...baseFields, request_id: "req-7", type: "stamp_removed", quantity: 5,
       })).rejects.toThrow(ValidationError);
     });
   });
 
   it("reward_redeemed resets stamps_acquired to 0 and sets status redeemed", async () => {
-    await service().createStampEvent({
+    await service().createStampCardEvent({
       ...baseFields, request_id: "req-8", type: "reward_redeemed", quantity: 0,
     });
 
@@ -169,7 +169,7 @@ describe("stampEventService.createStampEvent", () => {
   });
 
   it("card_expired sets status expired without changing stamps_acquired", async () => {
-    await service().createStampEvent({
+    await service().createStampCardEvent({
       ...baseFields, request_id: "req-9", type: "card_expired", quantity: 0,
     });
 
@@ -181,7 +181,7 @@ describe("stampEventService.createStampEvent", () => {
   });
 
   it("card_deleted sets status cancelled", async () => {
-    await service().createStampEvent({
+    await service().createStampCardEvent({
       ...baseFields, request_id: "req-10", type: "card_deleted", quantity: 0,
     });
 

@@ -13,7 +13,7 @@ export interface StampCard {
   notify_window_start_time: string | null; // TIME
   notify_window_end_time: string | null;   // TIME
   notification_time_sent: Date | null;
-  notification_cooldown_time: number | null;
+  notification_cooldown_seconds: number | null;
   expiration_date: Date | null;
   deleted: boolean;
   deleted_at: Date | null;
@@ -34,8 +34,7 @@ export type CreateStampCardInput = Omit<StampCard,
 >
 
 type StampCardUpdateableFields = Pick<StampCard,
-  "business_id"
-  | "nickname"
+  "nickname"
   | "notes"
   | "stamps_needed"
   | "stamps_acquired"
@@ -44,7 +43,7 @@ type StampCardUpdateableFields = Pick<StampCard,
   | "notify_window_start_time"
   | "notify_window_end_time"
   | "notification_time_sent"
-  | "notification_cooldown_time"
+  | "notification_cooldown_seconds"
   | "expiration_date"
 >
 

@@ -3,6 +3,7 @@ export interface User {
   display_name: string | null;
   email: string;
   auth_provider_id: string | null;
+  timezone: string;
   created_at: Date;
   updated_at: Date;
   deleted: boolean;
@@ -20,6 +21,7 @@ export type CreateUserInput = Omit<User,
 
 type UserUpdateableFields = Pick<User,
   "display_name"
+  | "timezone"
 >
 
 export type UpdateUserInput = Partial<UserUpdateableFields>;

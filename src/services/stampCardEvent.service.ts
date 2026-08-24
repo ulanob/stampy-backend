@@ -1,31 +1,33 @@
-import { StampCardDAO, StampEventDAO } from "../dao";
+import { StampCardDAO, StampCardEventDAO } from "../dao";
 import { Pool } from "pg";
-import { Executor } from "../dao/types";
 import { withTransaction } from "../lib/db";
 import { StampCardStatus } from "../models/stamp-card.model";
-import { CreateStampEventInput, StampEvent } from "../models/stamp-event.model";
+import { CreateStampCardEventInput, StampCardEvent } from "../models/stamp-card-event.model";
 import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
+import { requireFields } from "./helpers.service";
 
-export type StampEventService = {
-  createStampEvent(fields: CreateStampEventInput): Promise<StampEvent>;
-  getStampEventsByStampCardID(stamp_card_id: string): Promise<StampEvent[]>
-  getStampEventByRequestID(request_id: string): Promise<StampEvent | null>;
-  getAllStampEventsByUserID(user_id: string): Promise<StampEvent[]>
+export type StampCardEventService = {
+  createStampCardEvent(fields: CreateStampCardEventInput): Promise<StampCardEvent>;
+  getStampCardEventsByStampCardID(stamp_card_id: string): Promise<StampCardEvent[]>
+  getStampCardEventByRequestID(request_id: string): Promise<StampCardEvent | null>;
+  getAllStampCardEventsByUserID(user_id: string): Promise<StampCardEvent[]>
 };
 
-export function createStampEventService(
-  stampEventDAO: StampEventDAO,
+export function createStampCardEventService(
+  stampCardEventDAO: StampCardEventDAO,
   stampCardDAO: StampCardDAO,
   pool: Pool
-): StampEventService {
+): StampCardEventService {
   return {
-    async createStampEvent(fields): Promise<StampEvent> {
+    async createStampCardEvent(fields): Promise<StampCardEvent> {
       validateUUID(fields.stamp_card_id)
+      requireFields(fields, ['user_id', 'stamp_card_id', 'request_id', 'type', 'quantity']);
+      
 
       return withTransaction(pool, async (client) => {
         // idempotency check
         if (fields.request_id) {
-          const existing = await stampEventDAO.getStampEventByRequestID(fields.request_id, client);
+          const existing = await stampCardEventDAO.getStampCardEventByRequestID(fields.request_id, client);
           if (existing) return existing;
         }
 
@@ -33,7 +35,7 @@ export function createStampEventService(
         const card = await stampCardDAO.getStampCardByID(fields.stamp_card_id, false, client);
         if (!card) throw new NotFoundError('Could not find stamp card');
 
-        // handle stamp event types 
+        // handle stamp card event types 
 
         const NO_ADD_STATUSES: StampCardStatus[] = ['completed', 'redeemed', 'expired', 'cancelled'];
         const NO_REMOVE_STATUSES: StampCardStatus[] = ['redeemed', 'expired', 'cancelled'];
@@ -68,12 +70,12 @@ export function createStampEventService(
                   notify_window_start_time: null,
                   notify_window_end_time: null,
                   notification_time_sent: null,
-                  notification_cooldown_time: null,
+                  notification_cooldown_seconds: null,
                   expiration_date: null
                 },
                 client
               );
-              await stampEventDAO.createStampEvent(
+              await stampCardEventDAO.createStampCardEvent(
                 {
                   user_id: card.user_id,
                   stamp_card_id: newCard.id,
@@ -118,7 +120,7 @@ export function createStampEventService(
             break;
           }
         }
-        const event = await stampEventDAO.createStampEvent(fields, client);
+        const event = await stampCardEventDAO.createStampCardEvent(fields, client);
         await stampCardDAO.updateStampCardByID(
           card.id,
           { stamps_acquired: newAcquired, status: newStatus },
@@ -130,26 +132,26 @@ export function createStampEventService(
 
     },
 
-    async getStampEventByRequestID(request_id: string): Promise<StampEvent | null> {
+    async getStampCardEventByRequestID(request_id: string): Promise<StampCardEvent | null> {
       validateUUID(request_id);
 
-      const fetchedEvent = await stampEventDAO.getStampEventByRequestID(request_id);
+      const fetchedEvent = await stampCardEventDAO.getStampCardEventByRequestID(request_id);
 
       return fetchedEvent ? fetchedEvent : null
     },
 
-    async getStampEventsByStampCardID(stamp_card_id: string): Promise<StampEvent[]> {
+    async getStampCardEventsByStampCardID(stamp_card_id: string): Promise<StampCardEvent[]> {
       validateUUID(stamp_card_id);
 
-      const fetchedEvents = await stampEventDAO.getStampEventsByStampCardID(stamp_card_id);
+      const fetchedEvents = await stampCardEventDAO.getStampCardEventsByStampCardID(stamp_card_id);
 
       return fetchedEvents
     },
 
-    async getAllStampEventsByUserID(user_id: string): Promise<StampEvent[]> {
+    async getAllStampCardEventsByUserID(user_id: string): Promise<StampCardEvent[]> {
       validateUUID(user_id);
 
-      const fetchedEvents = await stampEventDAO.getAllStampEventsByUserID(user_id);
+      const fetchedEvents = await stampCardEventDAO.getAllStampCardEventsByUserID(user_id);
 
       return fetchedEvents;
     }

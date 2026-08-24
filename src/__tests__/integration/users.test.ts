@@ -12,6 +12,7 @@ const tempUser: CreateUserInput = {
   email: 'temp-user@example.com',
   display_name: null,
   auth_provider_id: null,
+  timezone: 'America/Vancouver'
 };
 
 async function createUser(payload: CreateUserInput = tempUser) {
@@ -66,7 +67,7 @@ describe('users', () => {
   });
 
   test('GET /api/v1/users/:id returns 404 for deleted user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-deleted@example.com', display_name: null, auth_provider_id: null });
+    const { body: created } = await createUser({ email: 'to-be-deleted@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
 
     await request(BASE_URL)
       .delete(`/api/v1/users/${created.id}`)
@@ -78,7 +79,7 @@ describe('users', () => {
   });
 
   test('POST /api/v1/users creates a user', async () => {
-    const body: CreateUserInput = { email: 'new-user@example.com', display_name: null, auth_provider_id: null };
+    const body: CreateUserInput = { email: 'new-user@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' };
 
     const response = await request(BASE_URL)
       .post('/api/v1/users')
@@ -92,7 +93,7 @@ describe('users', () => {
   });
 
   test('POST /api/v1/users also creates default notification preferences', async () => {
-    const { body: created } = await createUser({ email: 'prefs-check@example.com', display_name: null, auth_provider_id: null });
+    const { body: created } = await createUser({ email: 'prefs-check@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
 
     const response = await request(BASE_URL)
       .get(`/api/v1/users/${created.id}/preferences`)
@@ -115,8 +116,36 @@ describe('users', () => {
     expect(response.body.error).toBeDefined();
   });
 
+  test('POST /api/v1/users returns 400 for invalid email', async () => {
+    const response = await request(BASE_URL)
+      .post('/api/v1/users')
+      .send({
+        email: 'not-an-email',
+        display_name: null,
+        auth_provider_id: null,
+        timezone: 'America/Vancouver',
+      })
+      .expect(400);
+
+    expect(response.body.error).toBe('Invalid email');
+  });
+
+  test('POST /api/v1/users returns 400 for invalid timezone', async () => {
+    const response = await request(BASE_URL)
+      .post('/api/v1/users')
+      .send({
+        email: 'bad-timezone@example.com',
+        display_name: null,
+        auth_provider_id: null,
+        timezone: 'Not/A/Real/Zone',
+      })
+      .expect(400);
+
+    expect(response.body.error).toBe('Invalid timezone');
+  });
+
   test('PATCH /api/v1/users/:id updates a user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-updated@example.com', display_name: null, auth_provider_id: null });
+    const { body: created } = await createUser({ email: 'to-be-updated@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
 
     const response = await request(BASE_URL)
       .patch(`/api/v1/users/${created.id}`)
@@ -145,7 +174,7 @@ describe('users', () => {
   });
 
   test('PATCH /api/v1/users/:id ignores email even if included in the body', async () => {
-    const { body: created } = await createUser({ email: 'original@example.com', display_name: null, auth_provider_id: null });
+    const { body: created } = await createUser({ email: 'original@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
 
     const response = await request(BASE_URL)
       .patch(`/api/v1/users/${created.id}`)
@@ -160,8 +189,24 @@ describe('users', () => {
     );
   });
 
+  test('PATCH /api/v1/users/:id returns 400 for invalid timezone', async () => {
+    const { body: created } = await createUser({
+      email: 'patch-bad-timezone@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    });
+
+    const response = await request(BASE_URL)
+      .patch(`/api/v1/users/${created.id}`)
+      .send({ timezone: 'Not/A/Real/Zone' })
+      .expect(400);
+
+    expect(response.body.error).toBe('Invalid timezone');
+  });
+
   test('DELETE /api/v1/users/:id deletes a user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-deleted-2@example.com', display_name: null, auth_provider_id: null });
+    const { body: created } = await createUser({ email: 'to-be-deleted-2@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
 
     await request(BASE_URL)
       .delete(`/api/v1/users/${created.id}`)
@@ -177,7 +222,7 @@ describe('users', () => {
   });
 
   test('DELETE /api/v1/users/:id returns 400 for already deleted user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-deleted-3@example.com', display_name: null, auth_provider_id: null });
+    const { body: created } = await createUser({ email: 'to-be-deleted-3@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
 
     await request(BASE_URL)
       .delete(`/api/v1/users/${created.id}`)
@@ -209,6 +254,7 @@ describe('users', () => {
           email: 'rollback-test@example.com',
           display_name: null,
           auth_provider_id: null,
+          timezone: 'America/Vancouver'
         })
       ).rejects.toThrow('forced failure');
 

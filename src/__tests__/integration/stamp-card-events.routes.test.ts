@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { seed, clearAll, TEST_IDS } from '../../scripts/testSeed';
-import { CreateStampEventInput } from '../../models/stamp-event.model';
+import { CreateStampCardEventInput } from '../../models/stamp-card-event.model';
 import pool from '../../lib/db';
 
 const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:3001';
@@ -14,13 +14,13 @@ afterAll(async () => {
   await clearAll();
 });
 
-function createEvent(cardId: string, payload: Partial<CreateStampEventInput>) {
+function createEvent(cardId: string, payload: Partial<CreateStampCardEventInput>) {
   return request(BASE_URL)
-    .post(`/api/v1/stamp-cards/${cardId}/stamp-events`)
+    .post(`/api/v1/stamp-cards/${cardId}/stamp-card-events`)
     .send(payload);
 }
 
-describe('stamp-events routes', () => {
+describe('stamp-card-events routes', () => {
   test('POST creates a stamp_added event and updates the card', async () => {
     const requestId = crypto.randomUUID();
 
@@ -58,7 +58,7 @@ describe('stamp-events routes', () => {
     expect(second.body.id).toBe(first.body.id);
 
     const events = await request(BASE_URL)
-      .get(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-events`)
+      .get(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-card-events`)
       .expect(200);
 
     const matching = events.body.filter((e: any) => e.request_id === requestId);
@@ -90,7 +90,7 @@ describe('stamp-events routes', () => {
 
   test('GET returns events for a stamp card', async () => {
     const response = await request(BASE_URL)
-      .get(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-events`)
+      .get(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-card-events`)
       .expect(200);
 
     expect(Array.isArray(response.body)).toBe(true);
@@ -109,7 +109,7 @@ describe('stamp-events routes', () => {
 
     const response = await request(BASE_URL)
       .get(
-        `/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-events?request_id=${requestId}`
+        `/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-card-events?request_id=${requestId}`
       )
       .expect(200);
 
@@ -119,7 +119,7 @@ describe('stamp-events routes', () => {
   test('GET with unknown request_id returns 404', async () => {
     await request(BASE_URL)
       .get(
-        `/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-events?request_id=${crypto.randomUUID()}`
+        `/api/v1/stamp-cards/${TEST_IDS.stampCard1}/stamp-card-events?request_id=${crypto.randomUUID()}`
       )
       .expect(404);
   });

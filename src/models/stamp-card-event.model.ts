@@ -1,21 +1,21 @@
-export interface StampEvent {
+export interface StampCardEvent {
   id: string;
   user_id: string;
   stamp_card_id: string;
   location_id: string | null;
   request_id: string;
-  type: StampEventType;
+  type: StampCardEventType;
   quantity: number;
   created_at: Date;
 }
 
-export const STAMP_EVENT_TYPES = [
+export const STAMP_CARD_EVENT_TYPES = [
   'stamp_added',
   'stamp_removed',
   'reward_redeemed',
   'card_expired',
   'card_deleted',
 ] as const;
-export type StampEventType = typeof STAMP_EVENT_TYPES[number];
+export type StampCardEventType = typeof STAMP_CARD_EVENT_TYPES[number];
 
-export type CreateStampEventInput = Omit<StampEvent, 'id' | 'created_at'>;
+export type CreateStampCardEventInput = Omit<StampCardEvent, 'id' | 'created_at'>;

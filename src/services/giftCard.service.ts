@@ -1,11 +1,13 @@
 import { BusinessDAO, GiftCardDAO, UserDAO } from '../dao';
-import { GiftCard, CreateGiftCardInput, UpdateGiftCardInput, } from '../models/gift-card.model';
+import { GiftCard, UpdateGiftCardInput, CreateGiftCardRequestBody, } from '../models/gift-card.model';
 import { NotFoundError, validateUUID, ValidationError, } from '../utils/validators';
 import { Pool } from 'pg';
 import { assertExists, requireFields } from './helpers.service';
+import { withTransaction } from '../lib/db';
+import { GiftCardEventService } from './giftCardEvent.service';
 
 export type GiftCardService = {
-  createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard>;
+  createGiftCard(fields: CreateGiftCardRequestBody): Promise<GiftCard>;
   getAllGiftCardsByUserId(user_id: string,includeDeleted?: boolean): Promise<GiftCard[]>;
   getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard>;
   updateGiftCardByID(id: string,updates: UpdateGiftCardInput): Promise<GiftCard>;
@@ -16,16 +18,21 @@ export function createGiftCardService(
   giftCardDAO: GiftCardDAO,
   userDAO: UserDAO,
   businessDAO: BusinessDAO,
+  giftCardEventService: GiftCardEventService,
   pool: Pool
 ): GiftCardService {
   return {
-    async createGiftCard(fields: CreateGiftCardInput): Promise<GiftCard> {
-      // check required fields
-      requireFields(fields, ['user_id', 'business_id', 'initial_balance', 'currency'])
+    async createGiftCard(
+      fields: CreateGiftCardRequestBody ): Promise<GiftCard> {
+      // check required card create fields
+      // location_id optional: card create can happen away from a location (ie at home instead of a business)
+      requireFields(fields, ['user_id', 'business_id', 'currency', 'amount', 'request_id'])
 
       // validate user_id, business_id
       validateUUID(fields.user_id);
       validateUUID(fields.business_id);
+
+      const { amount, location_id, request_id, ...cardFields } = fields;
 
       await assertExists(
         () => userDAO.getUserByID(fields.user_id),
@@ -36,11 +43,28 @@ export function createGiftCardService(
         'Business not found'
       );
 
-      // set current_balance to be the initial_balance on card creation
-      return await giftCardDAO.createGiftCard(
-        { ...fields, current_balance: fields.initial_balance },
-        pool
-      );
+      return withTransaction(pool, async (client) => {
+        const newCard = await giftCardDAO.createGiftCard(
+          { ...cardFields, 
+            status: 'active' },
+          client
+        );
+  
+        await giftCardEventService.createGiftCardEvent(
+          { 
+            gift_card_id: newCard.id, 
+            user_id: fields.user_id,
+            location_id: location_id ?? null,
+            request_id,
+            type: 'balance_added' ,
+            amount,
+          },
+          client
+        );  
+
+        // current_balance set to amount as card creation only has one event: balance_added. Does not need to be derived from another request.
+        return {... newCard, current_balance: amount};
+      })
     },
 
     async getAllGiftCardsByUserId(
@@ -78,7 +102,7 @@ export function createGiftCardService(
         notify_window_start_time: updates.notify_window_start_time,
         notify_window_end_time: updates.notify_window_end_time,
         notification_time_sent: updates.notification_time_sent,
-        notification_cooldown_time: updates.notification_cooldown_time,
+        notification_cooldown_seconds: updates.notification_cooldown_seconds,
         expiration_date: updates.expiration_date,
       };
 

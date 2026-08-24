@@ -33,9 +33,21 @@ export class ValidationError extends AppError {
   }
 }
 
+export class InvalidTimezoneError extends AppError {
+  constructor(message = "Invalid timezone") {
+    super(message, 400);
+  }
+}
+
+export class InvalidEmailError extends AppError {
+  constructor(message = "Invalid email") {
+    super(message, 400);
+  }
+}
+
 export function validateUUID(id: string): void {
   const uuidRegex =
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   if (!uuidRegex.test(id)) {
     throw new InvalidUUIDError("Invalid ID format");
   }
@@ -44,6 +56,22 @@ export function validateUUID(id: string): void {
 export function validateBusinessType(value: string): asserts value is BusinessType {
   if (!VALID_TYPES.includes(value as BusinessType)) {
     throw new InvalidBusinessType();
+  }
+}
+
+const VALID_TIMEZONES = new Set(Intl.supportedValuesOf("timeZone"));
+
+export function validateTimezone(value: string): asserts value is string {
+  if (!VALID_TIMEZONES.has(value)) {
+    throw new InvalidTimezoneError();
+  }
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function validateEmail(value: string): asserts value is string {
+  if (!EMAIL_REGEX.test(value)) {
+    throw new InvalidEmailError();
   }
 }
 

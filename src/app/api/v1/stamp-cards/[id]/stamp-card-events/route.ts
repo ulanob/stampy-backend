@@ -1,5 +1,5 @@
-import { stampEventService } from "@/src/composition";
-import { CreateStampEventInput } from "@/src/models/stamp-event.model";
+import { stampCardEventService } from "@/src/composition";
+import { CreateStampCardEventInput } from "@/src/models/stamp-card-event.model";
 import { handleRouteError } from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
@@ -14,15 +14,15 @@ export async function GET(
     const requestId = searchParams.get("request_id");
 
     if (requestId) {
-      const event = await stampEventService.getStampEventByRequestID(requestId);
+      const event = await stampCardEventService.getStampCardEventByRequestID(requestId);
       if (!event) {
-        return NextResponse.json({ error: "Stamp event not found" }, { status: 404 });
+        return NextResponse.json({ error: "Stamp card event not found" }, { status: 404 });
       }
       return NextResponse.json(event, { status: 200 });
     }
 
-    const stampEvents = await stampEventService.getStampEventsByStampCardID(id);
-    return NextResponse.json(stampEvents, { status: 200 });
+    const stampCardEvents = await stampCardEventService.getStampCardEventsByStampCardID(id);
+    return NextResponse.json(stampCardEvents, { status: 200 });
   } catch (error) {
     return handleRouteError(error, "GET /api/v1/stamp-cards/[id]/stamp-events");
   }
@@ -35,15 +35,15 @@ export async function POST(
   try {
     const { id: stamp_card_id } = await params;
 
-    const body: CreateStampEventInput = await request.json();
+    const body: CreateStampCardEventInput = await request.json();
 
-    const createdStampEvent = await stampEventService.createStampEvent({
+    const createdStampCardEvent = await stampCardEventService.createStampCardEvent({
       ...body,
       stamp_card_id,
       quantity: body.quantity ?? 1,
     });
 
-    return NextResponse.json(createdStampEvent, { status: 201 });
+    return NextResponse.json(createdStampCardEvent, { status: 201 });
   } catch (error) {
     return handleRouteError(error, "POST /api/v1/stamp-cards/[id]/stamp-events");
   }

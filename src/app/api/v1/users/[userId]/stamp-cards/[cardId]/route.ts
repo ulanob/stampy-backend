@@ -1,4 +1,4 @@
-import { stampCardDAO } from "@/src/composition";
+import { stampCardService } from "@/src/composition";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
@@ -10,9 +10,9 @@ export async function GET(
     const { cardId } = await params;
     validateUUID(cardId.trim());
 
-    const stampEvents = await stampCardDAO.getStampCardByID(cardId);
+    const stampCardEvents = await stampCardService.getStampCardByID(cardId);
 
-    return NextResponse.json(stampEvents, { status: 200 });
+    return NextResponse.json(stampCardEvents, { status: 200 });
 
   } catch (error) {
     return handleRouteError(error, "GET /api/v1/users/[userId]/stamp-cards/[cardId]")
