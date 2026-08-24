@@ -15,7 +15,6 @@ erDiagram
   stamp_cards ||--o{ notifications : "triggers"
   gift_cards ||--o{ gift_card_events : "logged in"
   gift_cards ||--o{ notifications : "triggers"
-
   users {
     uuid id PK
     text display_name
@@ -99,8 +98,6 @@ erDiagram
     uuid business_id FK
     text nickname
     text notes
-    numeric initial_balance
-    numeric current_balance
     text currency
     text status
     text[] notify_window_days

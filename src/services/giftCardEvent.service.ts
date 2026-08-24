@@ -5,9 +5,10 @@ import { GiftCardStatus } from "../models/gift-card.model";
 import { CreateGiftCardEventInput, GiftCardEvent } from "../models/gift-card-event.model";
 import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
 import { requireFields } from "./helpers.service";
+import { Executor } from "../dao/types";
 
 export type GiftCardEventService = {
-  createGiftCardEvent(fields: CreateGiftCardEventInput): Promise<GiftCardEvent>;
+  createGiftCardEvent(fields: CreateGiftCardEventInput, executor?: Executor): Promise<GiftCardEvent>;
   getGiftCardEventsByGiftCardID(gift_card_id: string): Promise<GiftCardEvent[]>;
   getGiftCardEventByRequestID(request_id: string): Promise<GiftCardEvent | null>;
   getAllGiftCardEventsByUserID(user_id: string): Promise<GiftCardEvent[]>;
@@ -19,12 +20,12 @@ export function createGiftCardEventService(
   pool: Pool
 ): GiftCardEventService {
   return {
-    async createGiftCardEvent(fields): Promise<GiftCardEvent> {
+    async createGiftCardEvent(fields, executor?: Executor): Promise<GiftCardEvent> {
       requireFields(fields, ['user_id', 'gift_card_id', 'request_id', 'type', 'amount']);
       validateUUID(fields.gift_card_id);
       validateUUID(fields.user_id);
 
-      return withTransaction(pool, async (client) => {
+      const run = async (client: Executor): Promise<GiftCardEvent> => {
         // idempotency check
         if (fields.request_id) {
           const existing = await giftCardEventDAO.getGiftCardEventByRequestID(fields.request_id, client);
@@ -36,11 +37,9 @@ export function createGiftCardEventService(
         if (!card) throw new NotFoundError('Could not find gift card');
 
         // handle gift card event types
-
         const NO_ADD_STATUSES: GiftCardStatus[] = ['expired', 'cancelled'];
         const NO_REDEEM_STATUSES: GiftCardStatus[] = ['expired', 'cancelled'];
 
-        let newBalance = card.current_balance;
         let newStatus = card.status;
 
         switch (fields.type) {
@@ -48,7 +47,6 @@ export function createGiftCardEventService(
             if (NO_ADD_STATUSES.includes(card.status)) {
               throw new ValidationError(`Cannot add balance to a ${card.status} card`);
             }
-            newBalance = card.current_balance + fields.amount;
             break;
           }
 
@@ -59,7 +57,6 @@ export function createGiftCardEventService(
             if (card.current_balance - fields.amount < 0) {
               throw new ValidationError('Cannot redeem more than the card balance');
             }
-            newBalance = card.current_balance - fields.amount;
             break;
           }
 
@@ -75,14 +72,12 @@ export function createGiftCardEventService(
         }
 
         const event = await giftCardEventDAO.createGiftCardEvent(fields, client);
-        await giftCardDAO.updateGiftCardByID(
-          card.id,
-          { current_balance: newBalance, status: newStatus },
-          client
-        );
+        await giftCardDAO.updateGiftCardByID(card.id, { status: newStatus }, client);
 
         return event;
-      });
+      };
+
+      return executor ? run(executor) : withTransaction(pool, run);
     },
 
     async getGiftCardEventByRequestID(request_id: string): Promise<GiftCardEvent | null> {

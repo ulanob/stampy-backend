@@ -6,7 +6,6 @@ export interface GiftCard {
   business_id: string;
   nickname: string | null;
   notes: string | null;
-  initial_balance: number;
   current_balance: number;
   currency: string;
   status: GiftCardStatus;
@@ -27,7 +26,6 @@ export type GiftCardStatus = typeof GIFT_CARD_STATUSES[number];
 
 export type CreateGiftCardInput = Omit<GiftCard,
   "id"
-  | "current_balance"
   | "created_at"
   | "updated_at"
   | "deleted"
@@ -36,11 +34,16 @@ export type CreateGiftCardInput = Omit<GiftCard,
   current_balance?: number;
 };
 
+export type CreateGiftCardRequestBody = CreateGiftCardInput & {
+  amount: number;
+  location_id?: string | null;
+  request_id: string;
+};
+
 type GiftCardUpdateableFields = Pick<GiftCard,
   "nickname"
   | "notes"
   | "status"
-  | "current_balance"
   | "notify_window_days"
   | "notify_window_start_time"
   | "notify_window_end_time"

@@ -1,11 +1,11 @@
 import { giftCardService } from "@/src/composition";
-import { CreateGiftCardInput } from "@/src/models/gift-card.model";
+import { CreateGiftCardRequestBody } from "@/src/models/gift-card.model";
 import { NextResponse } from "next/server";
 import { handleRouteError } from "@/src/utils/validators";
 
 export async function POST(request: Request) {
   try {
-    const body: CreateGiftCardInput = await request.json();
+    const body: CreateGiftCardRequestBody = await request.json();
 
     const createdCard = await giftCardService.createGiftCard(body);
 

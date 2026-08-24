@@ -106,8 +106,6 @@ CREATE TABLE gift_cards (
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
     nickname TEXT NULL,
     notes TEXT NULL,
-    initial_balance NUMERIC(10,2) NOT NULL,
-    current_balance NUMERIC(10,2) NOT NULL,
     currency TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('active', 'cancelled', 'expired')),
     notify_window_days TEXT[] NULL,

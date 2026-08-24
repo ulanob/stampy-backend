@@ -73,10 +73,10 @@ async function seed() {
     // --- GIFT CARDS ---
     const { rows: giftCards } = await client.query(
       `
-        INSERT INTO gift_cards (id, user_id, business_id, current_balance, initial_balance, currency, status)
+        INSERT INTO gift_cards (id, user_id, business_id, currency, status)
         VALUES
-          (gen_random_uuid(), $1, $2, 50.00, 50.00, 'CAD', 'active'),
-          (gen_random_uuid(), $1, $3, 25.00, 25.00, 'CAD', 'active')
+          (gen_random_uuid(), $1, $2, 'CAD', 'active'),
+          (gen_random_uuid(), $1, $3, 'CAD', 'active')
         RETURNING id
       `,
       [userId, businessId1, businessId2],

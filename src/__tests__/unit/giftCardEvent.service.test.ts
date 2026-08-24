@@ -16,7 +16,6 @@ describe("giftCardEventService.createGiftCardEvent", () => {
     business_id: "a1b2c3d4-0000-0000-0000-000000000001",
     nickname: null,
     current_balance: 50.00,
-    initial_balance: 50.00,
     currency: "CAD",
     status: "active" as const,
   };
@@ -84,14 +83,14 @@ describe("giftCardEventService.createGiftCardEvent", () => {
       }
     });
 
-    it("increases current_balance by the amount", async () => {
+    it("succeeds and updates only status when the card can accept the amount", async () => {
       await service().createGiftCardEvent({
         ...baseFields, request_id: "req-3", type: "balance_added", amount: 15.00,
       });
 
       expect(giftCardDAO.updateGiftCardByID).toHaveBeenCalledWith(
         baseCard.id,
-        expect.objectContaining({ current_balance: 65.00, status: "active" }),
+        { status: "active" },
         mockClient
       );
     });
@@ -108,14 +107,14 @@ describe("giftCardEventService.createGiftCardEvent", () => {
       }
     });
 
-    it("decreases current_balance by the amount", async () => {
+    it("succeeds and updates only status when there is enough balance", async () => {
       await service().createGiftCardEvent({
         ...baseFields, request_id: "req-4", type: "balance_redeemed", amount: 20.00,
       });
 
       expect(giftCardDAO.updateGiftCardByID).toHaveBeenCalledWith(
         baseCard.id,
-        expect.objectContaining({ current_balance: 30.00, status: "active" }),
+        { status: "active" },
         mockClient
       );
     });
@@ -127,7 +126,7 @@ describe("giftCardEventService.createGiftCardEvent", () => {
 
       expect(giftCardDAO.updateGiftCardByID).toHaveBeenCalledWith(
         baseCard.id,
-        expect.objectContaining({ current_balance: 0 }),
+        { status: "active" },
         mockClient
       );
     });
@@ -139,27 +138,45 @@ describe("giftCardEventService.createGiftCardEvent", () => {
     });
   });
 
-  it("card_expired sets status expired without changing current_balance", async () => {
+  it("card_expired sets status expired", async () => {
     await service().createGiftCardEvent({
       ...baseFields, request_id: "req-7", type: "card_expired", amount: 0,
     });
 
     expect(giftCardDAO.updateGiftCardByID).toHaveBeenCalledWith(
       baseCard.id,
-      expect.objectContaining({ current_balance: baseCard.current_balance, status: "expired" }),
+      { status: "expired" },
       mockClient
     );
   });
 
-  it("card_deleted sets status cancelled without changing current_balance", async () => {
+  it("card_deleted sets status cancelled", async () => {
     await service().createGiftCardEvent({
       ...baseFields, request_id: "req-8", type: "card_deleted", amount: 0,
     });
 
     expect(giftCardDAO.updateGiftCardByID).toHaveBeenCalledWith(
       baseCard.id,
-      expect.objectContaining({ current_balance: baseCard.current_balance, status: "cancelled" }),
+      { status: "cancelled" },
       mockClient
     );
+  });
+
+  describe("executor passthrough", () => {
+    it("uses a passed-in executor instead of opening its own transaction", async () => {
+      const externalClient: Partial<PoolClient> = { query: vi.fn().mockResolvedValue({ rows: [] }), release: vi.fn() };
+
+      await service().createGiftCardEvent(
+        { ...baseFields, request_id: "req-9", type: "balance_added", amount: 5.00 },
+        externalClient as PoolClient
+      );
+
+      expect(mockPool.connect).not.toHaveBeenCalled();
+      expect(giftCardDAO.updateGiftCardByID).toHaveBeenCalledWith(
+        baseCard.id,
+        { status: "active" },
+        externalClient
+      );
+    });
   });
 });

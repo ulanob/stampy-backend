@@ -27,10 +27,7 @@ describe('gift card events — transaction rollback', () => {
 
     const service = createGiftCardEventService(giftCardEventDAO, brokenGiftCardDAO, pool);
 
-    const before = await pool.query(
-      'SELECT current_balance FROM gift_cards WHERE id = $1',
-      [TEST_IDS.giftCard1]
-    );
+    const before = await giftCardDAO.getGiftCardByID(TEST_IDS.giftCard1);
     const eventsBefore = await pool.query(
       'SELECT COUNT(*) FROM gift_card_events WHERE gift_card_id = $1',
       [TEST_IDS.giftCard1]
@@ -47,16 +44,13 @@ describe('gift card events — transaction rollback', () => {
       })
     ).rejects.toThrow('forced failure');
 
-    const after = await pool.query(
-      'SELECT current_balance FROM gift_cards WHERE id = $1',
-      [TEST_IDS.giftCard1]
-    );
+    const after = await giftCardDAO.getGiftCardByID(TEST_IDS.giftCard1);
     const eventsAfter = await pool.query(
       'SELECT COUNT(*) FROM gift_card_events WHERE gift_card_id = $1',
       [TEST_IDS.giftCard1]
     );
 
-    expect(after.rows[0].current_balance).toBe(before.rows[0].current_balance);
+    expect(after?.current_balance).toBe(before?.current_balance);
     expect(eventsAfter.rows[0].count).toBe(eventsBefore.rows[0].count);
   });
 });

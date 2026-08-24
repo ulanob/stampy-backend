@@ -18,6 +18,8 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [x] CRUD API (users, businesses, locations, stamp cards, gift cards)
 - [x] Event-sourced business logic layer (stamp progression via `stamp_card_events`, gift card balance via `gift_card_events`)
 - [x] Idempotent, transactional event processing (request-id based replay safety)
+- [x] Derive gift card `current_balance` from the event log (SUM-based, no cached column)
+- [ ] Derive stamp card `stamps_acquired` from the event log (same pattern, pending `reward_redeemed` semantics decision)
 - [ ] Location-based notification eligibility pipeline (in progress — checks scaffolded, pipeline wiring pending)
 - [ ] Location-based notifications (geofence check-in → eligibility → send)
 - [ ] Authentication
@@ -154,9 +156,9 @@ src/
 
 A few decisions worth explaining, since they shape a lot of the codebase:
 
-**Event sourcing for card state.** Stamp counts and gift card balances aren't just stored and mutated in place — every change (`stamp_added`, `balance_redeemed`, `card_expired`, etc.) is first written as an immutable row in `stamp_card_events` / `gift_card_events`, inside the same database transaction as the resulting update to the card's cached `stamps_acquired` / `current_balance`. This gives a full audit trail and, combined with a `request_id` idempotency key on every event, makes retried requests safe — a dropped connection and a client retry won't double-charge a stamp or double-deduct a balance.
+**Event sourcing for card state.** Stamp counts and gift card balances aren't stored as mutable columns — every change (`stamp_added`, `balance_redeemed`, `card_expired`, etc.) is written as an immutable row in `stamp_card_events` / `gift_card_events`, and the card's current value is derived by summing its event log on every read (`COALESCE(SUM(...), 0)` over a `LEFT JOIN`), rather than cached and incrementally updated. Combined with a `request_id` idempotency key on every event, this makes retried requests safe — a dropped connection and a client retry won't double-charge a stamp or double-deduct a balance — and removes cache-drift risk entirely, since there's no stored value that could ever disagree with the log.
 
-> The cached columns (`stamps_acquired`, `current_balance`) are currently kept in sync incrementally by the event services, not recomputed from the event log on every read. Switching to full derivation (`SUM()` over events, no stored column) is a deliberate future pass — see the open item in project notes.
+> Gift cards (`current_balance`) are fully derived as of this pass. Stamp cards (`stamps_acquired`) are still on the older incremental-cache model and are next in line for the same treatment.
 
 **Notification eligibility as Chain of Responsibility.** Rather than one large conditional, notification eligibility is a sequence of independent, individually testable checks (`NotificationsEnabledCheck`, `QuietHoursCheck`, `DailyCapCheck`, `CardWindowCheck`, `CooldownCheck`, `ExpirationCheck`), each implementing a shared `EligibilityCheck` interface. A card is only notified if it passes every check in order.
 
@@ -192,10 +194,10 @@ This project is intentionally a learning vehicle:
 ## Roadmap
 
 - [ ] `users.timezone` column + client-side timezone capture at signup
+- [ ] Derive stamp card `stamps_acquired` from the event log (pending `reward_redeemed` semantics decision — does redemption reset the counter, or is it a non-quantity-affecting marker event like `card_expired`/`card_deleted`?)
 - [ ] Complete notification eligibility pipeline (remaining checks + tests)
 - [ ] Wire `notificationService` to the eligibility pipeline; synchronous geofence check-in evaluation
 - [ ] Shared transaction/idempotency helper (deferred — revisit if a third event-creation flow emerges)
-- [ ] Derive `current_balance` / `stamps_acquired` from the event log instead of caching (deferred architecture pass)
 - [ ] Authentication - evaluating Amazon Cognito
 - [ ] React Native (Expo) mobile app
 - [ ] Docker Compose refinements for local dev

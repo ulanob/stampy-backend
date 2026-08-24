@@ -88,10 +88,10 @@ export async function seed() {
 
     // --- GIFT CARDS ---
     await client.query(`
-      INSERT INTO gift_cards (id, user_id, business_id, current_balance, initial_balance, currency, status)
+      INSERT INTO gift_cards (id, user_id, business_id, currency, status)
       VALUES
-        ($1, $2, $3, 50.00, 50.00, 'CAD', 'active'),
-        ($4, $2, $5, 25.00, 25.00, 'CAD', 'active')
+        ($1, $2, $3, 'CAD', 'active'),
+        ($4, $2, $5, 'CAD', 'active')
     `, [TEST_IDS.giftCard1, TEST_IDS.user1, TEST_IDS.business1,
         TEST_IDS.giftCard2, TEST_IDS.business2]);
 
