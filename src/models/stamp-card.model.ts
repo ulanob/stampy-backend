@@ -27,6 +27,7 @@ export type StampCardStatus = typeof STAMP_CARD_STATUSES[number];
 
 export type CreateStampCardInput = Omit<StampCard,
   "id"
+  | "stamps_acquired"
   | "created_at"
   | "updated_at"
   | "deleted"
@@ -37,7 +38,6 @@ type StampCardUpdateableFields = Pick<StampCard,
   "nickname"
   | "notes"
   | "stamps_needed"
-  | "stamps_acquired"
   | "status"
   | "notify_window_days"
   | "notify_window_start_time"

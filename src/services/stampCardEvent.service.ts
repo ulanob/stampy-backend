@@ -5,9 +5,10 @@ import { StampCardStatus } from "../models/stamp-card.model";
 import { CreateStampCardEventInput, StampCardEvent } from "../models/stamp-card-event.model";
 import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
 import { requireFields } from "./helpers.service";
+import { Executor } from "../dao/types";
 
 export type StampCardEventService = {
-  createStampCardEvent(fields: CreateStampCardEventInput): Promise<StampCardEvent>;
+  createStampCardEvent(fields: CreateStampCardEventInput, executor?: Executor): Promise<StampCardEvent>;
   getStampCardEventsByStampCardID(stamp_card_id: string): Promise<StampCardEvent[]>
   getStampCardEventByRequestID(request_id: string): Promise<StampCardEvent | null>;
   getAllStampCardEventsByUserID(user_id: string): Promise<StampCardEvent[]>
@@ -19,12 +20,11 @@ export function createStampCardEventService(
   pool: Pool
 ): StampCardEventService {
   return {
-    async createStampCardEvent(fields): Promise<StampCardEvent> {
+    async createStampCardEvent(fields, executor?: Executor): Promise<StampCardEvent> {
       validateUUID(fields.stamp_card_id)
       requireFields(fields, ['user_id', 'stamp_card_id', 'request_id', 'type', 'quantity']);
       
-
-      return withTransaction(pool, async (client) => {
+      const run = async (client: Executor): Promise<StampCardEvent> => {
         // idempotency check
         if (fields.request_id) {
           const existing = await stampCardEventDAO.getStampCardEventByRequestID(fields.request_id, client);
@@ -36,11 +36,9 @@ export function createStampCardEventService(
         if (!card) throw new NotFoundError('Could not find stamp card');
 
         // handle stamp card event types 
-
         const NO_ADD_STATUSES: StampCardStatus[] = ['completed', 'redeemed', 'expired', 'cancelled'];
         const NO_REMOVE_STATUSES: StampCardStatus[] = ['redeemed', 'expired', 'cancelled'];
 
-        let newAcquired = card.stamps_acquired;
         let newStatus = card.status;
 
         switch (fields.type) {
@@ -53,7 +51,7 @@ export function createStampCardEventService(
             const fillAmount = Math.min(fields.quantity, card.stamps_needed - card.stamps_acquired);
             const overflowAmount = fields.quantity - fillAmount;
 
-            newAcquired = card.stamps_acquired + fillAmount;
+            const newAcquired = card.stamps_acquired + fillAmount;
             if (newAcquired >= card.stamps_needed) newStatus = 'completed';
 
             if (overflowAmount > 0) {
@@ -64,7 +62,6 @@ export function createStampCardEventService(
                   nickname: card.nickname,
                   notes: null,
                   stamps_needed: card.stamps_needed,
-                  stamps_acquired: overflowAmount,
                   status: 'active',
                   notify_window_days: null,
                   notify_window_start_time: null,
@@ -97,7 +94,7 @@ export function createStampCardEventService(
             if (card.stamps_acquired - fields.quantity < 0) {
               throw new ValidationError('Cannot remove more stamps than the card has');
             }
-            newAcquired = card.stamps_acquired - fields.quantity;
+            const newAcquired = card.stamps_acquired - fields.quantity;
             if (card.status === 'completed' && newAcquired < card.stamps_needed) {
               newStatus = 'active';
             }
@@ -105,7 +102,9 @@ export function createStampCardEventService(
           }
 
           case 'reward_redeemed': {
-            newAcquired = 0;
+            if (card.status !== 'completed') {
+              throw new ValidationError(`Cannot redeem reward on a ${card.status} card`);
+            }
             newStatus = 'redeemed';
             break;
           }
@@ -120,41 +119,37 @@ export function createStampCardEventService(
             break;
           }
         }
+
         const event = await stampCardEventDAO.createStampCardEvent(fields, client);
+
         await stampCardDAO.updateStampCardByID(
           card.id,
-          { stamps_acquired: newAcquired, status: newStatus },
+          { status: newStatus },
           client
         );
+
         return event;
-      })
+      };
 
-
+      return executor ? run(executor) : withTransaction(pool, run);
     },
 
     async getStampCardEventByRequestID(request_id: string): Promise<StampCardEvent | null> {
       validateUUID(request_id);
-
       const fetchedEvent = await stampCardEventDAO.getStampCardEventByRequestID(request_id);
-
       return fetchedEvent ? fetchedEvent : null
     },
 
     async getStampCardEventsByStampCardID(stamp_card_id: string): Promise<StampCardEvent[]> {
       validateUUID(stamp_card_id);
-
       const fetchedEvents = await stampCardEventDAO.getStampCardEventsByStampCardID(stamp_card_id);
-
       return fetchedEvents
     },
 
     async getAllStampCardEventsByUserID(user_id: string): Promise<StampCardEvent[]> {
       validateUUID(user_id);
-
       const fetchedEvents = await stampCardEventDAO.getAllStampCardEventsByUserID(user_id);
-
       return fetchedEvents;
     }
-
   };
 }

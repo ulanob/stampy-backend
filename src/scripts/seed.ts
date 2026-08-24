@@ -49,10 +49,10 @@ async function seed() {
     // --- STAMP CARDS ---
     const { rows: stampCards } = await client.query(
       `
-        INSERT INTO stamp_cards (id, user_id, business_id, stamps_needed, stamps_acquired, status)
+        INSERT INTO stamp_cards (id, user_id, business_id, stamps_needed, status)
         VALUES
-          (gen_random_uuid(), $1, $2, 10, 0, 'active'),
-          (gen_random_uuid(), $1, $3, 8, 5, 'active')
+          (gen_random_uuid(), $1, $2, 10, 'active'),
+          (gen_random_uuid(), $1, $3, 8, 'active')
         RETURNING id
       `,
       [userId, businessId1, businessId2],
