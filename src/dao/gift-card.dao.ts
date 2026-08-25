@@ -180,7 +180,7 @@ const currentBalanceExpr = `
       WHEN 'balance_redeemed' THEN -e.amount
       ELSE 0
     END
-  ), 0)::int AS current_balance
+  ), 0) AS current_balance
 `;
 
 function mapDbRowToGiftCard(row: GiftCard): GiftCard {
