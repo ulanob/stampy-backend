@@ -15,6 +15,7 @@ erDiagram
   stamp_cards ||--o{ notifications : "triggers"
   gift_cards ||--o{ gift_card_events : "logged in"
   gift_cards ||--o{ notifications : "triggers"
+
   users {
     uuid id PK
     text display_name
@@ -69,7 +70,6 @@ erDiagram
     text nickname
     text notes
     int stamps_needed
-    int stamps_acquired
     text status
     text[] notify_window_days
     time notify_window_start_time

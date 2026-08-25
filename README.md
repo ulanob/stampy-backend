@@ -1,31 +1,36 @@
 # Stampy
-
 A personal finance companion for tracking gift cards and stamp cards - and notifying you when you're near a vendor where you have rewards waiting.
 
 ## The Problem
-
 Gift cards get forgotten in wallets. Stamp cards get lost. Rewards go unused and stamps are missed - not because people don't want to use them, but because they don't remember they have them until they're already somewhere else.
 
 Stampy solves this with a simple idea: track your cards in one place, and get notified when you're physically close to a vendor where you have something to redeem.
 
 ---
 
-## Status
-
+## Status & Roadmap
 > 🚧 Active development - learning project
 
+**Done:**
 - [x] Database schema design
 - [x] CRUD API (users, businesses, locations, stamp cards, gift cards)
 - [x] Event-sourced business logic layer (stamp progression via `stamp_card_events`, gift card balance via `gift_card_events`)
 - [x] Idempotent, transactional event processing (request-id based replay safety)
 - [x] Derive gift card `current_balance` from the event log (SUM-based, no cached column)
-- [ ] Derive stamp card `stamps_acquired` from the event log (same pattern, pending `reward_redeemed` semantics decision)
-- [ ] Location-based notification eligibility pipeline (in progress — checks scaffolded, pipeline wiring pending)
-- [ ] Location-based notifications (geofence check-in → eligibility → send)
-- [ ] Authentication
+- [x] Derive stamp card `stamps_acquired` from the event log (same pattern; `reward_redeemed` resolved as a status-only event — see Design Decisions)
+- [x] `users.timezone` column, model, and DAO support (create + update)
+
+**In progress / not started:**
+- [ ] Client-side timezone capture at signup (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and lazy drift-correction wiring at geofence check-in (`geo-tz`) — column and DAO exist, the capture/correction call sites don't yet
+- [ ] Location-based notification eligibility pipeline — checks scaffolded (`NotificationsEnabledCheck`, `QuietHoursCheck`, `DailyCapCheck`, `CardWindowCheck`, `CooldownCheck`, `ExpirationCheck`), pipeline wiring + tests pending
+- [ ] Wire `notificationService` to the eligibility pipeline; synchronous geofence check-in evaluation (`POST /locations/:id/check-in`)
+- [ ] Location-based notifications end-to-end (geofence check-in → eligibility → send)
+- [ ] Shared transaction/idempotency helper (deferred — revisit if a third event-creation flow emerges; currently held at two call sites)
+- [ ] Authentication - evaluating Amazon Cognito
 - [ ] React web app
 - [ ] React Native (Expo) mobile app (iOS + Android)
-- [ ] Docker + AWS deployment
+- [ ] Docker Compose refinements for local dev
+- [ ] AWS deployment pipeline (RDS, EventBridge, Lambda, SNS)
 
 ---
 
@@ -158,7 +163,9 @@ A few decisions worth explaining, since they shape a lot of the codebase:
 
 **Event sourcing for card state.** Stamp counts and gift card balances aren't stored as mutable columns — every change (`stamp_added`, `balance_redeemed`, `card_expired`, etc.) is written as an immutable row in `stamp_card_events` / `gift_card_events`, and the card's current value is derived by summing its event log on every read (`COALESCE(SUM(...), 0)` over a `LEFT JOIN`), rather than cached and incrementally updated. Combined with a `request_id` idempotency key on every event, this makes retried requests safe — a dropped connection and a client retry won't double-charge a stamp or double-deduct a balance — and removes cache-drift risk entirely, since there's no stored value that could ever disagree with the log.
 
-> Gift cards (`current_balance`) are fully derived as of this pass. Stamp cards (`stamps_acquired`) are still on the older incremental-cache model and are next in line for the same treatment.
+> Both gift cards (`current_balance`) and stamp cards (`stamps_acquired`) are now fully derived. Stamp cards were the more recent migration, since `reward_redeemed`'s semantics needed resolving first — see below.
+
+**Stamp card redemption doesn't clear stamps.** A gift card's `balance_redeemed` event reduces the derived sum, same as a real gift card losing value when spent. A stamp card's `reward_redeemed` event doesn't — it's excluded from the `SUM()` entirely and only flips `status` to `redeemed`. Real stamp cards don't erase their stamp history when the reward is claimed; only eligibility for another reward changes. One consequence: `reward_redeemed` now requires the card to already be `status: 'completed'`, a guard that wasn't needed before this decision — the old zero-reset behavior had accidentally been absorbing that job (a stray or duplicate redemption call was harmless because it just re-zeroed an already-zero value), and removing the reset meant that safety net needed replacing with an explicit check.
 
 **Notification eligibility as Chain of Responsibility.** Rather than one large conditional, notification eligibility is a sequence of independent, individually testable checks (`NotificationsEnabledCheck`, `QuietHoursCheck`, `DailyCapCheck`, `CardWindowCheck`, `CooldownCheck`, `ExpirationCheck`), each implementing a shared `EligibilityCheck` interface. A card is only notified if it passes every check in order.
 
@@ -175,7 +182,6 @@ A few decisions worth explaining, since they shape a lot of the codebase:
 ## Learning Goals
 
 This project is intentionally a learning vehicle:
-
 - **REST API design** - versioning, resource naming, consistent response patterns
 - **Clean code & design patterns** - separation of concerns, SOLID principles, Chain of Responsibility (notification eligibility), meaningful naming, small focused functions
 - **Event-driven data modeling** - append-only logs, idempotency, transactional consistency
@@ -186,19 +192,4 @@ This project is intentionally a learning vehicle:
 ---
 
 ## Running Locally
-
 > Setup instructions coming as the project stabilises.
-
----
-
-## Roadmap
-
-- [ ] `users.timezone` column + client-side timezone capture at signup
-- [ ] Derive stamp card `stamps_acquired` from the event log (pending `reward_redeemed` semantics decision — does redemption reset the counter, or is it a non-quantity-affecting marker event like `card_expired`/`card_deleted`?)
-- [ ] Complete notification eligibility pipeline (remaining checks + tests)
-- [ ] Wire `notificationService` to the eligibility pipeline; synchronous geofence check-in evaluation
-- [ ] Shared transaction/idempotency helper (deferred — revisit if a third event-creation flow emerges)
-- [ ] Authentication - evaluating Amazon Cognito
-- [ ] React Native (Expo) mobile app
-- [ ] Docker Compose refinements for local dev
-- [ ] AWS deployment pipeline (RDS, EventBridge, Lambda, SNS)
