@@ -25,7 +25,6 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         business_id,
         notes,
         stamps_needed,
-        stamps_acquired,
         status,
         notify_window_days,
         notify_window_start_time,
@@ -33,7 +32,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         notification_time_sent,
         notification_cooldown_seconds,
         expiration_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING
         ${stampCardColumns}`
 
@@ -43,7 +42,6 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         fields.business_id,
         fields.notes,
         fields.stamps_needed,
-        fields.stamps_acquired ?? 0,
         fields.status ?? 'active',
         fields.notify_window_days,
         fields.notify_window_start_time,
@@ -60,11 +58,13 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
 
     async getAllStampCards(includeDeleted: boolean = false): Promise<StampCard[]> {
       const sqlString = `
-        SELECT ${stampCardColumns}
+        SELECT ${stampCardColumns}, ${stampsAcquiredExpr}
         FROM ${stampCardTableName}
-        ${includeDeleted ? '' :
-          'WHERE deleted = false'}
-        ORDER BY created_at DESC;`
+        LEFT JOIN stamp_card_events e ON e.stamp_card_id = ${stampCardTableName}.id
+        ${includeDeleted ? '' : `WHERE ${stampCardTableName}.deleted = false`}
+        GROUP BY ${stampCardTableName}.id
+        ORDER BY ${stampCardTableName}.created_at DESC;`
+
 
       const result = await pool.query(sqlString)
       const rows = result.rows
@@ -74,10 +74,13 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
 
     async getStampCardByID(id: string, includeDeleted: boolean = false, executor: Executor = pool): Promise<StampCard | null> {
       const sqlString = `
-        SELECT ${stampCardColumns}
+        SELECT ${stampCardColumns}, ${stampsAcquiredExpr}
         FROM ${stampCardTableName}
-        WHERE id = $1
-        ${includeDeleted ? '' : 'AND deleted = false'}
+        LEFT JOIN stamp_card_events e ON e.stamp_card_id = ${stampCardTableName}.id
+        WHERE ${stampCardTableName}.id = $1
+        ${includeDeleted ? '' : `AND ${stampCardTableName}.deleted = false`}
+        GROUP BY ${stampCardTableName}.id
+
       `;
 
       const result = await executor.query(sqlString, [id])
@@ -89,11 +92,14 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
 
     async getAllStampCardsByUserID(user_id: string, includeDeleted: boolean = false): Promise<StampCard[]> {
       const sqlString = `
-        SELECT ${stampCardColumns}
+        SELECT ${stampCardColumns}, ${stampsAcquiredExpr}
         FROM ${stampCardTableName}
-        WHERE user_id = $1
-        ${includeDeleted ? '' : 'AND deleted = false'}
-        ORDER BY created_at DESC
+        LEFT JOIN stamp_card_events e ON e.stamp_card_id = ${stampCardTableName}.id
+        WHERE ${stampCardTableName}.user_id = $1
+        ${includeDeleted ? '' : `AND ${stampCardTableName}.deleted = false`}
+        GROUP BY ${stampCardTableName}.id
+        ORDER BY ${stampCardTableName}.created_at DESC
+
       `;
 
       const result = await pool.query(sqlString, [user_id])
@@ -124,7 +130,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
         SET ${setArgs.join(", ")},
         updated_at = NOW()
         WHERE id = $${i}
-        RETURNING *;
+        RETURNING id;
       `;
       values.push(id);
 
@@ -132,7 +138,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
       const row = result.rows[0];
       if (!row) return null;
 
-      return mapDbRowToStampCard(row);
+      return this.getStampCardByID(row.id, true, executor)
     },
 
     async deleteStampCardByID(id: string): Promise<void> {
@@ -149,25 +155,36 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
 }
 
 const stampCardColumns = `
-  id,
-  user_id,
-  nickname,
-  business_id,
-  notes,
-  stamps_needed,
-  stamps_acquired,
-  status,
-  notify_window_days,
-  notify_window_start_time,
-  notify_window_end_time,
-  notification_time_sent,
-  notification_cooldown_seconds,
-  expiration_date,
-  deleted,
-  deleted_at,
-  created_at,
-  updated_at
+  ${stampCardTableName}.id,
+  ${stampCardTableName}.user_id,
+  ${stampCardTableName}.nickname,
+  ${stampCardTableName}.business_id,
+  ${stampCardTableName}.notes,
+  ${stampCardTableName}.stamps_needed,
+  ${stampCardTableName}.status,
+  ${stampCardTableName}.notify_window_days,
+  ${stampCardTableName}.notify_window_start_time,
+  ${stampCardTableName}.notify_window_end_time,
+  ${stampCardTableName}.notification_time_sent,
+  ${stampCardTableName}.notification_cooldown_seconds,
+  ${stampCardTableName}.expiration_date,
+  ${stampCardTableName}.deleted,
+  ${stampCardTableName}.deleted_at,
+  ${stampCardTableName}.created_at,
+  ${stampCardTableName}.updated_at
 `
+
+const stampsAcquiredExpr = `
+  COALESCE(SUM(
+    CASE e.type
+      WHEN 'stamp_added' THEN e.quantity
+      WHEN 'stamp_removed' THEN -e.quantity
+      ELSE 0
+    END
+  ), 0)::int AS stamps_acquired
+`;
+
+
 
 function mapDbRowToStampCard(row: StampCard): StampCard {
   return {

@@ -62,10 +62,10 @@ export async function seed() {
 
     // --- STAMP CARDS ---
     await client.query(`
-      INSERT INTO stamp_cards (id, user_id, business_id, stamps_needed, stamps_acquired, status)
+      INSERT INTO stamp_cards (id, user_id, business_id, stamps_needed, status)
       VALUES
-        ($1, $2, $3, 10, 0, 'active'),
-        ($4, $2, $5, 8, 5, 'active')
+        ($1, $2, $3, 10, 'active'),
+        ($4, $2, $5, 8, 'active')
     `, [TEST_IDS.stampCard1, TEST_IDS.user1, TEST_IDS.business1,
         TEST_IDS.stampCard2, TEST_IDS.business2]);
 

@@ -148,4 +148,17 @@ describe('gift card current_balance — SUM() derivation', () => {
     expect(fetchedA?.current_balance).toBe(40);
     expect(fetchedB?.current_balance).toBe(99);
   });
+
+  test('preserves cents, not just whole dollars', async () => {
+  const card = await giftCardDAO.createGiftCard(
+    { user_id: TEST_IDS.user1, business_id: TEST_IDS.business1, nickname: null, notes: null, currency: 'CAD', status: 'active' } as any,
+    pool
+  );
+  await giftCardEventService.createGiftCardEvent({
+    user_id: TEST_IDS.user1, gift_card_id: card.id, location_id: null,
+    request_id: crypto.randomUUID(), type: 'balance_added', amount: 29.99,
+  });
+  const result = await giftCardDAO.getGiftCardByID(card.id);
+  expect(result?.current_balance).toBe(29.99);
+});
 });

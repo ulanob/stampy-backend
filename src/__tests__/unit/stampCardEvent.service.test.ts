@@ -76,13 +76,14 @@ describe("stampCardEventService.createStampCardEvent", () => {
     it("rejects on completed/redeemed/expired/cancelled cards", async () => {
       for (const status of ["completed", "redeemed", "expired", "cancelled"] as const) {
         (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status });
+
         await expect(service().createStampCardEvent({
           ...baseFields, request_id: `req-${status}`, type: "stamp_added", quantity: 1,
         })).rejects.toThrow(ValidationError);
       }
     });
 
-    it("marks the card completed when it reaches stamps_needed exactly", async () => {
+    it("marks the card completed when it reaches stamps_needed exactly, without writing stamps_acquired", async () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, stamps_acquired: 9 });
 
       await service().createStampCardEvent({
@@ -91,12 +92,12 @@ describe("stampCardEventService.createStampCardEvent", () => {
 
       expect(stampCardDAO.updateStampCardByID).toHaveBeenCalledWith(
         baseCard.id,
-        expect.objectContaining({ stamps_acquired: 10, status: "completed" }),
+        { status: "completed" },
         mockClient
       );
     });
 
-    it("creates an overflow card and event when quantity exceeds capacity", async () => {
+    it("creates an overflow card seeded only by its own event, with no stamps_acquired on insert", async () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, stamps_acquired: 9 });
       (stampCardDAO.createStampCard as any).mockResolvedValue({ id: "overflow-card" });
 
@@ -104,22 +105,21 @@ describe("stampCardEventService.createStampCardEvent", () => {
         ...baseFields, request_id: "req-4", type: "stamp_added", quantity: 4,
       });
 
-      expect(stampCardDAO.createStampCard).toHaveBeenCalledWith(
-        expect.objectContaining({ stamps_acquired: 3, status: "active" }),
+      const createCardArgs = (stampCardDAO.createStampCard as any).mock.calls[0][0];
+      expect(createCardArgs).not.toHaveProperty("stamps_acquired");
+      expect(createCardArgs).toMatchObject({ stamps_needed: baseCard.stamps_needed, status: "active" });
+
+      expect(stampCardEventDAO.createStampCardEvent).toHaveBeenCalledTimes(2);
+      expect(stampCardEventDAO.createStampCardEvent).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ stamp_card_id: "overflow-card", type: "stamp_added", quantity: 3 }),
         mockClient
       );
-      expect(stampCardEventDAO.createStampCardEvent).toHaveBeenCalledTimes(2);
-    });
-
-    it("does not create an overflow card when quantity exactly fills the card", async () => {
-      (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, stamps_acquired: 9 });
-
-      await service().createStampCardEvent({
-        ...baseFields, request_id: "req-5", type: "stamp_added", quantity: 1,
-      });
-
-      expect(stampCardDAO.createStampCard).not.toHaveBeenCalled();
-      expect(stampCardEventDAO.createStampCardEvent).toHaveBeenCalledTimes(1);
+      expect(stampCardEventDAO.createStampCardEvent).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ stamp_card_id: baseCard.id, type: "stamp_added", quantity: 1 }),
+        mockClient
+      );
     });
   });
 
@@ -127,13 +127,14 @@ describe("stampCardEventService.createStampCardEvent", () => {
     it("rejects on redeemed/expired/cancelled cards", async () => {
       for (const status of ["redeemed", "expired", "cancelled"] as const) {
         (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status });
+
         await expect(service().createStampCardEvent({
           ...baseFields, request_id: `req-rm-${status}`, type: "stamp_removed", quantity: 1,
         })).rejects.toThrow(ValidationError);
       }
     });
 
-    it("allows removal on a completed card (correction)", async () => {
+    it("allows removal on a completed card and reverts status to active, without writing stamps_acquired", async () => {
       (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status: "completed", stamps_acquired: 10 });
 
       await service().createStampCardEvent({
@@ -142,7 +143,7 @@ describe("stampCardEventService.createStampCardEvent", () => {
 
       expect(stampCardDAO.updateStampCardByID).toHaveBeenCalledWith(
         baseCard.id,
-        expect.objectContaining({ stamps_acquired: 8, status: "active" }),
+        { status: "active" },
         mockClient
       );
     });
@@ -156,26 +157,42 @@ describe("stampCardEventService.createStampCardEvent", () => {
     });
   });
 
-  it("reward_redeemed resets stamps_acquired to 0 and sets status redeemed", async () => {
-    await service().createStampCardEvent({
-      ...baseFields, request_id: "req-8", type: "reward_redeemed", quantity: 0,
-    });
+  describe("reward_redeemed", () => {
+    it("sets status redeemed WITHOUT touching stamps_acquired — stamps stay on the card", async () => {
+      (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status: "completed", stamps_acquired: 10 });
+
+      await service().createStampCardEvent({
+        ...baseFields, request_id: "req-8", type: "reward_redeemed", quantity: 0,
+      });
 
     expect(stampCardDAO.updateStampCardByID).toHaveBeenCalledWith(
       baseCard.id,
-      expect.objectContaining({ stamps_acquired: 0, status: "redeemed" }),
+      { status: "redeemed" },
       mockClient
     );
   });
 
-  it("card_expired sets status expired without changing stamps_acquired", async () => {
+  it("rejects redeeming a card that is not completed", async () => {
+      for (const status of ["active", "redeemed", "expired", "cancelled"] as const) {
+        (stampCardDAO.getStampCardByID as any).mockResolvedValue({ ...baseCard, status });
+
+        await expect(service().createStampCardEvent({
+          ...baseFields, request_id: `req-redeem-${status}`, type: "reward_redeemed", quantity: 0,
+        })).rejects.toThrow(ValidationError);
+      }
+
+      expect(stampCardDAO.updateStampCardByID).not.toHaveBeenCalled();
+    });
+  });
+
+  it("card_expired sets status expired without touching stamps_acquired", async () => {
     await service().createStampCardEvent({
       ...baseFields, request_id: "req-9", type: "card_expired", quantity: 0,
     });
 
     expect(stampCardDAO.updateStampCardByID).toHaveBeenCalledWith(
       baseCard.id,
-      expect.objectContaining({ stamps_acquired: baseCard.stamps_acquired, status: "expired" }),
+      { status: "expired" },
       mockClient
     );
   });
@@ -187,7 +204,7 @@ describe("stampCardEventService.createStampCardEvent", () => {
 
     expect(stampCardDAO.updateStampCardByID).toHaveBeenCalledWith(
       baseCard.id,
-      expect.objectContaining({ status: "cancelled" }),
+      { status: "cancelled" },
       mockClient
     );
   });

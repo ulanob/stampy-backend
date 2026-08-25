@@ -71,7 +71,6 @@ CREATE TABLE stamp_cards (
     nickname TEXT NULL,
     notes TEXT NULL,
     stamps_needed INT NOT NULL DEFAULT 0,
-    stamps_acquired INT NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'redeemed', 'expired', 'cancelled')),
     notify_window_days TEXT[] NULL,
     notify_window_start_time TIME NULL,

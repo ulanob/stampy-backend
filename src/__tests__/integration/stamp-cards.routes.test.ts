@@ -25,6 +25,7 @@ describe('stamp-cards routes', () => {
         user_id: TEST_IDS.user1,
         business_id: TEST_IDS.business1,
         stamps_needed: 10,
+        stamps_acquired: 0,
       })
     );
   });
@@ -66,6 +67,16 @@ describe('stamp-cards routes', () => {
       .send({ nickname: 'Updated nickname' })
       .expect(200);
     expect(response.body.nickname).toBe('Updated nickname');
+  });
+    test('PATCH ignores stamps_needed even if included in the body', async () => {
+    const before = await request(BASE_URL)
+      .get(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}`)
+      .expect(200);
+    const response = await request(BASE_URL)
+      .patch(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}`)
+      .send({ stamps_needed: 999, nickname: 'Still updating' })
+      .expect(200);
+    expect(response.body.stamps_needed).toBe(before.body.stamps_needed);
   });
   test('PATCH ignores status even if included in the body', async () => {
     const before = await request(BASE_URL)

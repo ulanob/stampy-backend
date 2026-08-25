@@ -25,10 +25,6 @@ describe('stamp card events — transaction rollback', () => {
 
     const service = createStampCardEventService(stampCardEventDAO, brokenStampCardDAO, pool);
 
-    const before = await pool.query(
-      'SELECT stamps_acquired FROM stamp_cards WHERE id = $1',
-      [TEST_IDS.stampCard1]
-    );
     const eventsBefore = await pool.query(
       'SELECT COUNT(*) FROM stamp_card_events WHERE stamp_card_id = $1',
       [TEST_IDS.stampCard1]
@@ -43,16 +39,11 @@ describe('stamp card events — transaction rollback', () => {
       quantity: 1,
     })).rejects.toThrow('forced failure');
 
-    const after = await pool.query(
-      'SELECT stamps_acquired FROM stamp_cards WHERE id = $1',
-      [TEST_IDS.stampCard1]
-    );
     const eventsAfter = await pool.query(
       'SELECT COUNT(*) FROM stamp_card_events WHERE stamp_card_id = $1',
       [TEST_IDS.stampCard1]
     );
 
-    expect(after.rows[0].stamps_acquired).toBe(before.rows[0].stamps_acquired);
     expect(eventsAfter.rows[0].count).toBe(eventsBefore.rows[0].count);
   });
 });
