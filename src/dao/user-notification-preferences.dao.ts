@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { UserNotificationPreferences, CreateUserNotificationPreferencesInput, UpdateUserNotificationPreferencesInput } from "../models/user-notification-preferences.model";
 import { Executor } from "./types";
+import { NotificationWindowDays } from "../models/shared.types";
 
 const userNotificationPreferencesTableName = "user_notification_preferences"
 
@@ -59,7 +60,7 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
 
     async updateUserNotificationPreferencesByUserID(user_id: string, updates: UpdateUserNotificationPreferencesInput) {
       const setArgs: string[] = [];
-      const values: (string | string[] | number | boolean | Date | null)[] = [];
+      const values: (string | NotificationWindowDays | number | boolean | Date | null)[] = [];
 
       let i = 1;
 

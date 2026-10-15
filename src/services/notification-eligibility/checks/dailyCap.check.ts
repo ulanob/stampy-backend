@@ -1,14 +1,8 @@
 import { EligibilityCheck } from "../types";
+import { toLocalDateKey } from "./utils";
 
 function isSameLocalDay(dateA: Date, dateB: Date, timezone: string): boolean {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: timezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
-
-    return formatter.format(dateA) === formatter.format(dateB);
+    return toLocalDateKey(dateA, timezone) === toLocalDateKey(dateB, timezone);
 }
 
 export const dailyCapCheck: EligibilityCheck = {
