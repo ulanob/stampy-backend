@@ -19,10 +19,10 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [x] Derive gift card `current_balance` from the event log (SUM-based, no cached column)
 - [x] Derive stamp card `stamps_acquired` from the event log (same pattern; `reward_redeemed` resolved as a status-only event — see Design Decisions)
 - [x] `users.timezone` column, model, and DAO support (create + update)
+- [x] Notification eligibility pipeline (Chain of Responsibility) — eight independent checks, `evaluateEligibility` pipeline, unit tests per check
 
 **In progress / not started:**
 - [ ] Client-side timezone capture at signup (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and lazy drift-correction wiring at geofence check-in (`geo-tz`) — column and DAO exist, the capture/correction call sites don't yet
-- [ ] Location-based notification eligibility pipeline — checks scaffolded (`NotificationsEnabledCheck`, `QuietHoursCheck`, `DailyCapCheck`, `CardWindowCheck`, `CooldownCheck`, `ExpirationCheck`), pipeline wiring + tests pending
 - [ ] Wire `notificationService` to the eligibility pipeline; synchronous geofence check-in evaluation (`POST /locations/:id/check-in`)
 - [ ] Location-based notifications end-to-end (geofence check-in → eligibility → send)
 - [ ] Shared transaction/idempotency helper (deferred — revisit if a third event-creation flow emerges; currently held at two call sites)
@@ -119,11 +119,11 @@ src/
 │   ├── stampCardEvent.service.ts
 │   ├── user.service.ts
 │   ├── userNotificationPreferences.service.ts
-│   └── notification-eligibility/     # Chain of Responsibility pipeline (in progress)
-│       ├── checks/
-│       ├── utils/
-│       ├── pipeline.ts
-│       └── index.ts
+│   └── notification-eligibility/     # Chain of Responsibility pipeline
+│       ├── checks/                   # one file per check, plus shared utils.ts
+│       ├── pipeline.ts               # evaluateEligibility
+│       ├── types.ts                  # EligibilityCheck interface, result/context types
+│       └── index.ts                  # ELIGIBILITY_CHECKS (ordered list)
 ├── models/
 │   ├── business.model.ts
 │   ├── gift-card-event.model.ts
@@ -149,7 +149,7 @@ src/
 │   └── validators.ts          # error classes, validateUUID, handleRouteError
 └── __tests__/
     ├── integration/           # Supertest, real DB, one file per resource + events
-    ├── unit/                  # Vitest, mocked DAOs, one file per service
+    ├── unit/                  # Vitest, mocked DAOs, one file per service (notification-eligibility/ has one per check)
     └── smoke.test.ts
 ```
 
@@ -167,7 +167,7 @@ A few decisions worth explaining, since they shape a lot of the codebase:
 
 **Stamp card redemption doesn't clear stamps.** A gift card's `balance_redeemed` event reduces the derived sum, same as a real gift card losing value when spent. A stamp card's `reward_redeemed` event doesn't — it's excluded from the `SUM()` entirely and only flips `status` to `redeemed`. Real stamp cards don't erase their stamp history when the reward is claimed; only eligibility for another reward changes. One consequence: `reward_redeemed` now requires the card to already be `status: 'completed'`, a guard that wasn't needed before this decision — the old zero-reset behavior had accidentally been absorbing that job (a stray or duplicate redemption call was harmless because it just re-zeroed an already-zero value), and removing the reset meant that safety net needed replacing with an explicit check.
 
-**Notification eligibility as Chain of Responsibility.** Rather than one large conditional, notification eligibility is a sequence of independent, individually testable checks (`NotificationsEnabledCheck`, `QuietHoursCheck`, `DailyCapCheck`, `CardWindowCheck`, `CooldownCheck`, `ExpirationCheck`), each implementing a shared `EligibilityCheck` interface. A card is only notified if it passes every check in order.
+**Notification eligibility as Chain of Responsibility.** Rather than one large conditional, notification eligibility is a sequence of independent, individually testable checks, each implementing a shared `EligibilityCheck` interface (`name` plus `check(notifiable, preferences, context)`). `evaluateEligibility` runs the ordered `ELIGIBILITY_CHECKS` list and stops at the first failure, returning a `reason` (and optional `detail`) so a skipped notification is explainable. The order is `notificationsEnabledCheck`, `cardStatusCheck`, `dailyCapCheck`, `generalWindowCheck`, `quietHoursCheck`, `cardWindowCheck`, `cooldownCheck`, `expirationCheck`. Gift cards and stamp cards go through the same pipeline via a `NotifiableCard` discriminated union.
 
 **Cooldown stored in seconds.** `notification_cooldown_seconds` (not minutes) keeps the unit unambiguous and avoids a conversion step in the eligibility check math, even though the UI will likely present it in coarser units.
 

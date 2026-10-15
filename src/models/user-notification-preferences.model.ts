@@ -1,10 +1,12 @@
+import { NotificationWindowDays } from "./shared.types";
+
 export interface UserNotificationPreferences {
   id: string;
   user_id: string;
   notifications_enabled: boolean;
   quiet_hours_start: string | null; // TIME
   quiet_hours_end: string | null;   // TIME
-  notify_window_days: string[] | null;
+  notify_window_days: NotificationWindowDays | null;
   general_notification_window_start: string | null; // TIME
   general_notification_window_end: string | null;   // TIME
   daily_notification_cap: number;
