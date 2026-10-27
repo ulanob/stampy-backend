@@ -5,13 +5,16 @@ export interface Notification {
   gift_card_id: string | null;
   location_id: string | null;
   type: string;
-  status: string;
+  status: NotificationStatus;
   sent_at: Date | null;
   subject: string | null;
   body: string | null;
   created_at: Date;
   updated_at: Date;
 }
+
+export const NOTIFICATION_STATUSES = ['pending', 'sent', 'read'] as const;
+export type NotificationStatus = typeof NOTIFICATION_STATUSES[number];
 
 export type CreateNotificationInput = Omit<Notification,
   "id"
