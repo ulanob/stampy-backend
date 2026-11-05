@@ -13,7 +13,7 @@ export interface Notification {
   updated_at: Date;
 }
 
-export const NOTIFICATION_STATUSES = ['pending', 'sent', 'read'] as const;
+export const NOTIFICATION_STATUSES = ['pending', 'sent', 'read', 'failed'] as const;
 export type NotificationStatus = typeof NOTIFICATION_STATUSES[number];
 
 export type CreateNotificationInput = Omit<Notification,
