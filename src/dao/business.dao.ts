@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { Business, BusinessType, CreateBusinessInput, UpdateBusinessInput } from "../models/business.model";
+import { Business, CreateBusinessInput, UpdateBusinessInput } from "../models/business.model";
 
 const businessTableName = "businesses"
 
