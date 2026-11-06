@@ -141,7 +141,7 @@ CREATE TABLE notifications (
     gift_card_id UUID NULL REFERENCES gift_cards(id) ON DELETE SET NULL,
     location_id UUID NULL REFERENCES locations(id) ON DELETE SET NULL,
     type TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'read', 'failed')),
     sent_at TIMESTAMP WITH TIME ZONE NULL,
     subject TEXT NULL,
     body TEXT NULL,

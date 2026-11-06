@@ -1,4 +1,4 @@
-import { notificationDAO } from "@/src/composition";
+import { notificationService } from "@/src/composition";
 import { validateUUID, handleRouteError } from "@/src/utils/validators";
 import { NextResponse } from "next/server";
 
@@ -10,7 +10,7 @@ export async function GET(
     const { userId } = await params;
     validateUUID(userId.trim());
 
-    const notifications = await notificationDAO.getAllNotificationsByUserID(userId);
+    const notifications = await notificationService.getAllNotificationsByUserID(userId);
 
     return NextResponse.json(notifications, { status: 200 });
 

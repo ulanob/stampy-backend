@@ -1,5 +1,6 @@
 import { VALID_TYPES, BusinessType } from "../models/business.model";
 import { NextResponse } from "next/server";
+import { NOTIFICATION_STATUSES, NotificationStatus } from "../models/notification.model";
 
 
 export class AppError extends Error {
@@ -64,6 +65,12 @@ const VALID_TIMEZONES = new Set(Intl.supportedValuesOf("timeZone"));
 export function validateTimezone(value: string): asserts value is string {
   if (!VALID_TIMEZONES.has(value)) {
     throw new InvalidTimezoneError();
+  }
+}
+
+export function validateNotificationStatus(value: string): asserts value is NotificationStatus {
+  if (!NOTIFICATION_STATUSES.includes(value as NotificationStatus)) {
+    throw new ValidationError('Invalid notification status');
   }
 }
 

@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { Notification, CreateNotificationInput, UpdateNotificationInput } from "@/src/models/index.model";
+import { Notification, CreateNotificationInput, UpdateNotificationInput, NotificationStatus } from "@/src/models/index.model";
 
 const notificationTableName = "notifications"
 
@@ -72,9 +72,10 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
       return  result.rows.map(row => mapDbRowToNotification(row))
     },
 
+    // could be updated as UpdateNotificationInput should only update status
     async updateNotificationByID(id: string, updates: UpdateNotificationInput) {
       const setArgs: string[] = [];
-      const values: (string | number | boolean | Date | null)[] = [];
+      const values: (string | number | NotificationStatus | boolean | Date | null)[] = [];
 
       let i = 1;
 

@@ -20,10 +20,12 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [x] Derive stamp card `stamps_acquired` from the event log (same pattern; `reward_redeemed` resolved as a status-only event — see Design Decisions)
 - [x] `users.timezone` column, model, and DAO support (create + update)
 - [x] Notification eligibility pipeline (Chain of Responsibility) — eight independent checks, `evaluateEligibility` pipeline, unit tests per check
+- [x] Notification status (`pending` / `sent` / `failed` / `read`) typed in the model and enforced by a matching SQL CHECK constraint
+- [x] Notification service: fetch by id, list by user, mark as read (`POST /notifications/:id/read`)
 
 **In progress / not started:**
 - [ ] Client-side timezone capture at signup (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and lazy drift-correction wiring at geofence check-in (`geo-tz`) — column and DAO exist, the capture/correction call sites don't yet
-- [ ] Wire `notificationService` to the eligibility pipeline; synchronous geofence check-in evaluation (`POST /locations/:id/check-in`)
+- [ ] Check-in service and endpoint (`POST /locations/:id/check-in`): loads the user's cards and preferences for the location's business, runs `evaluateEligibility` per card, and creates notifications for cards that pass
 - [ ] Location-based notifications end-to-end (geofence check-in → eligibility → send)
 - [ ] Shared transaction/idempotency helper (deferred — revisit if a third event-creation flow emerges; currently held at two call sites)
 - [ ] Authentication - evaluating Amazon Cognito
@@ -31,6 +33,13 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [ ] React Native (Expo) mobile app (iOS + Android)
 - [ ] Docker Compose refinements for local dev
 - [ ] AWS deployment pipeline (RDS, EventBridge, Lambda, SNS)
+
+**Backlog:**
+- [ ] Only allow `sent → read` once the pipeline sets `sent`
+- [ ] `read_at` timestamp column (split from the status enum)
+- [ ] Allowlist request bodies in the business, location, and notification-preferences services (the DAOs build SQL column names from update keys)
+- [ ] Scope all resources to the authenticated user (with Cognito)
+- [ ] Direct unit tests for the remaining validators
 
 ---
 
@@ -78,8 +87,9 @@ src/
 │           │   ├── [id]/route.ts
 │           │   └── route.ts
 │           ├── notifications/
-│           │   ├── [id]/route.ts
-│           │   └── route.ts
+│           │   └── [id]/
+│           │       ├── read/route.ts
+│           │       └── route.ts
 │           ├── stamp-cards/
 │           │   ├── [id]/
 │           │   │   ├── route.ts
@@ -173,7 +183,7 @@ A few decisions worth explaining, since they shape a lot of the codebase:
 
 **Timezone handling.** `users.timezone` (IANA string, e.g. `America/Vancouver`) is set client-side at signup via `Intl.DateTimeFormat().resolvedOptions().timeZone` — no location permission required. It's lazily corrected at geofence check-in using `geo-tz` to resolve lat/lng drift.
 
-**Server-controlled status.** Card `status` (`active`/`completed`/`redeemed`/`expired`/`cancelled` for stamp cards; `active`/`expired`/`cancelled` for gift cards) is never client-settable via the generic `PATCH` route — it only changes as a side effect of processing an event. This keeps the event log the single source of truth for *why* a card reached a given state.
+**Server-controlled status.** Card `status` (`active`/`completed`/`redeemed`/`expired`/`cancelled` for stamp cards; `active`/`expired`/`cancelled` for gift cards) is never client-settable via the generic `PATCH` route — it only changes as a side effect of processing an event. This keeps the event log the single source of truth for *why* a card reached a given state. Notifications follow the same rule: there is no generic update route. `sent` and `failed` are set server-side as delivery outcomes, and the only client-driven transition is `read`, exposed as a dedicated action (`POST /notifications/:id/read`) with the status hardcoded in the service. Notifications are also never created over HTTP; they're a side effect of a check-in.
 
 **Raw SQL, no ORM.** Deliberately skipping an ORM for now. Writing raw SQL builds real understanding of the database layer — joins, transactions, constraints — before reaching for an abstraction.
 
