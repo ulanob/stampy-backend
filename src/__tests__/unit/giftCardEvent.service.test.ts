@@ -162,6 +162,22 @@ describe("giftCardEventService.createGiftCardEvent", () => {
     );
   });
 
+  describe("amount validation", () => {
+    const invalidAmounts = [0, -5, NaN, Infinity, "10"];
+
+    for (const type of ["balance_added", "balance_redeemed"] as const) {
+      it.each(invalidAmounts)(`rejects %s as the amount for ${type}`, async (amount) => {
+        await expect(service().createGiftCardEvent({
+          ...baseFields, request_id: `req-amt-${type}`, type, amount: amount as any,
+        })).rejects.toThrow(ValidationError);
+
+        // validation runs before the transaction opens and before any DB work
+        expect(mockPool.connect).not.toHaveBeenCalled();
+        expect(giftCardEventDAO.createGiftCardEvent).not.toHaveBeenCalled();
+      });
+    }
+  });
+
   describe("executor passthrough", () => {
     it("uses a passed-in executor instead of opening its own transaction", async () => {
       const externalClient: Partial<PoolClient> = { query: vi.fn().mockResolvedValue({ rows: [] }), release: vi.fn() };
