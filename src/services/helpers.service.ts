@@ -34,3 +34,9 @@ export function validateCoordinates(lat: number, lng: number): void {
 export function validateRadius(radius: number): void {
   if (radius <= 0) throw new ValidationError('geofence_radius must be positive');
 }
+
+export function validatePositiveNumber(value: unknown, fieldName: string): void {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    throw new ValidationError(`${fieldName} must be a positive number`);
+  }
+}

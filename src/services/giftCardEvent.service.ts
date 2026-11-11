@@ -2,9 +2,9 @@ import { GiftCardDAO, GiftCardEventDAO } from "../dao";
 import { Pool } from "pg";
 import { withTransaction } from "../lib/db";
 import { GiftCardStatus } from "../models/gift-card.model";
-import { CreateGiftCardEventInput, GiftCardEvent } from "../models/gift-card-event.model";
+import { CreateGiftCardEventInput, GiftCardEvent, GiftCardEventType } from "../models/gift-card-event.model";
 import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
-import { requireFields } from "./helpers.service";
+import { requireFields, validatePositiveNumber } from "./helpers.service";
 import { Executor } from "../dao/types";
 
 export type GiftCardEventService = {
@@ -24,6 +24,12 @@ export function createGiftCardEventService(
       requireFields(fields, ['user_id', 'gift_card_id', 'request_id', 'type', 'amount']);
       validateUUID(fields.gift_card_id);
       validateUUID(fields.user_id);
+
+      const AMOUNT_EVENT_TYPES: GiftCardEventType[] = ['balance_added', 'balance_redeemed'];
+
+      if (AMOUNT_EVENT_TYPES.includes(fields.type)) {
+        validatePositiveNumber(fields.amount, 'amount');
+      }
 
       const run = async (client: Executor): Promise<GiftCardEvent> => {
         // idempotency check

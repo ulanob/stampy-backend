@@ -46,6 +46,20 @@ describe('gift-cards routes', () => {
     expect(response.body.error).toBeDefined();
   });
 
+  test('POST rejects a zero or negative starting amount', async () => {
+    for (const amount of [0, -10]) {
+      const response = await createGiftCard({
+        user_id: TEST_IDS.user1,
+        business_id: TEST_IDS.business1,
+        amount,
+        currency: 'CAD',
+        request_id: crypto.randomUUID(),
+      }).expect(400);
+
+      expect(response.body.error).toBeDefined();
+    }
+  });
+
   test('POST returns 404 for a non-existent user', async () => {
     await createGiftCard({
       user_id: TEST_IDS.userNonExistent,
