@@ -9,6 +9,7 @@ import { createLocationService } from "./services/location.service";
 import { createUserNotificationPreferencesService } from "./services/userNotificationPreferences.service";
 import { createGiftCardEventService } from "./services/giftCardEvent.service";
 import { createNotificationService } from "./services/notification.service";
+import { createCheckInService } from "./services/checkIn.service";
 
 export const stampCardDAO = createStampCardDAO(pool);
 export const stampCardEventDAO = createStampCardEventDAO(pool);
@@ -29,3 +30,4 @@ export const businessService = createBusinessService(businessDAO);
 export const locationService = createLocationService(locationDAO, businessDAO)
 export const userNotificationPreferencesService = createUserNotificationPreferencesService(userNotificationPreferencesDAO, pool)
 export const notificationService = createNotificationService(notificationDAO, userDAO);
+export const checkInService = createCheckInService(locationDAO, userDAO);
