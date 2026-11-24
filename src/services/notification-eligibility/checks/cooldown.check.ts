@@ -1,22 +1,26 @@
 import { EligibilityCheck } from "../types";
 
+export const DEFAULT_COOLDOWN_SECONDS = 3 * 60 * 60;
+
 export const cooldownCheck: EligibilityCheck = {
     name: "cooldownCheck",
     check(notifiable, _preferences, context) {
-        const checkInTimeInSecs = context.now.getTime() / 1000;
-        const lastTimeSentInSecs = notifiable.card.notification_time_sent ? notifiable.card.notification_time_sent.getTime() / 1000 : null;
+        const { notification_time_sent, notification_cooldown_seconds } = notifiable.card;
 
-        const cooldownTime = notifiable.card.notification_cooldown_seconds;
+        // never notified before: nothing to cool down from
+        if (notification_time_sent === null) return { eligible: true };
 
-        if (cooldownTime !== null && lastTimeSentInSecs !== null) {
-            const elapsedTimeInSecs = checkInTimeInSecs - lastTimeSentInSecs;
-            
-            if (cooldownTime > elapsedTimeInSecs) {
-                return { eligible: false, reason: 'still_in_cooldown', detail: `Card is still in cooldown, ${Math.round(cooldownTime - elapsedTimeInSecs)} seconds` };
-            }
+        const cooldownSecs = notification_cooldown_seconds ?? DEFAULT_COOLDOWN_SECONDS;
+        const elapsedSecs = (context.now.getTime() - notification_time_sent.getTime()) / 1000;
 
+        if (cooldownSecs > elapsedSecs) {
+            return {
+                eligible: false,
+                reason: "still_in_cooldown",
+                detail: `Card is still in cooldown, ${Math.round(cooldownSecs - elapsedSecs)} seconds`,
+            };
         }
-        
+
         return { eligible: true };
-    }
+    },
 };

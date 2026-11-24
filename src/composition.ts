@@ -30,4 +30,4 @@ export const businessService = createBusinessService(businessDAO);
 export const locationService = createLocationService(locationDAO, businessDAO)
 export const userNotificationPreferencesService = createUserNotificationPreferencesService(userNotificationPreferencesDAO, pool)
 export const notificationService = createNotificationService(notificationDAO, userDAO);
-export const checkInService = createCheckInService(locationDAO, userDAO);
+export const checkInService = createCheckInService(locationDAO, userDAO, stampCardDAO, giftCardDAO);

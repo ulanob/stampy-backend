@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cooldownCheck } from "../../../../src/services/notification-eligibility/checks/cooldown.check";
+import { cooldownCheck, DEFAULT_COOLDOWN_SECONDS } from "../../../../src/services/notification-eligibility/checks/cooldown.check";
 import type { NotifiableCard, EligibilityContext } from "../../../../src/services/notification-eligibility/types";
 import type { UserNotificationPreferences } from "../../../../src/models/user-notification-preferences.model";
 import type { GiftCard } from "../../../../src/models/gift-card.model";
@@ -47,23 +47,19 @@ const context: EligibilityContext = {
   timezone: "UTC",
 };
 
+function giftNotifiable(overrides: Partial<GiftCard>): NotifiableCard {
+  return { type: "gift_card", card: { ...baseGiftCard, ...overrides } };
+}
+
+function secondsAgo(seconds: number): Date {
+  return new Date(context.now.getTime() - seconds * 1000);
+}
+
 describe("cooldownCheck", () => {
   it("is eligible when the card has never been notified (notification_time_sent is null)", () => {
     const notifiable: NotifiableCard = {
       type: "gift_card",
       card: { ...baseGiftCard, notification_time_sent: null, notification_cooldown_seconds: 3600 },
-    };
-    expect(cooldownCheck.check(notifiable, basePreferences, context)).toEqual({ eligible: true });
-  });
-
-  it("is eligible when no cooldown is configured", () => {
-    const notifiable: NotifiableCard = {
-      type: "gift_card",
-      card: {
-        ...baseGiftCard,
-        notification_cooldown_seconds: null,
-        notification_time_sent: new Date("2026-06-15T11:59:00Z"), // 1 minute ago
-      },
     };
     expect(cooldownCheck.check(notifiable, basePreferences, context)).toEqual({ eligible: true });
   });
@@ -108,5 +104,79 @@ describe("cooldownCheck", () => {
     };
     // cooldownTime > elapsedSecs → 3600 > 3600 → false → eligible
     expect(cooldownCheck.check(notifiable, basePreferences, context)).toEqual({ eligible: true });
+  });
+
+  it("exposes a 3 hour default", () => {
+    expect(DEFAULT_COOLDOWN_SECONDS).toBe(10800);
+  });
+
+  describe("null cooldown falls back to the default", () => {
+    it("is ineligible 1 minute after the last notification", () => {
+      const result = cooldownCheck.check(
+        giftNotifiable({ notification_cooldown_seconds: null, notification_time_sent: secondsAgo(60) }),
+        basePreferences,
+        context
+      );
+      expect(result).toMatchObject({ eligible: false, reason: "still_in_cooldown" });
+    });
+
+    it("is ineligible one second inside the default window", () => {
+      const result = cooldownCheck.check(
+        giftNotifiable({ notification_cooldown_seconds: null, notification_time_sent: secondsAgo(DEFAULT_COOLDOWN_SECONDS - 1) }),
+        basePreferences,
+        context
+      );
+      expect(result).toMatchObject({ eligible: false, reason: "still_in_cooldown" });
+    });
+
+    it("is eligible exactly at the default boundary", () => {
+      const result = cooldownCheck.check(
+        giftNotifiable({ notification_cooldown_seconds: null, notification_time_sent: secondsAgo(DEFAULT_COOLDOWN_SECONDS) }),
+        basePreferences,
+        context
+      );
+      expect(result).toEqual({ eligible: true });
+    });
+
+    it("is eligible once past the default window", () => {
+      const result = cooldownCheck.check(
+        giftNotifiable({ notification_cooldown_seconds: null, notification_time_sent: secondsAgo(DEFAULT_COOLDOWN_SECONDS + 1) }),
+        basePreferences,
+        context
+      );
+      expect(result).toEqual({ eligible: true });
+    });
+  });
+
+  describe("explicit cooldown overrides the default", () => {
+    it("is eligible after a custom window shorter than the default", () => {
+      const result = cooldownCheck.check(
+        giftNotifiable({ notification_cooldown_seconds: 60, notification_time_sent: secondsAgo(61) }),
+        basePreferences,
+        context
+      );
+      expect(result).toEqual({ eligible: true });
+    });
+
+    it("is ineligible inside a custom window longer than the default", () => {
+      const result = cooldownCheck.check(
+        giftNotifiable({
+          notification_cooldown_seconds: DEFAULT_COOLDOWN_SECONDS * 2,
+          notification_time_sent: secondsAgo(DEFAULT_COOLDOWN_SECONDS + 60),
+        }),
+        basePreferences,
+        context
+      );
+      expect(result).toMatchObject({ eligible: false, reason: "still_in_cooldown" });
+    });
+
+    it("treats an explicit 0 as no cooldown, not as the default", () => {
+      const result = cooldownCheck.check(
+        giftNotifiable({ notification_cooldown_seconds: 0, notification_time_sent: secondsAgo(1) }),
+        basePreferences,
+        context
+      );
+      expect(result).toEqual({ eligible: true });
+    });
   });
 });

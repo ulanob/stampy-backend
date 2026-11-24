@@ -2,8 +2,8 @@ import { GiftCardStatus } from "@/src/models/gift-card.model";
 import { EligibilityCheck } from "../types";
 import { StampCardStatus } from "@/src/models/stamp-card.model";
 
-const VALID_GIFT_CARD_STATUSES: GiftCardStatus[] = ['active'];
-const VALID_STAMP_CARD_STATUSES: StampCardStatus[] = ['active', 'completed'];
+export const VALID_GIFT_CARD_STATUSES: GiftCardStatus[] = ['active'];
+export const VALID_STAMP_CARD_STATUSES: StampCardStatus[] = ['active', 'completed'];
 
 export const cardStatusCheck: EligibilityCheck = {
     name: "cardStatusCheck",
