@@ -1,10 +1,33 @@
-import { GiftCardDAO, LocationDAO, StampCardDAO, UserDAO } from '../dao';
+import {
+  GiftCardDAO,
+  LocationDAO,
+  StampCardDAO,
+  UserDAO,
+  UserNotificationPreferencesDAO,
+} from '../dao';
 import { NotFoundError, validateUUID } from '../utils/validators';
-import { assertExists, requireFields } from './helpers.service';
-import { NotifiableCard, selectRelevantCards } from './notification-eligibility';
+import { requireFields } from './helpers.service';
+import {
+  ELIGIBILITY_CHECKS,
+  EligibilityContext,
+  evaluateEligibility,
+  NotifiableCard,
+  selectRelevantCards,
+} from './notification-eligibility';
+
+export type RejectedCard = {
+  notifiable: NotifiableCard;
+  reason: string;
+  detail?: string;
+};
+
+export type CheckInResult = {
+  eligible: NotifiableCard[];
+  rejected: RejectedCard[];
+};
 
 export type CheckInService = {
-  checkIn(location_id: string, user_id: string): Promise<NotifiableCard[] | null>;
+  checkIn(location_id: string, user_id: string, now?: Date): Promise<CheckInResult>;
 };
 
 export function createCheckInService(
@@ -12,14 +35,16 @@ export function createCheckInService(
   userDAO: UserDAO,
   stampCardDAO: StampCardDAO,
   giftCardDAO: GiftCardDAO,
+  userNotificationPreferencesDAO: UserNotificationPreferencesDAO,
 ): CheckInService {
   return {
-    async checkIn(location_id, user_id) {
+    async checkIn(location_id, user_id, now = new Date()) {
       requireFields({ location_id, user_id }, ['location_id', 'user_id']);
       validateUUID(location_id);
       validateUUID(user_id);
 
-      await assertExists(() => userDAO.getUserByID(user_id), 'User not found');
+      const user = await userDAO.getUserByID(user_id);
+      if (!user) throw new NotFoundError('User not found');
 
       const location = await locationDAO.getLocationByID(location_id);
       if (!location) throw new NotFoundError('Location not found');
@@ -30,7 +55,40 @@ export function createCheckInService(
       ]);
 
       const relevant = selectRelevantCards(location.business_id, stampCards, giftCards);
-      return relevant.length > 0 ? relevant : null;
+      if (relevant.length === 0) return { eligible: [], rejected: [] };
+
+      const preferences =
+        await userNotificationPreferencesDAO.getUserNotificationPreferencesByUserID(user_id);
+      if (!preferences) throw new NotFoundError('User notification preferences not found');
+
+      const context: EligibilityContext = {
+        now,
+        location_id,
+        timezone: user.timezone,
+      };
+
+      const result: CheckInResult = { eligible: [], rejected: [] };
+
+      for (const notifiable of relevant) {
+        const evaluation = evaluateEligibility(
+          notifiable,
+          preferences,
+          context,
+          ELIGIBILITY_CHECKS,
+        );
+
+        if (evaluation.eligible) {
+          result.eligible.push(notifiable);
+        } else {
+          result.rejected.push({
+            notifiable,
+            reason: evaluation.reason,
+            detail: evaluation.detail,
+          });
+        }
+      }
+
+      return result;
     },
   };
 }

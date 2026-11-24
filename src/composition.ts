@@ -53,4 +53,10 @@ export const userNotificationPreferencesService = createUserNotificationPreferen
   pool,
 );
 export const notificationService = createNotificationService(notificationDAO, userDAO);
-export const checkInService = createCheckInService(locationDAO, userDAO, stampCardDAO, giftCardDAO);
+export const checkInService = createCheckInService(
+  locationDAO,
+  userDAO,
+  stampCardDAO,
+  giftCardDAO,
+  userNotificationPreferencesDAO,
+);
