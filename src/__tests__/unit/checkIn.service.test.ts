@@ -11,6 +11,7 @@ import type { StampCard } from '../../models/stamp-card.model';
 import type { GiftCard } from '../../models/gift-card.model';
 import type { UserNotificationPreferences } from '../../models/user-notification-preferences.model';
 import { NotFoundError, ValidationError, InvalidUUIDError } from '../../utils/validators';
+import { EligibilityContext } from '@/src/services/notification-eligibility/types';
 
 describe('checkInService.checkIn', () => {
   let locationDAO: LocationDAO;
@@ -89,7 +90,13 @@ describe('checkInService.checkIn', () => {
     updated_at: new Date('2026-01-01T00:00:00Z'),
   };
 
-  const emptyResult = { eligible: [], rejected: [] };
+  const context: EligibilityContext = {
+    now,
+    location_id: baseLocation.id,
+    timezone: baseUser.timezone,
+  };
+
+  const emptyResult = { context, eligible: [], rejected: [] };
 
   beforeEach(() => {
     locationDAO = {
@@ -183,6 +190,24 @@ describe('checkInService.checkIn', () => {
 
       expectCardsNotLoaded();
       expectPreferencesNotLoaded();
+    });
+  });
+
+  describe('result context', () => {
+    it('returns the now, location_id and user timezone used for evaluation', async () => {
+      (userDAO.getUserByID as any).mockResolvedValue({
+        ...baseUser,
+        timezone: 'America/Vancouver',
+      });
+      (stampCardDAO.getAllStampCardsByUserID as any).mockResolvedValue([relevantStampCard]);
+
+      const result = await service().checkIn(validLocationId, validUserId, now);
+
+      expect(result.context).toEqual({
+        now,
+        location_id: validLocationId,
+        timezone: 'America/Vancouver',
+      });
     });
   });
 

@@ -22,6 +22,7 @@ export type RejectedCard = {
 };
 
 export type CheckInResult = {
+  context: EligibilityContext;
   eligible: NotifiableCard[];
   rejected: RejectedCard[];
 };
@@ -49,25 +50,21 @@ export function createCheckInService(
       const location = await locationDAO.getLocationByID(location_id);
       if (!location) throw new NotFoundError('Location not found');
 
+      const context: EligibilityContext = { now, location_id, timezone: user.timezone };
+
       const [stampCards, giftCards] = await Promise.all([
         stampCardDAO.getAllStampCardsByUserID(user_id),
         giftCardDAO.getAllGiftCardsByUserID(user_id),
       ]);
 
       const relevant = selectRelevantCards(location.business_id, stampCards, giftCards);
-      if (relevant.length === 0) return { eligible: [], rejected: [] };
+      if (relevant.length === 0) return { context, eligible: [], rejected: [] };
 
       const preferences =
         await userNotificationPreferencesDAO.getUserNotificationPreferencesByUserID(user_id);
       if (!preferences) throw new NotFoundError('User notification preferences not found');
 
-      const context: EligibilityContext = {
-        now,
-        location_id,
-        timezone: user.timezone,
-      };
-
-      const result: CheckInResult = { eligible: [], rejected: [] };
+      const result: CheckInResult = { context, eligible: [], rejected: [] };
 
       for (const notifiable of relevant) {
         const evaluation = evaluateEligibility(

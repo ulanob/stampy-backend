@@ -19,6 +19,14 @@ afterAll(async () => {
   await clearAll();
 });
 
+function emptyResultAt(location_id: string) {
+  return {
+    context: { now: expect.any(Date), location_id, timezone: 'UTC' },
+    eligible: [],
+    rejected: [],
+  };
+}
+
 describe('check-in service — real DAOs feeding selectRelevantCards and the eligibility pipeline', () => {
   const locationDAO = createLocationDAO(pool);
   const userDAO = createUserDAO(pool);
@@ -27,8 +35,6 @@ describe('check-in service — real DAOs feeding selectRelevantCards and the eli
   const businessDAO = createBusinessDAO(pool);
   const prefsDAO = createUserNotificationPreferencesDAO(pool);
   const service = createCheckInService(locationDAO, userDAO, stampCardDAO, giftCardDAO, prefsDAO);
-
-  const emptyResult = { eligible: [], rejected: [] };
 
   test('returns only the cards for the checked-in business, with derived values', async () => {
     // seed: user1 has stampCard1 (business1, 1 stamp) and giftCard1 (business1, $50),
@@ -45,6 +51,12 @@ describe('check-in service — real DAOs feeding selectRelevantCards and the eli
     expect((stamp?.card as any).stamps_acquired).toBe(1);
     expect(gift?.card.id).toBe(TEST_IDS.giftCard1);
     expect((gift?.card as any).current_balance).toBe(50);
+
+    expect(result.context).toEqual({
+      now: expect.any(Date),
+      location_id: TEST_IDS.location1,
+      timezone: 'UTC',
+    });
   });
 
   test('returns an empty result at a business where the user has no cards', async () => {
@@ -57,7 +69,7 @@ describe('check-in service — real DAOs feeding selectRelevantCards and the eli
       geofence_radius: 50,
     });
 
-    expect(await service.checkIn(location.id, TEST_IDS.user1)).toEqual(emptyResult);
+    expect(await service.checkIn(location.id, TEST_IDS.user1)).toEqual(emptyResultAt(location.id));
   });
 
   test('returns an empty result when the only matching gift card has no events (derived balance 0)', async () => {
@@ -81,7 +93,7 @@ describe('check-in service — real DAOs feeding selectRelevantCards and the eli
       pool,
     );
 
-    expect(await service.checkIn(location.id, TEST_IDS.user1)).toEqual(emptyResult);
+    expect(await service.checkIn(location.id, TEST_IDS.user1)).toEqual(emptyResultAt(location.id));
   });
 
   test('rejects every relevant card with notifications_disabled when the real preferences row opts out', async () => {
