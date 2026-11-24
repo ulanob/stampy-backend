@@ -1,21 +1,29 @@
-import { Pool } from "pg";
-import { StampCardEvent, CreateStampCardEventInput } from "@/src/models/index.model";
-import { Executor } from "./types";
+import { Pool } from 'pg';
+import { StampCardEvent, CreateStampCardEventInput } from '@/src/models/index.model';
+import { Executor } from './types';
 
-const stampCardEventTableName = "stamp_card_events"
+const stampCardEventTableName = 'stamp_card_events';
 
 export type StampCardEventDAO = {
-  createStampCardEvent(fields: CreateStampCardEventInput, executor: Executor): Promise<StampCardEvent>;
+  createStampCardEvent(
+    fields: CreateStampCardEventInput,
+    executor: Executor,
+  ): Promise<StampCardEvent>;
   getAllStampCardEvents(limit?: number, offset?: number): Promise<StampCardEvent[]>;
   getStampCardEventsByStampCardID(stamp_card_id: string): Promise<StampCardEvent[]>;
-  getStampCardEventByRequestID(request_id: string, executor?: Executor):Promise<StampCardEvent | null>;
-  getAllStampCardEventsByUserID(user_id: string): Promise<StampCardEvent[]>
-}
+  getStampCardEventByRequestID(
+    request_id: string,
+    executor?: Executor,
+  ): Promise<StampCardEvent | null>;
+  getAllStampCardEventsByUserID(user_id: string): Promise<StampCardEvent[]>;
+};
 
 export function createStampCardEventDAO(pool: Pool): StampCardEventDAO {
   return {
-    async createStampCardEvent(fields: CreateStampCardEventInput, executor: Executor): Promise<StampCardEvent> {
-
+    async createStampCardEvent(
+      fields: CreateStampCardEventInput,
+      executor: Executor,
+    ): Promise<StampCardEvent> {
       const sqlString = `
       INSERT INTO ${stampCardEventTableName}
         (user_id,
@@ -26,7 +34,7 @@ export function createStampCardEventDAO(pool: Pool): StampCardEventDAO {
         quantity)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING
-        ${stampCardEventColumns}`
+        ${stampCardEventColumns}`;
 
       const inputs = [
         fields.user_id,
@@ -34,10 +42,10 @@ export function createStampCardEventDAO(pool: Pool): StampCardEventDAO {
         fields.location_id,
         fields.request_id,
         fields.type,
-        fields.quantity
-      ]
+        fields.quantity,
+      ];
 
-      const result = await executor.query(sqlString, inputs)
+      const result = await executor.query(sqlString, inputs);
       return mapDbRowToStampCardEvent(result.rows[0]);
     },
 
@@ -46,12 +54,12 @@ export function createStampCardEventDAO(pool: Pool): StampCardEventDAO {
         SELECT ${stampCardEventColumns}
         FROM ${stampCardEventTableName}
         ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2;`
+        LIMIT $1 OFFSET $2;`;
 
-      const result = await pool.query(sqlString, [limit, offset])
+      const result = await pool.query(sqlString, [limit, offset]);
       const rows = result.rows;
 
-      return rows.map(row => mapDbRowToStampCardEvent(row));
+      return rows.map((row) => mapDbRowToStampCardEvent(row));
     },
 
     async getStampCardEventsByStampCardID(stamp_card_id: string): Promise<StampCardEvent[]> {
@@ -62,12 +70,14 @@ export function createStampCardEventDAO(pool: Pool): StampCardEventDAO {
         ORDER BY created_at DESC
       `;
 
-      const result = await pool.query(sqlString, [stamp_card_id])
-      return result.rows.map(row => mapDbRowToStampCardEvent(row))
-
+      const result = await pool.query(sqlString, [stamp_card_id]);
+      return result.rows.map((row) => mapDbRowToStampCardEvent(row));
     },
 
-    async getStampCardEventByRequestID(request_id: string, executor: Executor = pool): Promise<StampCardEvent | null> {
+    async getStampCardEventByRequestID(
+      request_id: string,
+      executor: Executor = pool,
+    ): Promise<StampCardEvent | null> {
       const sqlString = `
         SELECT ${stampCardEventColumns}
         FROM ${stampCardEventTableName}
@@ -87,10 +97,10 @@ export function createStampCardEventDAO(pool: Pool): StampCardEventDAO {
         ORDER BY created_at DESC
       `;
 
-      const result = await pool.query(sqlString, [user_id])
-      return result.rows.map(row => mapDbRowToStampCardEvent(row))
-    }
-  }
+      const result = await pool.query(sqlString, [user_id]);
+      return result.rows.map((row) => mapDbRowToStampCardEvent(row));
+    },
+  };
 }
 
 const stampCardEventColumns = `
@@ -102,7 +112,7 @@ const stampCardEventColumns = `
   type,
   quantity,
   created_at
-`
+`;
 
 function mapDbRowToStampCardEvent(row: StampCardEvent): StampCardEvent {
   return {
@@ -113,6 +123,6 @@ function mapDbRowToStampCardEvent(row: StampCardEvent): StampCardEvent {
     request_id: row.request_id,
     type: row.type,
     quantity: row.quantity,
-    created_at: new Date(row.created_at)
+    created_at: new Date(row.created_at),
   };
 }

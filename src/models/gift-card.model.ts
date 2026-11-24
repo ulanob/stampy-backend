@@ -1,4 +1,4 @@
-import { NotificationWindowDays } from "./shared.types";
+import { NotificationWindowDays } from './shared.types';
 
 export interface GiftCard {
   id: string;
@@ -22,14 +22,11 @@ export interface GiftCard {
 }
 
 export const GIFT_CARD_STATUSES = ['active', 'cancelled', 'expired'] as const;
-export type GiftCardStatus = typeof GIFT_CARD_STATUSES[number];
+export type GiftCardStatus = (typeof GIFT_CARD_STATUSES)[number];
 
-export type CreateGiftCardInput = Omit<GiftCard,
-  "id"
-  | "created_at"
-  | "updated_at"
-  | "deleted"
-  | "deleted_at"
+export type CreateGiftCardInput = Omit<
+  GiftCard,
+  'id' | 'created_at' | 'updated_at' | 'deleted' | 'deleted_at'
 > & {
   current_balance?: number;
 };
@@ -40,16 +37,17 @@ export type CreateGiftCardRequestBody = CreateGiftCardInput & {
   request_id: string;
 };
 
-type GiftCardUpdateableFields = Pick<GiftCard,
-  "nickname"
-  | "notes"
-  | "status"
-  | "notify_window_days"
-  | "notify_window_start_time"
-  | "notify_window_end_time"
-  | "notification_time_sent"
-  | "notification_cooldown_seconds"
-  | "expiration_date"
->
+type GiftCardUpdateableFields = Pick<
+  GiftCard,
+  | 'nickname'
+  | 'notes'
+  | 'status'
+  | 'notify_window_days'
+  | 'notify_window_start_time'
+  | 'notify_window_end_time'
+  | 'notification_time_sent'
+  | 'notification_cooldown_seconds'
+  | 'expiration_date'
+>;
 
 export type UpdateGiftCardInput = Partial<GiftCardUpdateableFields>;

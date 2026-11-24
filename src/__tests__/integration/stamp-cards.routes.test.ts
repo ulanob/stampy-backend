@@ -26,7 +26,7 @@ describe('stamp-cards routes', () => {
         business_id: TEST_IDS.business1,
         stamps_needed: 10,
         stamps_acquired: 0,
-      })
+      }),
     );
   });
   test('POST rejects missing required field', async () => {
@@ -57,9 +57,7 @@ describe('stamp-cards routes', () => {
     expect(response.body.id).toBe(TEST_IDS.stampCard1);
   });
   test('GET /:id returns 404 for a non-existent card', async () => {
-    await request(BASE_URL)
-      .get(`/api/v1/stamp-cards/${TEST_IDS.stampCardNonExistent}`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/stamp-cards/${TEST_IDS.stampCardNonExistent}`).expect(404);
   });
   test('PATCH /:id updates a stamp card', async () => {
     const response = await request(BASE_URL)
@@ -68,7 +66,7 @@ describe('stamp-cards routes', () => {
       .expect(200);
     expect(response.body.nickname).toBe('Updated nickname');
   });
-    test('PATCH ignores stamps_needed even if included in the body', async () => {
+  test('PATCH ignores stamps_needed even if included in the body', async () => {
     const before = await request(BASE_URL)
       .get(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}`)
       .expect(200);
@@ -120,12 +118,8 @@ describe('stamp-cards routes', () => {
       business_id: TEST_IDS.business1,
       stamps_needed: 5,
     }).expect(201);
-    await request(BASE_URL)
-      .delete(`/api/v1/stamp-cards/${created.body.id}`)
-      .expect(204);
-    await request(BASE_URL)
-      .get(`/api/v1/stamp-cards/${created.body.id}`)
-      .expect(404);
+    await request(BASE_URL).delete(`/api/v1/stamp-cards/${created.body.id}`).expect(204);
+    await request(BASE_URL).get(`/api/v1/stamp-cards/${created.body.id}`).expect(404);
   });
   test('DELETE /:id returns 400 for already-deleted card', async () => {
     const created = await createCard({

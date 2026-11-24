@@ -1,10 +1,10 @@
-import pool from "../lib/db";
+import pool from '../lib/db';
 
 async function seed() {
   const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
+    await client.query('BEGIN');
 
     // --- BUSINESSES ---
     const { rows: businesses } = await client.query(`
@@ -105,8 +105,8 @@ async function seed() {
       [userId, stampCardId1, locationId1, giftCardId1, locationId2],
     );
 
-    await client.query("COMMIT");
-    console.log("✅ Seed complete");
+    await client.query('COMMIT');
+    console.log('✅ Seed complete');
     console.log({
       businessId1,
       businessId2,
@@ -119,8 +119,8 @@ async function seed() {
       giftCardId2,
     });
   } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("❌ Seed failed, rolled back:", err);
+    await client.query('ROLLBACK');
+    console.error('❌ Seed failed, rolled back:', err);
   } finally {
     client.release();
     await pool.end();

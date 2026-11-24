@@ -15,6 +15,6 @@ export const GIFT_CARD_EVENT_TYPES = [
   'card_expired',
   'card_deleted',
 ] as const;
-export type GiftCardEventType = typeof GIFT_CARD_EVENT_TYPES[number];
+export type GiftCardEventType = (typeof GIFT_CARD_EVENT_TYPES)[number];
 
 export type CreateGiftCardEventInput = Omit<GiftCardEvent, 'id' | 'created_at'>;

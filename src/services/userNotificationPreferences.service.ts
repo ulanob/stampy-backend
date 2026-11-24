@@ -4,11 +4,7 @@ import {
   CreateUserNotificationPreferencesInput,
   UpdateUserNotificationPreferencesInput,
 } from '../models/user-notification-preferences.model';
-import {
-  NotFoundError,
-  validateUUID,
-  ValidationError,
-} from '../utils/validators';
+import { NotFoundError, validateUUID, ValidationError } from '../utils/validators';
 import { Pool } from 'pg';
 import { requireFields } from './helpers.service';
 import { Executor } from '../dao/types';
@@ -16,25 +12,23 @@ import { Executor } from '../dao/types';
 export type UserNotificationPreferencesService = {
   createUserNotificationPreferences(
     fields: CreateUserNotificationPreferencesInput,
-    executor?: Executor
+    executor?: Executor,
   ): Promise<UserNotificationPreferences>;
-  getUserNotificationPreferencesByUserID(
-    user_id: string
-  ): Promise<UserNotificationPreferences>;
+  getUserNotificationPreferencesByUserID(user_id: string): Promise<UserNotificationPreferences>;
   updateUserNotificationPreferencesByUserID(
     user_id: string,
-    updates: UpdateUserNotificationPreferencesInput
+    updates: UpdateUserNotificationPreferencesInput,
   ): Promise<UserNotificationPreferences>;
 };
 
 export function createUserNotificationPreferencesService(
   userNotificationPreferencesDAO: UserNotificationPreferencesDAO,
-  pool: Pool
+  pool: Pool,
 ): UserNotificationPreferencesService {
   return {
     async createUserNotificationPreferences(
       fields: CreateUserNotificationPreferencesInput,
-      executor: Executor = pool
+      executor: Executor = pool,
     ): Promise<UserNotificationPreferences> {
       // check required fields
       requireFields(fields, ['user_id']);
@@ -42,19 +36,17 @@ export function createUserNotificationPreferencesService(
 
       return await userNotificationPreferencesDAO.createUserNotificationPreferences(
         fields,
-        executor
+        executor,
       );
     },
 
     async getUserNotificationPreferencesByUserID(
-      user_id: string
+      user_id: string,
     ): Promise<UserNotificationPreferences> {
       validateUUID(user_id);
 
       const fetchedUserNotificationPreferences =
-        await userNotificationPreferencesDAO.getUserNotificationPreferencesByUserID(
-          user_id
-        );
+        await userNotificationPreferencesDAO.getUserNotificationPreferencesByUserID(user_id);
 
       if (!fetchedUserNotificationPreferences) {
         throw new NotFoundError('Could not find userNotificationPreferences');
@@ -65,14 +57,12 @@ export function createUserNotificationPreferencesService(
 
     async updateUserNotificationPreferencesByUserID(
       user_id: string,
-      updates: UpdateUserNotificationPreferencesInput
+      updates: UpdateUserNotificationPreferencesInput,
     ): Promise<UserNotificationPreferences> {
       validateUUID(user_id);
 
       // check updates exist, arent aren't undefined
-      const definedUpdates = Object.entries(updates).filter(
-        ([, v]) => v !== undefined
-      );
+      const definedUpdates = Object.entries(updates).filter(([, v]) => v !== undefined);
       if (definedUpdates.length === 0) {
         throw new ValidationError('No fields to update');
       }
@@ -80,7 +70,7 @@ export function createUserNotificationPreferencesService(
       const updatedUserNotificationPreferences =
         await userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID(
           user_id,
-          updates
+          updates,
         );
 
       if (!updatedUserNotificationPreferences) {

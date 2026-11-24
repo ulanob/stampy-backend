@@ -1,19 +1,26 @@
-import { Pool } from "pg";
-import { Notification, CreateNotificationInput, UpdateNotificationInput, NotificationStatus } from "@/src/models/index.model";
+import { Pool } from 'pg';
+import {
+  Notification,
+  CreateNotificationInput,
+  UpdateNotificationInput,
+  NotificationStatus,
+} from '@/src/models/index.model';
 
-const notificationTableName = "notifications"
+const notificationTableName = 'notifications';
 
 export type NotificationDAO = {
   createNotification(fields: CreateNotificationInput): Promise<Notification>;
   getNotificationByID(id: string): Promise<Notification | null>;
   getAllNotificationsByUserID(user_id: string): Promise<Notification[]>;
-  updateNotificationByID(id: string, updates: UpdateNotificationInput): Promise<Notification | null>;
-}
+  updateNotificationByID(
+    id: string,
+    updates: UpdateNotificationInput,
+  ): Promise<Notification | null>;
+};
 
 export function createNotificationDAO(pool: Pool): NotificationDAO {
   return {
     async createNotification(fields: CreateNotificationInput): Promise<Notification> {
-
       const sqlString = `
       INSERT INTO ${notificationTableName}
         (
@@ -27,7 +34,7 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
         )
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING
-        ${notificationColumns}`
+        ${notificationColumns}`;
 
       const inputs = [
         fields.user_id,
@@ -36,11 +43,11 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
         fields.location_id,
         fields.type,
         fields.subject,
-        fields.body
-      ]
+        fields.body,
+      ];
 
-      const result = await pool.query(sqlString, inputs)
-      
+      const result = await pool.query(sqlString, inputs);
+
       return mapDbRowToNotification(result.rows[0]);
     },
 
@@ -51,11 +58,11 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
         WHERE id = $1
       `;
 
-      const result = await pool.query(sqlString, [id])
-      const row = result.rows[0]
+      const result = await pool.query(sqlString, [id]);
+      const row = result.rows[0];
       if (!row) return null;
 
-      return mapDbRowToNotification(row)
+      return mapDbRowToNotification(row);
     },
 
     async getAllNotificationsByUserID(user_id: string): Promise<Notification[]> {
@@ -66,10 +73,9 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
         ORDER BY created_at DESC
       `;
 
-      
-      const result = await pool.query(sqlString, [user_id])
+      const result = await pool.query(sqlString, [user_id]);
 
-      return  result.rows.map(row => mapDbRowToNotification(row))
+      return result.rows.map((row) => mapDbRowToNotification(row));
     },
 
     // could be updated as UpdateNotificationInput should only update status
@@ -89,12 +95,12 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
       }
 
       if (setArgs.length === 0) {
-        throw new Error("No fields to update");
+        throw new Error('No fields to update');
       }
 
       const sqlString = `
       UPDATE ${notificationTableName}
-      SET ${setArgs.join(", ")},
+      SET ${setArgs.join(', ')},
       updated_at = NOW()
       WHERE id = $${i}
       RETURNING *;
@@ -106,8 +112,8 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
       if (!row) return null;
 
       return mapDbRowToNotification(row);
-    }
-  }
+    },
+  };
 }
 
 const notificationColumns = `
@@ -123,7 +129,7 @@ const notificationColumns = `
   body,
   created_at,
   updated_at
-`
+`;
 
 function mapDbRowToNotification(row: Notification): Notification {
   return {

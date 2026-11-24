@@ -1,14 +1,14 @@
-import { NotificationWindowDays } from "./shared.types";
+import { NotificationWindowDays } from './shared.types';
 
 export interface UserNotificationPreferences {
   id: string;
   user_id: string;
   notifications_enabled: boolean;
   quiet_hours_start: string | null; // TIME
-  quiet_hours_end: string | null;   // TIME
+  quiet_hours_end: string | null; // TIME
   notify_window_days: NotificationWindowDays | null;
   general_notification_window_start: string | null; // TIME
-  general_notification_window_end: string | null;   // TIME
+  general_notification_window_end: string | null; // TIME
   daily_notification_cap: number;
   daily_notification_counter: number;
   last_notified_date: Date | null;
@@ -16,23 +16,26 @@ export interface UserNotificationPreferences {
   updated_at: Date;
 }
 
-export type CreateUserNotificationPreferencesInput = Omit<UserNotificationPreferences,
-  "id"
-  | "daily_notification_counter"
-  | "daily_notification_cap"
-  | "last_notified_date"
-  | "created_at"
-  | "updated_at"
->
+export type CreateUserNotificationPreferencesInput = Omit<
+  UserNotificationPreferences,
+  | 'id'
+  | 'daily_notification_counter'
+  | 'daily_notification_cap'
+  | 'last_notified_date'
+  | 'created_at'
+  | 'updated_at'
+>;
 
-type UserNotificationPreferencesUpdateableFields = Pick<UserNotificationPreferences,
-  "notifications_enabled"
-  | "quiet_hours_start"
-  | "quiet_hours_end"
-  | "general_notification_window_start"
-  | "general_notification_window_end"
-  | "notify_window_days"
-  | "daily_notification_cap"
->
+type UserNotificationPreferencesUpdateableFields = Pick<
+  UserNotificationPreferences,
+  | 'notifications_enabled'
+  | 'quiet_hours_start'
+  | 'quiet_hours_end'
+  | 'general_notification_window_start'
+  | 'general_notification_window_end'
+  | 'notify_window_days'
+  | 'daily_notification_cap'
+>;
 
-export type UpdateUserNotificationPreferencesInput = Partial<UserNotificationPreferencesUpdateableFields>
+export type UpdateUserNotificationPreferencesInput =
+  Partial<UserNotificationPreferencesUpdateableFields>;

@@ -1,4 +1,4 @@
-import { DAY_OF_WEEK } from "@/src/models/shared.types";
+import { DAY_OF_WEEK } from '@/src/models/shared.types';
 
 export function toLocalDateKey(date: Date, timezone: string): string {
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -10,7 +10,10 @@ export function toLocalDateKey(date: Date, timezone: string): string {
   return formatter.format(date); // "2026-10-06"
 }
 
-export function getLocalDayAndMinutes(now: Date, timezone: string): { dayOfWeek: DAY_OF_WEEK; minutes: number } {
+export function getLocalDayAndMinutes(
+  now: Date,
+  timezone: string,
+): { dayOfWeek: DAY_OF_WEEK; minutes: number } {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     weekday: 'long',
@@ -20,19 +23,19 @@ export function getLocalDayAndMinutes(now: Date, timezone: string): { dayOfWeek:
   });
 
   const parts = formatter.formatToParts(now);
-  
-  const dayStr = parts.find(part => part.type === 'weekday')?.value.toLowerCase() as DAY_OF_WEEK;
-  const hourStr = parts.find(part => part.type === 'hour')?.value || '0';
-  const minuteStr = parts.find(part => part.type === 'minute')?.value || '0';
-  
+
+  const dayStr = parts.find((part) => part.type === 'weekday')?.value.toLowerCase() as DAY_OF_WEEK;
+  const hourStr = parts.find((part) => part.type === 'hour')?.value || '0';
+  const minuteStr = parts.find((part) => part.type === 'minute')?.value || '0';
+
   const hours = parseInt(hourStr, 10) % 24;
   const minutes = parseInt(minuteStr, 10);
 
-  const totalMinutes = (hours * 60) + minutes;
+  const totalMinutes = hours * 60 + minutes;
 
   return {
     dayOfWeek: dayStr,
-    minutes: totalMinutes
+    minutes: totalMinutes,
   };
 }
 
@@ -45,5 +48,5 @@ export function postgresTimeToMinutes(timeStr: string): number {
   const minutes = parseInt(minutesStr, 10) || 0;
 
   // 3. Return total minutes from midnight
-  return (hours * 60) + minutes;
+  return hours * 60 + minutes;
 }

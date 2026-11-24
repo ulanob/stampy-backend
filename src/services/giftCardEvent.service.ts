@@ -1,14 +1,21 @@
-import { GiftCardDAO, GiftCardEventDAO } from "../dao";
-import { Pool } from "pg";
-import { withTransaction } from "../lib/db";
-import { GiftCardStatus } from "../models/gift-card.model";
-import { CreateGiftCardEventInput, GiftCardEvent, GiftCardEventType } from "../models/gift-card-event.model";
-import { NotFoundError, validateUUID, ValidationError } from "../utils/validators";
-import { requireFields, validatePositiveNumber } from "./helpers.service";
-import { Executor } from "../dao/types";
+import { GiftCardDAO, GiftCardEventDAO } from '../dao';
+import { Pool } from 'pg';
+import { withTransaction } from '../lib/db';
+import { GiftCardStatus } from '../models/gift-card.model';
+import {
+  CreateGiftCardEventInput,
+  GiftCardEvent,
+  GiftCardEventType,
+} from '../models/gift-card-event.model';
+import { NotFoundError, validateUUID, ValidationError } from '../utils/validators';
+import { requireFields, validatePositiveNumber } from './helpers.service';
+import { Executor } from '../dao/types';
 
 export type GiftCardEventService = {
-  createGiftCardEvent(fields: CreateGiftCardEventInput, executor?: Executor): Promise<GiftCardEvent>;
+  createGiftCardEvent(
+    fields: CreateGiftCardEventInput,
+    executor?: Executor,
+  ): Promise<GiftCardEvent>;
   getGiftCardEventsByGiftCardID(gift_card_id: string): Promise<GiftCardEvent[]>;
   getGiftCardEventByRequestID(request_id: string): Promise<GiftCardEvent | null>;
   getAllGiftCardEventsByUserID(user_id: string): Promise<GiftCardEvent[]>;
@@ -17,7 +24,7 @@ export type GiftCardEventService = {
 export function createGiftCardEventService(
   giftCardEventDAO: GiftCardEventDAO,
   giftCardDAO: GiftCardDAO,
-  pool: Pool
+  pool: Pool,
 ): GiftCardEventService {
   return {
     async createGiftCardEvent(fields, executor?: Executor): Promise<GiftCardEvent> {
@@ -34,7 +41,10 @@ export function createGiftCardEventService(
       const run = async (client: Executor): Promise<GiftCardEvent> => {
         // idempotency check
         if (fields.request_id) {
-          const existing = await giftCardEventDAO.getGiftCardEventByRequestID(fields.request_id, client);
+          const existing = await giftCardEventDAO.getGiftCardEventByRequestID(
+            fields.request_id,
+            client,
+          );
           if (existing) return existing;
         }
 
@@ -108,6 +118,6 @@ export function createGiftCardEventService(
       const fetchedEvents = await giftCardEventDAO.getAllGiftCardEventsByUserID(user_id);
 
       return fetchedEvents;
-    }
+    },
   };
 }

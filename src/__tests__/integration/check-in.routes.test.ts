@@ -45,19 +45,29 @@ describe('check-in route', () => {
   });
 
   test('POST returns 404 for a non-existent location', async () => {
-    const response = await checkIn(TEST_IDS.locationNonExistent, { user_id: TEST_IDS.user1 }).expect(404);
+    const response = await checkIn(TEST_IDS.locationNonExistent, {
+      user_id: TEST_IDS.user1,
+    }).expect(404);
     expect(response.body.error).toBeDefined();
   });
 
   test('POST returns 404 for a non-existent user', async () => {
-    const response = await checkIn(TEST_IDS.location1, { user_id: TEST_IDS.userNonExistent }).expect(404);
+    const response = await checkIn(TEST_IDS.location1, {
+      user_id: TEST_IDS.userNonExistent,
+    }).expect(404);
     expect(response.body.error).toBeDefined();
   });
 
   test('POST returns 404 for a soft-deleted location', async () => {
     const { body: created } = await request(BASE_URL)
       .post('/api/v1/locations')
-      .send({ business_id: TEST_IDS.business1, address: 'Temp', lat: 1, lng: 1, geofence_radius: 50 })
+      .send({
+        business_id: TEST_IDS.business1,
+        address: 'Temp',
+        lat: 1,
+        lng: 1,
+        geofence_radius: 50,
+      })
       .expect(201);
 
     await request(BASE_URL).delete(`/api/v1/locations/${created.id}`).expect(204);
@@ -68,7 +78,12 @@ describe('check-in route', () => {
   test('POST returns 404 for a soft-deleted user', async () => {
     const { body: created } = await request(BASE_URL)
       .post('/api/v1/users')
-      .send({ email: 'checkin-deleted@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' })
+      .send({
+        email: 'checkin-deleted@example.com',
+        display_name: null,
+        auth_provider_id: null,
+        timezone: 'America/Vancouver',
+      })
       .expect(201);
 
     await request(BASE_URL).delete(`/api/v1/users/${created.id}`).expect(204);

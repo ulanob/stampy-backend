@@ -29,7 +29,7 @@ describe('stamp card stamps_acquired — SUM() derivation', () => {
         stamps_needed: 20,
         status: 'active',
       } as any,
-      pool
+      pool,
     );
 
     // Seed history: +5, +3, -2, +4, -1 => expected 9
@@ -66,7 +66,7 @@ describe('stamp card stamps_acquired — SUM() derivation', () => {
         stamps_needed: 5,
         status: 'active',
       } as any,
-      pool
+      pool,
     );
 
     // Fill exactly to completion first — reward_redeemed requires the card
@@ -106,7 +106,7 @@ describe('stamp card stamps_acquired — SUM() derivation', () => {
         stamps_needed: 20,
         status: 'active',
       } as any,
-      pool
+      pool,
     );
 
     await stampCardEventService.createStampCardEvent({
@@ -147,7 +147,7 @@ describe('stamp card stamps_acquired — SUM() derivation', () => {
         stamps_needed: 10,
         status: 'active',
       } as any,
-      pool
+      pool,
     );
 
     const result = await stampCardDAO.getStampCardByID(card.id);
@@ -156,25 +156,51 @@ describe('stamp card stamps_acquired — SUM() derivation', () => {
 
   test('two cards with different event histories do not leak stamps into each other (JOIN isolation)', async () => {
     const cardA = await stampCardDAO.createStampCard(
-      { user_id: TEST_IDS.user1, business_id: TEST_IDS.business1, nickname: 'A', notes: null, stamps_needed: 50, status: 'active' } as any,
-      pool
+      {
+        user_id: TEST_IDS.user1,
+        business_id: TEST_IDS.business1,
+        nickname: 'A',
+        notes: null,
+        stamps_needed: 50,
+        status: 'active',
+      } as any,
+      pool,
     );
     const cardB = await stampCardDAO.createStampCard(
-      { user_id: TEST_IDS.user1, business_id: TEST_IDS.business1, nickname: 'B', notes: null, stamps_needed: 50, status: 'active' } as any,
-      pool
+      {
+        user_id: TEST_IDS.user1,
+        business_id: TEST_IDS.business1,
+        nickname: 'B',
+        notes: null,
+        stamps_needed: 50,
+        status: 'active',
+      } as any,
+      pool,
     );
 
     await stampCardEventService.createStampCardEvent({
-      user_id: TEST_IDS.user1, stamp_card_id: cardA.id, location_id: null,
-      request_id: crypto.randomUUID(), type: 'stamp_added', quantity: 7,
+      user_id: TEST_IDS.user1,
+      stamp_card_id: cardA.id,
+      location_id: null,
+      request_id: crypto.randomUUID(),
+      type: 'stamp_added',
+      quantity: 7,
     });
     await stampCardEventService.createStampCardEvent({
-      user_id: TEST_IDS.user1, stamp_card_id: cardB.id, location_id: null,
-      request_id: crypto.randomUUID(), type: 'stamp_added', quantity: 30,
+      user_id: TEST_IDS.user1,
+      stamp_card_id: cardB.id,
+      location_id: null,
+      request_id: crypto.randomUUID(),
+      type: 'stamp_added',
+      quantity: 30,
     });
     await stampCardEventService.createStampCardEvent({
-      user_id: TEST_IDS.user1, stamp_card_id: cardB.id, location_id: null,
-      request_id: crypto.randomUUID(), type: 'stamp_removed', quantity: 5,
+      user_id: TEST_IDS.user1,
+      stamp_card_id: cardB.id,
+      location_id: null,
+      request_id: crypto.randomUUID(),
+      type: 'stamp_removed',
+      quantity: 5,
     });
 
     const resultA = await stampCardDAO.getStampCardByID(cardA.id);
@@ -185,8 +211,8 @@ describe('stamp card stamps_acquired — SUM() derivation', () => {
     // Also confirm the list getter (same JOIN + GROUP BY pattern) isolates
     // correctly, not just the single-card getter.
     const allForUser = await stampCardDAO.getAllStampCardsByUserID(TEST_IDS.user1);
-    const fetchedA = allForUser.find(c => c.id === cardA.id);
-    const fetchedB = allForUser.find(c => c.id === cardB.id);
+    const fetchedA = allForUser.find((c) => c.id === cardA.id);
+    const fetchedB = allForUser.find((c) => c.id === cardB.id);
     expect(fetchedA?.stamps_acquired).toBe(7);
     expect(fetchedB?.stamps_acquired).toBe(25);
   });

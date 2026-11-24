@@ -1,7 +1,12 @@
 import { BusinessDAO, LocationDAO } from '../dao';
-import { Location, CreateLocationInput, UpdateLocationInput, } from '../models/location.model';
-import { NotFoundError, validateUUID, ValidationError, } from '../utils/validators';
-import { assertExists, requireFields, validateCoordinates, validateRadius } from './helpers.service';
+import { Location, CreateLocationInput, UpdateLocationInput } from '../models/location.model';
+import { NotFoundError, validateUUID, ValidationError } from '../utils/validators';
+import {
+  assertExists,
+  requireFields,
+  validateCoordinates,
+  validateRadius,
+} from './helpers.service';
 
 export type LocationService = {
   createLocation(fields: CreateLocationInput): Promise<Location>;
@@ -12,19 +17,22 @@ export type LocationService = {
   deleteLocationByID(id: string): Promise<void>;
 };
 
-export function createLocationService(locationDAO: LocationDAO, businessDAO: BusinessDAO): LocationService {
+export function createLocationService(
+  locationDAO: LocationDAO,
+  businessDAO: BusinessDAO,
+): LocationService {
   return {
     async createLocation(fields: CreateLocationInput): Promise<Location> {
       // check required fields
-      requireFields(fields, ["address", "business_id", "geofence_radius", "lat", "lng"])
+      requireFields(fields, ['address', 'business_id', 'geofence_radius', 'lat', 'lng']);
 
       validateUUID(fields.business_id);
-      validateCoordinates(fields.lat, fields.lng)
-      validateRadius(fields.geofence_radius)
+      validateCoordinates(fields.lat, fields.lng);
+      validateRadius(fields.geofence_radius);
 
       await assertExists(
         () => businessDAO.getBusinessByID(fields.business_id),
-        'Business not found'
+        'Business not found',
       );
 
       return await locationDAO.createLocation(fields);
@@ -42,15 +50,18 @@ export function createLocationService(locationDAO: LocationDAO, businessDAO: Bus
       return fetchedLocation;
     },
 
-    async getLocationsByBusinessID(business_id: string, includeDeleted: boolean = false): Promise<Location[]> {
+    async getLocationsByBusinessID(
+      business_id: string,
+      includeDeleted: boolean = false,
+    ): Promise<Location[]> {
       validateUUID(business_id);
 
-      await assertExists(
-        () => businessDAO.getBusinessByID(business_id),
-        'Business not found'
-      );
+      await assertExists(() => businessDAO.getBusinessByID(business_id), 'Business not found');
 
-      const fetchedLocations = await locationDAO.getLocationsByBusinessID(business_id, includeDeleted);
+      const fetchedLocations = await locationDAO.getLocationsByBusinessID(
+        business_id,
+        includeDeleted,
+      );
 
       if (fetchedLocations.length <= 0) {
         throw new NotFoundError('Could not find locations');
@@ -59,14 +70,11 @@ export function createLocationService(locationDAO: LocationDAO, businessDAO: Bus
       return fetchedLocations;
     },
 
-    async getAllLocations(includeDeleted: boolean = false): Promise<Location[]>{
-      return locationDAO.getAllLocations(includeDeleted)
+    async getAllLocations(includeDeleted: boolean = false): Promise<Location[]> {
+      return locationDAO.getAllLocations(includeDeleted);
     },
 
-    async updateLocationByID(
-      id: string,
-      updates: UpdateLocationInput
-    ): Promise<Location> {
+    async updateLocationByID(id: string, updates: UpdateLocationInput): Promise<Location> {
       validateUUID(id);
 
       // check if there are updates
@@ -75,11 +83,11 @@ export function createLocationService(locationDAO: LocationDAO, businessDAO: Bus
       }
 
       if (updates.lat !== undefined || updates.lng !== undefined) {
-        validateCoordinates(updates.lat!, updates.lng!)
+        validateCoordinates(updates.lat!, updates.lng!);
       }
 
       if (updates.geofence_radius !== undefined) {
-        validateRadius(updates.geofence_radius)
+        validateRadius(updates.geofence_radius);
       }
 
       const updatedLocation = await locationDAO.updateLocationByID(id, updates);
@@ -107,5 +115,3 @@ export function createLocationService(locationDAO: LocationDAO, businessDAO: Bus
     },
   };
 }
-
-

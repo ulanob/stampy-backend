@@ -27,7 +27,7 @@ describe('gift card current_balance — SUM() derivation', () => {
         currency: 'CAD',
         status: 'active',
       } as any,
-      pool
+      pool,
     );
 
     // Seed history: +100, +50, -30, +20, -10 => expected 130
@@ -64,7 +64,7 @@ describe('gift card current_balance — SUM() derivation', () => {
         currency: 'CAD',
         status: 'active',
       } as any,
-      pool
+      pool,
     );
 
     await giftCardEventService.createGiftCardEvent({
@@ -103,7 +103,7 @@ describe('gift card current_balance — SUM() derivation', () => {
         currency: 'CAD',
         status: 'active',
       } as any,
-      pool
+      pool,
     );
 
     const result = await giftCardDAO.getGiftCardByID(card.id);
@@ -112,25 +112,51 @@ describe('gift card current_balance — SUM() derivation', () => {
 
   test('two cards with different event histories do not leak balances into each other (JOIN isolation)', async () => {
     const cardA = await giftCardDAO.createGiftCard(
-      { user_id: TEST_IDS.user1, business_id: TEST_IDS.business1, nickname: 'A', notes: null, currency: 'CAD', status: 'active' } as any,
-      pool
+      {
+        user_id: TEST_IDS.user1,
+        business_id: TEST_IDS.business1,
+        nickname: 'A',
+        notes: null,
+        currency: 'CAD',
+        status: 'active',
+      } as any,
+      pool,
     );
     const cardB = await giftCardDAO.createGiftCard(
-      { user_id: TEST_IDS.user1, business_id: TEST_IDS.business1, nickname: 'B', notes: null, currency: 'CAD', status: 'active' } as any,
-      pool
+      {
+        user_id: TEST_IDS.user1,
+        business_id: TEST_IDS.business1,
+        nickname: 'B',
+        notes: null,
+        currency: 'CAD',
+        status: 'active',
+      } as any,
+      pool,
     );
 
     await giftCardEventService.createGiftCardEvent({
-      user_id: TEST_IDS.user1, gift_card_id: cardA.id, location_id: null,
-      request_id: crypto.randomUUID(), type: 'balance_added', amount: 40,
+      user_id: TEST_IDS.user1,
+      gift_card_id: cardA.id,
+      location_id: null,
+      request_id: crypto.randomUUID(),
+      type: 'balance_added',
+      amount: 40,
     });
     await giftCardEventService.createGiftCardEvent({
-      user_id: TEST_IDS.user1, gift_card_id: cardB.id, location_id: null,
-      request_id: crypto.randomUUID(), type: 'balance_added', amount: 999,
+      user_id: TEST_IDS.user1,
+      gift_card_id: cardB.id,
+      location_id: null,
+      request_id: crypto.randomUUID(),
+      type: 'balance_added',
+      amount: 999,
     });
     await giftCardEventService.createGiftCardEvent({
-      user_id: TEST_IDS.user1, gift_card_id: cardB.id, location_id: null,
-      request_id: crypto.randomUUID(), type: 'balance_redeemed', amount: 900,
+      user_id: TEST_IDS.user1,
+      gift_card_id: cardB.id,
+      location_id: null,
+      request_id: crypto.randomUUID(),
+      type: 'balance_redeemed',
+      amount: 900,
     });
 
     const resultA = await giftCardDAO.getGiftCardByID(cardA.id);
@@ -142,23 +168,34 @@ describe('gift card current_balance — SUM() derivation', () => {
     // Also confirm the list getters (which use the same JOIN + GROUP BY pattern)
     // isolate balances correctly, not just the single-card getter.
     const allForUser = await giftCardDAO.getAllGiftCardsByUserID(TEST_IDS.user1);
-    const fetchedA = allForUser.find(c => c.id === cardA.id);
-    const fetchedB = allForUser.find(c => c.id === cardB.id);
+    const fetchedA = allForUser.find((c) => c.id === cardA.id);
+    const fetchedB = allForUser.find((c) => c.id === cardB.id);
 
     expect(fetchedA?.current_balance).toBe(40);
     expect(fetchedB?.current_balance).toBe(99);
   });
 
   test('preserves cents, not just whole dollars', async () => {
-  const card = await giftCardDAO.createGiftCard(
-    { user_id: TEST_IDS.user1, business_id: TEST_IDS.business1, nickname: null, notes: null, currency: 'CAD', status: 'active' } as any,
-    pool
-  );
-  await giftCardEventService.createGiftCardEvent({
-    user_id: TEST_IDS.user1, gift_card_id: card.id, location_id: null,
-    request_id: crypto.randomUUID(), type: 'balance_added', amount: 29.99,
+    const card = await giftCardDAO.createGiftCard(
+      {
+        user_id: TEST_IDS.user1,
+        business_id: TEST_IDS.business1,
+        nickname: null,
+        notes: null,
+        currency: 'CAD',
+        status: 'active',
+      } as any,
+      pool,
+    );
+    await giftCardEventService.createGiftCardEvent({
+      user_id: TEST_IDS.user1,
+      gift_card_id: card.id,
+      location_id: null,
+      request_id: crypto.randomUUID(),
+      type: 'balance_added',
+      amount: 29.99,
+    });
+    const result = await giftCardDAO.getGiftCardByID(card.id);
+    expect(result?.current_balance).toBe(29.99);
   });
-  const result = await giftCardDAO.getGiftCardByID(card.id);
-  expect(result?.current_balance).toBe(29.99);
-});
 });

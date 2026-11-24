@@ -1,22 +1,33 @@
-import { Pool } from "pg";
-import { GiftCard, CreateGiftCardInput, UpdateGiftCardInput } from "@/src/models/index.model";
-import { NotificationWindowDays } from "../models/shared.types";
-import { Executor } from "./types";
+import { Pool } from 'pg';
+import { GiftCard, CreateGiftCardInput, UpdateGiftCardInput } from '@/src/models/index.model';
+import { NotificationWindowDays } from '../models/shared.types';
+import { Executor } from './types';
 
-const giftCardTableName = "gift_cards"
+const giftCardTableName = 'gift_cards';
 
 export type GiftCardDAO = {
   createGiftCard(fields: CreateGiftCardInput, executor: Executor): Promise<GiftCard>;
   getAllGiftCards(includeDeleted?: boolean): Promise<GiftCard[]>;
-  getGiftCardByID(id: string, includeDeleted?: boolean, executor?: Executor): Promise<GiftCard | null>;
+  getGiftCardByID(
+    id: string,
+    includeDeleted?: boolean,
+    executor?: Executor,
+  ): Promise<GiftCard | null>;
   getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
-  updateGiftCardByID(id: string, updates: UpdateGiftCardInput, executor?: Executor): Promise<GiftCard | null>;
-  deleteGiftCardByID(id: string): Promise<void>
-}
+  updateGiftCardByID(
+    id: string,
+    updates: UpdateGiftCardInput,
+    executor?: Executor,
+  ): Promise<GiftCard | null>;
+  deleteGiftCardByID(id: string): Promise<void>;
+};
 
 export function createGiftCardDAO(pool: Pool): GiftCardDAO {
   return {
-    async createGiftCard(fields: CreateGiftCardInput, executor: Executor = pool): Promise<GiftCard> {
+    async createGiftCard(
+      fields: CreateGiftCardInput,
+      executor: Executor = pool,
+    ): Promise<GiftCard> {
       // current_balance is not returned here (RETURNING has no access to gift_card_events).
       // Caller (giftCardService.createGiftCard) is responsible for setting it after insert.
       const sqlString = `
@@ -35,7 +46,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         expiration_date)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING
-      ${giftCardColumns}`
+      ${giftCardColumns}`;
 
       const inputs = [
         fields.user_id,
@@ -50,9 +61,9 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         fields.notification_time_sent,
         fields.notification_cooldown_seconds,
         fields.expiration_date,
-      ]
+      ];
 
-      const result = await executor.query(sqlString, inputs)
+      const result = await executor.query(sqlString, inputs);
       return mapDbRowToGiftCard(result.rows[0]);
     },
 
@@ -69,10 +80,14 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       const result = await pool.query(sqlString);
       const rows = result.rows;
 
-      return rows.map(row => mapDbRowToGiftCard(row));
+      return rows.map((row) => mapDbRowToGiftCard(row));
     },
 
-    async getGiftCardByID(id: string, includeDeleted: boolean = false, executor: Executor = pool): Promise<GiftCard | null> {
+    async getGiftCardByID(
+      id: string,
+      includeDeleted: boolean = false,
+      executor: Executor = pool,
+    ): Promise<GiftCard | null> {
       const sqlString = `
         SELECT ${giftCardColumns}, ${currentBalanceExpr}
         FROM ${giftCardTableName}
@@ -89,7 +104,10 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       return mapDbRowToGiftCard(row);
     },
 
-    async getAllGiftCardsByUserID(user_id: string, includeDeleted: boolean = false): Promise<GiftCard[]> {
+    async getAllGiftCardsByUserID(
+      user_id: string,
+      includeDeleted: boolean = false,
+    ): Promise<GiftCard[]> {
       const sqlString = `
         SELECT ${giftCardColumns}, ${currentBalanceExpr}
         FROM ${giftCardTableName}
@@ -101,7 +119,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       `;
 
       const result = await pool.query(sqlString, [user_id]);
-      return result.rows.map(row => mapDbRowToGiftCard(row));
+      return result.rows.map((row) => mapDbRowToGiftCard(row));
     },
 
     async updateGiftCardByID(id: string, updates: UpdateGiftCardInput, executor: Executor = pool) {
@@ -120,12 +138,12 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       }
 
       if (setArgs.length === 0) {
-        throw new Error("No fields to update");
+        throw new Error('No fields to update');
       }
 
       const sqlString = `
         UPDATE ${giftCardTableName}
-        SET ${setArgs.join(", ")},
+        SET ${setArgs.join(', ')},
         updated_at = NOW()
         WHERE id = $${i}
         RETURNING id;
@@ -145,11 +163,11 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       SET
         deleted = true,
         deleted_at = NOW()
-      WHERE id = $1;`
+      WHERE id = $1;`;
 
-      await pool.query(sqlString, [id])
-    }
-  }
+      await pool.query(sqlString, [id]);
+    },
+  };
 }
 
 const giftCardColumns = `
@@ -170,7 +188,7 @@ const giftCardColumns = `
   ${giftCardTableName}.deleted_at,
   ${giftCardTableName}.created_at,
   ${giftCardTableName}.updated_at
-`
+`;
 
 // derive current_balance from gift card events
 const currentBalanceExpr = `

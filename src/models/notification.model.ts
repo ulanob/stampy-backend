@@ -14,18 +14,13 @@ export interface Notification {
 }
 
 export const NOTIFICATION_STATUSES = ['pending', 'sent', 'read', 'failed'] as const;
-export type NotificationStatus = typeof NOTIFICATION_STATUSES[number];
+export type NotificationStatus = (typeof NOTIFICATION_STATUSES)[number];
 
-export type CreateNotificationInput = Omit<Notification,
-  "id"
-  | "status"
-  | "sent_at"
-  | "created_at"
-  | "updated_at"
+export type CreateNotificationInput = Omit<
+  Notification,
+  'id' | 'status' | 'sent_at' | 'created_at' | 'updated_at'
 >;
 
-type NotificationUpdateableFields = Pick<Notification,
-  "status"
->
+type NotificationUpdateableFields = Pick<Notification, 'status'>;
 
 export type UpdateNotificationInput = Partial<NotificationUpdateableFields>;

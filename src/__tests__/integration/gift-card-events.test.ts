@@ -30,7 +30,7 @@ describe('gift card events — transaction rollback', () => {
     const before = await giftCardDAO.getGiftCardByID(TEST_IDS.giftCard1);
     const eventsBefore = await pool.query(
       'SELECT COUNT(*) FROM gift_card_events WHERE gift_card_id = $1',
-      [TEST_IDS.giftCard1]
+      [TEST_IDS.giftCard1],
     );
 
     await expect(
@@ -40,14 +40,14 @@ describe('gift card events — transaction rollback', () => {
         location_id: null,
         request_id: crypto.randomUUID(),
         type: 'balance_added',
-        amount: 10.00,
-      })
+        amount: 10.0,
+      }),
     ).rejects.toThrow('forced failure');
 
     const after = await giftCardDAO.getGiftCardByID(TEST_IDS.giftCard1);
     const eventsAfter = await pool.query(
       'SELECT COUNT(*) FROM gift_card_events WHERE gift_card_id = $1',
-      [TEST_IDS.giftCard1]
+      [TEST_IDS.giftCard1],
     );
 
     expect(after?.current_balance).toBe(before?.current_balance);

@@ -30,7 +30,7 @@ describe('user notification preferences routes', () => {
         daily_notification_cap: 3,
         daily_notification_counter: 0,
         last_notified_date: null,
-      })
+      }),
     );
   });
 

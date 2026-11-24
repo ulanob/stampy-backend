@@ -1,6 +1,11 @@
 import { BusinessDAO } from '../dao';
-import { Business, CreateBusinessInput, UpdateBusinessInput, } from '../models/business.model';
-import { NotFoundError, validateBusinessType, validateUUID, ValidationError, } from '../utils/validators';
+import { Business, CreateBusinessInput, UpdateBusinessInput } from '../models/business.model';
+import {
+  NotFoundError,
+  validateBusinessType,
+  validateUUID,
+  ValidationError,
+} from '../utils/validators';
 import { requireFields } from './helpers.service';
 
 export type BusinessService = {
@@ -15,7 +20,7 @@ export function createBusinessService(businessDAO: BusinessDAO): BusinessService
   return {
     async createBusiness(fields: CreateBusinessInput): Promise<Business> {
       // check required fields
-      requireFields(fields, ["name", "type"])
+      requireFields(fields, ['name', 'type']);
       validateBusinessType(fields.type);
 
       return await businessDAO.createBusiness(fields);
@@ -33,18 +38,15 @@ export function createBusinessService(businessDAO: BusinessDAO): BusinessService
       return fetchedBusiness;
     },
 
-    async getAllBusinesses(includeDeleted: boolean = false): Promise<Business[]>{
-      return businessDAO.getAllBusinesses(includeDeleted)
+    async getAllBusinesses(includeDeleted: boolean = false): Promise<Business[]> {
+      return businessDAO.getAllBusinesses(includeDeleted);
     },
 
-    async updateBusinessByID(
-      id: string,
-      updates: UpdateBusinessInput
-    ): Promise<Business> {
+    async updateBusinessByID(id: string, updates: UpdateBusinessInput): Promise<Business> {
       validateUUID(id);
 
       if (updates.type !== undefined) {
-        validateBusinessType(updates.type)
+        validateBusinessType(updates.type);
       }
 
       const updatedBusiness = await businessDAO.updateBusinessByID(id, updates);

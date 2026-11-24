@@ -1,19 +1,15 @@
-import { businessService } from "@/src/composition";
-import { CreateBusinessInput } from "@/src/models/business.model";
-import { handleRouteError} from "@/src/utils/validators";
-import { NextResponse } from "next/server";
+import { businessService } from '@/src/composition';
+import { CreateBusinessInput } from '@/src/models/business.model';
+import { handleRouteError } from '@/src/utils/validators';
+import { NextResponse } from 'next/server';
 
-
-export async function GET(
-  _request: Request
-) {
+export async function GET(_request: Request) {
   try {
     const businesses = await businessService.getAllBusinesses();
 
     return NextResponse.json(businesses, { status: 200 });
-
   } catch (error) {
-    return handleRouteError(error, "GET /api/v1/businesses/")
+    return handleRouteError(error, 'GET /api/v1/businesses/');
   }
 }
 
@@ -23,11 +19,8 @@ export async function POST(request: Request) {
 
     const createdBusiness = await businessService.createBusiness(body);
 
-    return NextResponse.json(createdBusiness, { status: 201 })
-
+    return NextResponse.json(createdBusiness, { status: 201 });
   } catch (error) {
-    return handleRouteError(error, "POST /api/v1/businesses/")
+    return handleRouteError(error, 'POST /api/v1/businesses/');
   }
-
 }
-

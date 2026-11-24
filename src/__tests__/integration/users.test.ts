@@ -12,14 +12,11 @@ const tempUser: CreateUserInput = {
   email: 'temp-user@example.com',
   display_name: null,
   auth_provider_id: null,
-  timezone: 'America/Vancouver'
+  timezone: 'America/Vancouver',
 };
 
 async function createUser(payload: CreateUserInput = tempUser) {
-  return request(BASE_URL)
-    .post('/api/v1/users')
-    .send(payload)
-    .expect(201);
+  return request(BASE_URL).post('/api/v1/users').send(payload).expect(201);
 }
 
 beforeAll(async () => {
@@ -33,53 +30,47 @@ afterAll(async () => {
 
 describe('users', () => {
   test('GET /api/v1/users returns a list of users', async () => {
-    const response = await request(BASE_URL)
-      .get('/api/v1/users')
-      .expect(200);
+    const response = await request(BASE_URL).get('/api/v1/users').expect(200);
 
     expect(response.body).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: TEST_IDS.user1 }),
-      ])
+      expect.arrayContaining([expect.objectContaining({ id: TEST_IDS.user1 })]),
     );
   });
 
   test('GET /api/v1/users/:id returns a user', async () => {
-    const response = await request(BASE_URL)
-      .get(`/api/v1/users/${TEST_IDS.user1}`)
-      .expect(200);
+    const response = await request(BASE_URL).get(`/api/v1/users/${TEST_IDS.user1}`).expect(200);
 
-    expect(response.body).toEqual(
-      expect.objectContaining({ id: TEST_IDS.user1 })
-    );
+    expect(response.body).toEqual(expect.objectContaining({ id: TEST_IDS.user1 }));
   });
 
   test('GET /api/v1/users/:id returns 400 for invalid ID format', async () => {
-    await request(BASE_URL)
-      .get('/api/v1/users/999999')
-      .expect(400);
+    await request(BASE_URL).get('/api/v1/users/999999').expect(400);
   });
 
   test('GET /api/v1/users/:id returns 404 for user not found', async () => {
-    await request(BASE_URL)
-      .get(`/api/v1/users/${TEST_IDS.userNonExistent}`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/users/${TEST_IDS.userNonExistent}`).expect(404);
   });
 
   test('GET /api/v1/users/:id returns 404 for deleted user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-deleted@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
+    const { body: created } = await createUser({
+      email: 'to-be-deleted@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    });
 
-    await request(BASE_URL)
-      .delete(`/api/v1/users/${created.id}`)
-      .expect(204);
+    await request(BASE_URL).delete(`/api/v1/users/${created.id}`).expect(204);
 
-    await request(BASE_URL)
-      .get(`/api/v1/users/${created.id}`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/users/${created.id}`).expect(404);
   });
 
   test('POST /api/v1/users creates a user', async () => {
-    const body: CreateUserInput = { email: 'new-user@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' };
+    const body: CreateUserInput = {
+      email: 'new-user@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    };
 
     const response = await request(BASE_URL)
       .post('/api/v1/users')
@@ -88,12 +79,21 @@ describe('users', () => {
       .expect(201);
 
     expect(response.body).toEqual(
-      expect.objectContaining({ email: 'new-user@example.com', display_name: null, auth_provider_id: null })
+      expect.objectContaining({
+        email: 'new-user@example.com',
+        display_name: null,
+        auth_provider_id: null,
+      }),
     );
   });
 
   test('POST /api/v1/users also creates default notification preferences', async () => {
-    const { body: created } = await createUser({ email: 'prefs-check@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
+    const { body: created } = await createUser({
+      email: 'prefs-check@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    });
 
     const response = await request(BASE_URL)
       .get(`/api/v1/users/${created.id}/preferences`)
@@ -103,15 +103,12 @@ describe('users', () => {
       expect.objectContaining({
         user_id: created.id,
         notifications_enabled: true,
-      })
+      }),
     );
   });
 
   test('POST /api/v1/users rejects missing email', async () => {
-    const response = await request(BASE_URL)
-      .post('/api/v1/users')
-      .send({})
-      .expect(400);
+    const response = await request(BASE_URL).post('/api/v1/users').send({}).expect(400);
 
     expect(response.body.error).toBeDefined();
   });
@@ -145,16 +142,19 @@ describe('users', () => {
   });
 
   test('PATCH /api/v1/users/:id updates a user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-updated@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
+    const { body: created } = await createUser({
+      email: 'to-be-updated@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    });
 
     const response = await request(BASE_URL)
       .patch(`/api/v1/users/${created.id}`)
       .send({ display_name: 'Updated Name' })
       .expect(200);
 
-    expect(response.body).toEqual(
-      expect.objectContaining({ display_name: 'Updated Name' })
-    );
+    expect(response.body).toEqual(expect.objectContaining({ display_name: 'Updated Name' }));
   });
 
   test('PATCH /api/v1/users/:id returns 400 for invalid ID format', async () => {
@@ -174,7 +174,12 @@ describe('users', () => {
   });
 
   test('PATCH /api/v1/users/:id ignores email even if included in the body', async () => {
-    const { body: created } = await createUser({ email: 'original@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
+    const { body: created } = await createUser({
+      email: 'original@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    });
 
     const response = await request(BASE_URL)
       .patch(`/api/v1/users/${created.id}`)
@@ -185,7 +190,7 @@ describe('users', () => {
       expect.objectContaining({
         email: 'original@example.com',
         display_name: 'New Name',
-      })
+      }),
     );
   });
 
@@ -206,11 +211,14 @@ describe('users', () => {
   });
 
   test('DELETE /api/v1/users/:id deletes a user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-deleted-2@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
+    const { body: created } = await createUser({
+      email: 'to-be-deleted-2@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    });
 
-    await request(BASE_URL)
-      .delete(`/api/v1/users/${created.id}`)
-      .expect(204);
+    await request(BASE_URL).delete(`/api/v1/users/${created.id}`).expect(204);
   });
 
   test('DELETE /api/v1/users/:id returns 404 for user not found', async () => {
@@ -222,19 +230,19 @@ describe('users', () => {
   });
 
   test('DELETE /api/v1/users/:id returns 400 for already deleted user', async () => {
-    const { body: created } = await createUser({ email: 'to-be-deleted-3@example.com', display_name: null, auth_provider_id: null, timezone: 'America/Vancouver' });
+    const { body: created } = await createUser({
+      email: 'to-be-deleted-3@example.com',
+      display_name: null,
+      auth_provider_id: null,
+      timezone: 'America/Vancouver',
+    });
 
-    await request(BASE_URL)
-      .delete(`/api/v1/users/${created.id}`)
-      .expect(204);
+    await request(BASE_URL).delete(`/api/v1/users/${created.id}`).expect(204);
 
-    const response = await request(BASE_URL)
-      .delete(`/api/v1/users/${created.id}`)
-      .expect(400);
+    const response = await request(BASE_URL).delete(`/api/v1/users/${created.id}`).expect(400);
 
     expect(response.body.error).toBeDefined();
   });
-
 
   // exception: test atomicity of createUser in user.service.ts
   describe('createUser — transaction rollback', () => {
@@ -254,14 +262,13 @@ describe('users', () => {
           email: 'rollback-test@example.com',
           display_name: null,
           auth_provider_id: null,
-          timezone: 'America/Vancouver'
-        })
+          timezone: 'America/Vancouver',
+        }),
       ).rejects.toThrow('forced failure');
 
-      const result = await pool.query(
-        'SELECT * FROM users WHERE email = $1',
-        ['rollback-test@example.com']
-      );
+      const result = await pool.query('SELECT * FROM users WHERE email = $1', [
+        'rollback-test@example.com',
+      ]);
       expect(result.rows.length).toBe(0);
     });
   });

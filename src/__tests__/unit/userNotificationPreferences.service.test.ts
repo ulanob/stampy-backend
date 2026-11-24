@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createUserNotificationPreferencesService } from "../../services/userNotificationPreferences.service";
-import type { UserNotificationPreferencesDAO } from "../../dao";
-import { NotFoundError, ValidationError, InvalidUUIDError } from "../../utils/validators";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createUserNotificationPreferencesService } from '../../services/userNotificationPreferences.service';
+import type { UserNotificationPreferencesDAO } from '../../dao';
+import { NotFoundError, ValidationError, InvalidUUIDError } from '../../utils/validators';
 
-describe("userNotificationPreferencesService", () => {
+describe('userNotificationPreferencesService', () => {
   let userNotificationPreferencesDAO: UserNotificationPreferencesDAO;
 
-  const validUserId = "a1b2c3d4-0000-0000-0000-000000000001";
+  const validUserId = 'a1b2c3d4-0000-0000-0000-000000000001';
 
   const basePreferences = {
-    id: "b1b2c3d4-0000-0000-0000-000000000001",
+    id: 'b1b2c3d4-0000-0000-0000-000000000001',
     user_id: validUserId,
     notifications_enabled: true,
     quiet_hours_start: null,
@@ -36,8 +36,8 @@ describe("userNotificationPreferencesService", () => {
     return createUserNotificationPreferencesService(userNotificationPreferencesDAO, {} as any);
   }
 
-  describe("createUserNotificationPreferences", () => {
-    it("creates preferences with valid fields", async () => {
+  describe('createUserNotificationPreferences', () => {
+    it('creates preferences with valid fields', async () => {
       const result = await service().createUserNotificationPreferences({
         user_id: validUserId,
         notifications_enabled: true,
@@ -52,76 +52,94 @@ describe("userNotificationPreferencesService", () => {
       expect(userNotificationPreferencesDAO.createUserNotificationPreferences).toHaveBeenCalled();
     });
 
-    it("throws ValidationError when user_id is missing", async () => {
-      await expect(
-        service().createUserNotificationPreferences({} as any)
-      ).rejects.toThrow(ValidationError);
-      expect(userNotificationPreferencesDAO.createUserNotificationPreferences).not.toHaveBeenCalled();
+    it('throws ValidationError when user_id is missing', async () => {
+      await expect(service().createUserNotificationPreferences({} as any)).rejects.toThrow(
+        ValidationError,
+      );
+      expect(
+        userNotificationPreferencesDAO.createUserNotificationPreferences,
+      ).not.toHaveBeenCalled();
     });
 
-    it("throws InvalidUUIDError when user_id is malformed", async () => {
+    it('throws InvalidUUIDError when user_id is malformed', async () => {
       await expect(
-        service().createUserNotificationPreferences({ user_id: "not-a-uuid" } as any)
+        service().createUserNotificationPreferences({ user_id: 'not-a-uuid' } as any),
       ).rejects.toThrow(InvalidUUIDError);
-      expect(userNotificationPreferencesDAO.createUserNotificationPreferences).not.toHaveBeenCalled();
+      expect(
+        userNotificationPreferencesDAO.createUserNotificationPreferences,
+      ).not.toHaveBeenCalled();
     });
   });
 
-  describe("getUserNotificationPreferencesByUserID", () => {
-    it("returns preferences when found", async () => {
+  describe('getUserNotificationPreferencesByUserID', () => {
+    it('returns preferences when found', async () => {
       const result = await service().getUserNotificationPreferencesByUserID(validUserId);
       expect(result).toEqual(basePreferences);
     });
 
-    it("throws InvalidUUIDError for a malformed user_id", async () => {
-      await expect(
-        service().getUserNotificationPreferencesByUserID("not-a-uuid")
-      ).rejects.toThrow(InvalidUUIDError);
+    it('throws InvalidUUIDError for a malformed user_id', async () => {
+      await expect(service().getUserNotificationPreferencesByUserID('not-a-uuid')).rejects.toThrow(
+        InvalidUUIDError,
+      );
     });
 
-    it("throws NotFoundError when no preferences exist for the user", async () => {
-      (userNotificationPreferencesDAO.getUserNotificationPreferencesByUserID as any).mockResolvedValue(null);
-      await expect(
-        service().getUserNotificationPreferencesByUserID(validUserId)
-      ).rejects.toThrow(NotFoundError);
+    it('throws NotFoundError when no preferences exist for the user', async () => {
+      (
+        userNotificationPreferencesDAO.getUserNotificationPreferencesByUserID as any
+      ).mockResolvedValue(null);
+      await expect(service().getUserNotificationPreferencesByUserID(validUserId)).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 
-  describe("updateUserNotificationPreferencesByUserID", () => {
-    it("returns the updated preferences", async () => {
+  describe('updateUserNotificationPreferencesByUserID', () => {
+    it('returns the updated preferences', async () => {
       const result = await service().updateUserNotificationPreferencesByUserID(validUserId, {
         notifications_enabled: false,
       });
       expect(result).toEqual(basePreferences);
     });
 
-    it("throws InvalidUUIDError for a malformed user_id", async () => {
+    it('throws InvalidUUIDError for a malformed user_id', async () => {
       await expect(
-        service().updateUserNotificationPreferencesByUserID("not-a-uuid", { notifications_enabled: false })
+        service().updateUserNotificationPreferencesByUserID('not-a-uuid', {
+          notifications_enabled: false,
+        }),
       ).rejects.toThrow(InvalidUUIDError);
-      expect(userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID).not.toHaveBeenCalled();
+      expect(
+        userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID,
+      ).not.toHaveBeenCalled();
     });
 
-    it("throws ValidationError when the update object is empty", async () => {
+    it('throws ValidationError when the update object is empty', async () => {
       await expect(
-        service().updateUserNotificationPreferencesByUserID(validUserId, {})
+        service().updateUserNotificationPreferencesByUserID(validUserId, {}),
       ).rejects.toThrow(ValidationError);
-      expect(userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID).not.toHaveBeenCalled();
+      expect(
+        userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID,
+      ).not.toHaveBeenCalled();
     });
 
-    it("throws ValidationError when every update value is undefined", async () => {
+    it('throws ValidationError when every update value is undefined', async () => {
       await expect(
         service().updateUserNotificationPreferencesByUserID(validUserId, {
           notifications_enabled: undefined,
-        })
+        }),
       ).rejects.toThrow(ValidationError);
-      expect(userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID).not.toHaveBeenCalled();
+      expect(
+        userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID,
+      ).not.toHaveBeenCalled();
     });
 
     it("throws NotFoundError when the update target doesn't exist", async () => {
-      (userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID as any).mockResolvedValue(null);
+      (
+        userNotificationPreferencesDAO.updateUserNotificationPreferencesByUserID as any
+      ).mockResolvedValue(null);
       await expect(
-        service().updateUserNotificationPreferencesByUserID(validUserId, { notifications_enabled: false })
+        service().updateUserNotificationPreferencesByUserID(validUserId, {
+          notifications_enabled: false,
+        }),
       ).rejects.toThrow(NotFoundError);
     });
   });

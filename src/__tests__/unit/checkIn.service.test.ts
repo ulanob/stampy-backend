@@ -1,32 +1,32 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createCheckInService } from "../../services/checkIn.service";
-import type { LocationDAO, UserDAO, StampCardDAO, GiftCardDAO } from "../../dao";
-import { NotFoundError, ValidationError, InvalidUUIDError } from "../../utils/validators";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createCheckInService } from '../../services/checkIn.service';
+import type { LocationDAO, UserDAO, StampCardDAO, GiftCardDAO } from '../../dao';
+import { NotFoundError, ValidationError, InvalidUUIDError } from '../../utils/validators';
 
-describe("checkInService.checkIn", () => {
+describe('checkInService.checkIn', () => {
   let locationDAO: LocationDAO;
   let userDAO: UserDAO;
   let stampCardDAO: StampCardDAO;
   let giftCardDAO: GiftCardDAO;
 
-  const validLocationId = "b1b2c3d4-0000-0000-0000-000000000001";
-  const validUserId = "a1b2c3d4-0000-0000-0000-000000000005";
-  const businessId = "a1b2c3d4-0000-0000-0000-000000000001";
-  const otherBusinessId = "a1b2c3d4-0000-0000-0000-000000000002";
+  const validLocationId = 'b1b2c3d4-0000-0000-0000-000000000001';
+  const validUserId = 'a1b2c3d4-0000-0000-0000-000000000005';
+  const businessId = 'a1b2c3d4-0000-0000-0000-000000000001';
+  const otherBusinessId = 'a1b2c3d4-0000-0000-0000-000000000002';
 
   const baseLocation = { id: validLocationId, business_id: businessId };
 
   const relevantStampCard = {
-    id: "stamp-1",
+    id: 'stamp-1',
     business_id: businessId,
-    status: "active" as const,
+    status: 'active' as const,
     stamps_acquired: 3,
   };
 
   const relevantGiftCard = {
-    id: "gift-1",
+    id: 'gift-1',
     business_id: businessId,
-    status: "active" as const,
+    status: 'active' as const,
     current_balance: 25,
   };
 
@@ -57,11 +57,9 @@ describe("checkInService.checkIn", () => {
     expect(giftCardDAO.getAllGiftCardsByUserID).not.toHaveBeenCalled();
   }
 
-  describe("validation", () => {
-    it("throws InvalidUUIDError for a malformed location_id", async () => {
-      await expect(
-        service().checkIn("not-a-uuid", validUserId)
-      ).rejects.toThrow(InvalidUUIDError);
+  describe('validation', () => {
+    it('throws InvalidUUIDError for a malformed location_id', async () => {
+      await expect(service().checkIn('not-a-uuid', validUserId)).rejects.toThrow(InvalidUUIDError);
 
       expect(userDAO.getUserByID).not.toHaveBeenCalled();
       expect(locationDAO.getLocationByID).not.toHaveBeenCalled();
@@ -70,20 +68,20 @@ describe("checkInService.checkIn", () => {
 
     // Assumes requireFields({ location_id, user_id }, [...]) runs first.
     // Without requireFields this throws InvalidUUIDError instead.
-    it("throws ValidationError when user_id is missing", async () => {
-      await expect(
-        service().checkIn(validLocationId, undefined as any)
-      ).rejects.toThrow(ValidationError);
+    it('throws ValidationError when user_id is missing', async () => {
+      await expect(service().checkIn(validLocationId, undefined as any)).rejects.toThrow(
+        ValidationError,
+      );
 
       expect(userDAO.getUserByID).not.toHaveBeenCalled();
       expect(locationDAO.getLocationByID).not.toHaveBeenCalled();
       expectCardsNotLoaded();
     });
 
-    it("throws InvalidUUIDError for a malformed user_id", async () => {
-      await expect(
-        service().checkIn(validLocationId, "not-a-uuid")
-      ).rejects.toThrow(InvalidUUIDError);
+    it('throws InvalidUUIDError for a malformed user_id', async () => {
+      await expect(service().checkIn(validLocationId, 'not-a-uuid')).rejects.toThrow(
+        InvalidUUIDError,
+      );
 
       expect(userDAO.getUserByID).not.toHaveBeenCalled();
       expect(locationDAO.getLocationByID).not.toHaveBeenCalled();
@@ -91,13 +89,11 @@ describe("checkInService.checkIn", () => {
     });
   });
 
-  describe("existence checks", () => {
+  describe('existence checks', () => {
     it("throws NotFoundError when the user doesn't exist", async () => {
       (userDAO.getUserByID as any).mockResolvedValue(null);
 
-      await expect(
-        service().checkIn(validLocationId, validUserId)
-      ).rejects.toThrow(NotFoundError);
+      await expect(service().checkIn(validLocationId, validUserId)).rejects.toThrow(NotFoundError);
 
       expect(locationDAO.getLocationByID).not.toHaveBeenCalled();
       expectCardsNotLoaded();
@@ -106,16 +102,14 @@ describe("checkInService.checkIn", () => {
     it("throws NotFoundError when the location doesn't exist", async () => {
       (locationDAO.getLocationByID as any).mockResolvedValue(null);
 
-      await expect(
-        service().checkIn(validLocationId, validUserId)
-      ).rejects.toThrow(NotFoundError);
+      await expect(service().checkIn(validLocationId, validUserId)).rejects.toThrow(NotFoundError);
 
       expectCardsNotLoaded();
     });
   });
 
-  describe("card relevance", () => {
-    it("returns null when the user and location exist but the user has no cards", async () => {
+  describe('card relevance', () => {
+    it('returns null when the user and location exist but the user has no cards', async () => {
       const result = await service().checkIn(validLocationId, validUserId);
 
       expect(result).toBeNull();
@@ -123,7 +117,7 @@ describe("checkInService.checkIn", () => {
       expect(locationDAO.getLocationByID).toHaveBeenCalledWith(validLocationId);
     });
 
-    it("returns null when the user only has cards for other businesses", async () => {
+    it('returns null when the user only has cards for other businesses', async () => {
       (stampCardDAO.getAllStampCardsByUserID as any).mockResolvedValue([
         { ...relevantStampCard, business_id: otherBusinessId },
       ]);
@@ -134,7 +128,7 @@ describe("checkInService.checkIn", () => {
       expect(await service().checkIn(validLocationId, validUserId)).toBeNull();
     });
 
-    it("returns null when matching cards exist but none are worth notifying", async () => {
+    it('returns null when matching cards exist but none are worth notifying', async () => {
       (stampCardDAO.getAllStampCardsByUserID as any).mockResolvedValue([
         { ...relevantStampCard, stamps_acquired: 0 },
       ]);
@@ -148,31 +142,29 @@ describe("checkInService.checkIn", () => {
     it("returns the relevant cards tagged by type for the location's business", async () => {
       (stampCardDAO.getAllStampCardsByUserID as any).mockResolvedValue([
         relevantStampCard,
-        { ...relevantStampCard, id: "stamp-other", business_id: otherBusinessId },
+        { ...relevantStampCard, id: 'stamp-other', business_id: otherBusinessId },
       ]);
       (giftCardDAO.getAllGiftCardsByUserID as any).mockResolvedValue([relevantGiftCard]);
 
       const result = await service().checkIn(validLocationId, validUserId);
 
       expect(result).toEqual([
-        { type: "stamp_card", card: relevantStampCard },
-        { type: "gift_card", card: relevantGiftCard },
+        { type: 'stamp_card', card: relevantStampCard },
+        { type: 'gift_card', card: relevantGiftCard },
       ]);
     });
 
-    it("loads both card lists for the checking-in user", async () => {
+    it('loads both card lists for the checking-in user', async () => {
       await service().checkIn(validLocationId, validUserId);
 
       expect(stampCardDAO.getAllStampCardsByUserID).toHaveBeenCalledWith(validUserId);
       expect(giftCardDAO.getAllGiftCardsByUserID).toHaveBeenCalledWith(validUserId);
     });
 
-    it("propagates a failure from either card DAO", async () => {
-      (giftCardDAO.getAllGiftCardsByUserID as any).mockRejectedValue(new Error("db down"));
+    it('propagates a failure from either card DAO', async () => {
+      (giftCardDAO.getAllGiftCardsByUserID as any).mockRejectedValue(new Error('db down'));
 
-      await expect(
-        service().checkIn(validLocationId, validUserId)
-      ).rejects.toThrow("db down");
+      await expect(service().checkIn(validLocationId, validUserId)).rejects.toThrow('db down');
     });
   });
 });

@@ -1,19 +1,34 @@
-import { Pool } from "pg";
-import { UserNotificationPreferences, CreateUserNotificationPreferencesInput, UpdateUserNotificationPreferencesInput } from "../models/user-notification-preferences.model";
-import { Executor } from "./types";
-import { NotificationWindowDays } from "../models/shared.types";
+import { Pool } from 'pg';
+import {
+  UserNotificationPreferences,
+  CreateUserNotificationPreferencesInput,
+  UpdateUserNotificationPreferencesInput,
+} from '../models/user-notification-preferences.model';
+import { Executor } from './types';
+import { NotificationWindowDays } from '../models/shared.types';
 
-const userNotificationPreferencesTableName = "user_notification_preferences"
+const userNotificationPreferencesTableName = 'user_notification_preferences';
 
 export type UserNotificationPreferencesDAO = {
-  createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput, executor: Executor): Promise<UserNotificationPreferences>;
-  getUserNotificationPreferencesByUserID(user_id: string): Promise<UserNotificationPreferences | null>;
-  updateUserNotificationPreferencesByUserID(user_id: string, updates: UpdateUserNotificationPreferencesInput): Promise<UserNotificationPreferences | null>;
-}
+  createUserNotificationPreferences(
+    fields: CreateUserNotificationPreferencesInput,
+    executor: Executor,
+  ): Promise<UserNotificationPreferences>;
+  getUserNotificationPreferencesByUserID(
+    user_id: string,
+  ): Promise<UserNotificationPreferences | null>;
+  updateUserNotificationPreferencesByUserID(
+    user_id: string,
+    updates: UpdateUserNotificationPreferencesInput,
+  ): Promise<UserNotificationPreferences | null>;
+};
 
 export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificationPreferencesDAO {
   return {
-    async createUserNotificationPreferences(fields: CreateUserNotificationPreferencesInput, executor: Executor = pool): Promise<UserNotificationPreferences> {
+    async createUserNotificationPreferences(
+      fields: CreateUserNotificationPreferencesInput,
+      executor: Executor = pool,
+    ): Promise<UserNotificationPreferences> {
       const sqlString = `
       INSERT INTO ${userNotificationPreferencesTableName}
         (user_id,
@@ -26,7 +41,7 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
         )
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING
-        ${userNotificationPreferencesColumns}`
+        ${userNotificationPreferencesColumns}`;
 
       const inputs = [
         fields.user_id,
@@ -35,15 +50,17 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
         fields.quiet_hours_end,
         fields.general_notification_window_start,
         fields.general_notification_window_end,
-        fields.notify_window_days, 
-      ]
+        fields.notify_window_days,
+      ];
 
       const result = await executor.query(sqlString, inputs);
 
       return mapDbRowToUserNotificationPreferences(result.rows[0]);
     },
 
-    async getUserNotificationPreferencesByUserID(user_id: string, ): Promise<UserNotificationPreferences | null> {
+    async getUserNotificationPreferencesByUserID(
+      user_id: string,
+    ): Promise<UserNotificationPreferences | null> {
       const sqlString = `
           SELECT
             ${userNotificationPreferencesColumns}
@@ -51,14 +68,17 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
           WHERE user_id = $1
           `;
 
-      const result = await pool.query(sqlString, [user_id])
-      const row = result.rows[0]
+      const result = await pool.query(sqlString, [user_id]);
+      const row = result.rows[0];
       if (!row) return null;
 
       return mapDbRowToUserNotificationPreferences(row);
     },
 
-    async updateUserNotificationPreferencesByUserID(user_id: string, updates: UpdateUserNotificationPreferencesInput) {
+    async updateUserNotificationPreferencesByUserID(
+      user_id: string,
+      updates: UpdateUserNotificationPreferencesInput,
+    ) {
       const setArgs: string[] = [];
       const values: (string | NotificationWindowDays | number | boolean | Date | null)[] = [];
 
@@ -75,7 +95,7 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
 
       const sqlString = `
           UPDATE ${userNotificationPreferencesTableName}
-          SET ${setArgs.join(", ")},
+          SET ${setArgs.join(', ')},
           updated_at = NOW()
           WHERE user_id = $${i}
           RETURNING *;
@@ -87,8 +107,8 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
       if (!row) return null;
 
       return mapDbRowToUserNotificationPreferences(row);
-    }
-  }
+    },
+  };
 }
 
 const userNotificationPreferencesColumns = `
@@ -105,9 +125,11 @@ const userNotificationPreferencesColumns = `
   last_notified_date,
   created_at,
   updated_at
-`
+`;
 
-function mapDbRowToUserNotificationPreferences(row: UserNotificationPreferences): UserNotificationPreferences {
+function mapDbRowToUserNotificationPreferences(
+  row: UserNotificationPreferences,
+): UserNotificationPreferences {
   return {
     id: row.id,
     user_id: row.user_id,
@@ -115,12 +137,12 @@ function mapDbRowToUserNotificationPreferences(row: UserNotificationPreferences)
     quiet_hours_start: row.quiet_hours_start ?? null,
     quiet_hours_end: row.quiet_hours_end ?? null,
     notify_window_days: row.notify_window_days ?? null,
-    general_notification_window_start: row.general_notification_window_start ??  null,
+    general_notification_window_start: row.general_notification_window_start ?? null,
     general_notification_window_end: row.general_notification_window_end ?? null,
     daily_notification_cap: row.daily_notification_cap,
     daily_notification_counter: row.daily_notification_counter,
     last_notified_date: row.last_notified_date ?? null,
     created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at)
+    updated_at: new Date(row.updated_at),
   };
 }
