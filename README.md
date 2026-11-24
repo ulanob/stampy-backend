@@ -1,7 +1,9 @@
 # Stampy
+
 A personal finance companion for tracking gift cards and stamp cards - and notifying you when you're near a vendor where you have rewards waiting.
 
 ## The Problem
+
 Gift cards get forgotten in wallets. Stamp cards get lost. Rewards go unused and stamps are missed - not because people don't want to use them, but because they don't remember they have them until they're already somewhere else.
 
 Stampy solves this with a simple idea: track your cards in one place, and get notified when you're physically close to a vendor where you have something to redeem.
@@ -9,9 +11,11 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 ---
 
 ## Status & Roadmap
+
 > 🚧 Active development - learning project
 
 **Done:**
+
 - [x] Database schema design
 - [x] CRUD API (users, businesses, locations, stamp cards, gift cards)
 - [x] Event-sourced business logic layer (stamp progression via `stamp_card_events`, gift card balance via `gift_card_events`)
@@ -24,6 +28,7 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [x] Notification service: fetch by id, list by user, mark as read (`POST /notifications/:id/read`)
 
 **In progress / not started:**
+
 - [ ] Client-side timezone capture at signup (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and lazy drift-correction wiring at geofence check-in (`geo-tz`) — column and DAO exist, the capture/correction call sites don't yet
 - [ ] Check-in service and endpoint (`POST /locations/:id/check-in`): loads the user's cards and preferences for the location's business, runs `evaluateEligibility` per card, and creates notifications for cards that pass
 - [ ] Location-based notifications end-to-end (geofence check-in → eligibility → send)
@@ -35,6 +40,7 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [ ] AWS deployment pipeline (RDS, EventBridge, Lambda, SNS)
 
 **Backlog:**
+
 - [ ] Only allow `sent → read` once the pipeline sets `sent`
 - [ ] `read_at` timestamp column (split from the status enum)
 - [ ] Allowlist request bodies in the business, location, and notification-preferences services (the DAOs build SQL column names from update keys)
@@ -46,6 +52,7 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 ## Tech Stack
 
 ### Backend
+
 - **Next.js** (App Router) - REST API with file-based routing (`src/app/api/v1/...`)
 - **PostgreSQL** - Raw SQL via `pg`, no ORM. Deliberate choice to build foundational understanding before abstracting it away
 - **TypeScript** throughout
@@ -53,12 +60,14 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - **Vitest** - unit tests; **Supertest** - integration tests against a running dev server
 
 ### Infrastructure (planned)
+
 - **Amazon RDS** - Managed PostgreSQL hosting
 - **Amazon Cognito** - Authentication
 - **EventBridge + Lambda + SNS** - Scheduled push notifications to APNs/FCM
 - **Docker** - Containerisation for local dev and deployment consistency
 
 ### Frontend (planned)
+
 - **React** - browser-based web app
 - **React Native (Expo)** - iOS and Android mobile app, from a single codebase
 
@@ -183,7 +192,7 @@ A few decisions worth explaining, since they shape a lot of the codebase:
 
 **Timezone handling.** `users.timezone` (IANA string, e.g. `America/Vancouver`) is set client-side at signup via `Intl.DateTimeFormat().resolvedOptions().timeZone` — no location permission required. It's lazily corrected at geofence check-in using `geo-tz` to resolve lat/lng drift.
 
-**Server-controlled status.** Card `status` (`active`/`completed`/`redeemed`/`expired`/`cancelled` for stamp cards; `active`/`expired`/`cancelled` for gift cards) is never client-settable via the generic `PATCH` route — it only changes as a side effect of processing an event. This keeps the event log the single source of truth for *why* a card reached a given state. Notifications follow the same rule: there is no generic update route. `sent` and `failed` are set server-side as delivery outcomes, and the only client-driven transition is `read`, exposed as a dedicated action (`POST /notifications/:id/read`) with the status hardcoded in the service. Notifications are also never created over HTTP; they're a side effect of a check-in.
+**Server-controlled status.** Card `status` (`active`/`completed`/`redeemed`/`expired`/`cancelled` for stamp cards; `active`/`expired`/`cancelled` for gift cards) is never client-settable via the generic `PATCH` route — it only changes as a side effect of processing an event. This keeps the event log the single source of truth for _why_ a card reached a given state. Notifications follow the same rule: there is no generic update route. `sent` and `failed` are set server-side as delivery outcomes, and the only client-driven transition is `read`, exposed as a dedicated action (`POST /notifications/:id/read`) with the status hardcoded in the service. Notifications are also never created over HTTP; they're a side effect of a check-in.
 
 **Raw SQL, no ORM.** Deliberately skipping an ORM for now. Writing raw SQL builds real understanding of the database layer — joins, transactions, constraints — before reaching for an abstraction.
 
@@ -192,6 +201,7 @@ A few decisions worth explaining, since they shape a lot of the codebase:
 ## Learning Goals
 
 This project is intentionally a learning vehicle:
+
 - **REST API design** - versioning, resource naming, consistent response patterns
 - **Clean code & design patterns** - separation of concerns, SOLID principles, Chain of Responsibility (notification eligibility), meaningful naming, small focused functions
 - **Event-driven data modeling** - append-only logs, idempotency, transactional consistency
@@ -202,4 +212,5 @@ This project is intentionally a learning vehicle:
 ---
 
 ## Running Locally
+
 > Setup instructions coming as the project stabilises.

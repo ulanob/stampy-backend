@@ -16,6 +16,6 @@ export const STAMP_CARD_EVENT_TYPES = [
   'card_expired',
   'card_deleted',
 ] as const;
-export type StampCardEventType = typeof STAMP_CARD_EVENT_TYPES[number];
+export type StampCardEventType = (typeof STAMP_CARD_EVENT_TYPES)[number];
 
 export type CreateStampCardEventInput = Omit<StampCardEvent, 'id' | 'created_at'>;

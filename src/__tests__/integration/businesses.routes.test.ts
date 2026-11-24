@@ -29,14 +29,16 @@ describe('businesses routes', () => {
   });
 
   test('POST rejects invalid type', async () => {
-    const response = await createBusiness({ name: 'Bad Type', type: 'not-a-type' as any }).expect(400);
+    const response = await createBusiness({ name: 'Bad Type', type: 'not-a-type' as any }).expect(
+      400,
+    );
     expect(response.body.error).toBeDefined();
   });
 
   test('GET returns a list of businesses', async () => {
     const response = await request(BASE_URL).get('/api/v1/businesses').expect(200);
     expect(response.body).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: TEST_IDS.business1 })])
+      expect.arrayContaining([expect.objectContaining({ id: TEST_IDS.business1 })]),
     );
   });
 
@@ -48,9 +50,7 @@ describe('businesses routes', () => {
   });
 
   test('GET /:id returns 404 for a non-existent business', async () => {
-    await request(BASE_URL)
-      .get(`/api/v1/businesses/${TEST_IDS.businessNonExistent}`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/businesses/${TEST_IDS.businessNonExistent}`).expect(404);
   });
 
   test('PATCH /:id updates a business', async () => {

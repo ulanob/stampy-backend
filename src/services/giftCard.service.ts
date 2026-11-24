@@ -1,6 +1,10 @@
 import { BusinessDAO, GiftCardDAO, UserDAO } from '../dao';
-import { GiftCard, UpdateGiftCardInput, CreateGiftCardRequestBody, } from '../models/gift-card.model';
-import { NotFoundError, validateUUID, ValidationError, } from '../utils/validators';
+import {
+  GiftCard,
+  UpdateGiftCardInput,
+  CreateGiftCardRequestBody,
+} from '../models/gift-card.model';
+import { NotFoundError, validateUUID, ValidationError } from '../utils/validators';
 import { Pool } from 'pg';
 import { assertExists, requireFields } from './helpers.service';
 import { withTransaction } from '../lib/db';
@@ -8,9 +12,9 @@ import { GiftCardEventService } from './giftCardEvent.service';
 
 export type GiftCardService = {
   createGiftCard(fields: CreateGiftCardRequestBody): Promise<GiftCard>;
-  getAllGiftCardsByUserId(user_id: string,includeDeleted?: boolean): Promise<GiftCard[]>;
+  getAllGiftCardsByUserId(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
   getGiftCardByID(id: string, includeDeleted?: boolean): Promise<GiftCard>;
-  updateGiftCardByID(id: string,updates: UpdateGiftCardInput): Promise<GiftCard>;
+  updateGiftCardByID(id: string, updates: UpdateGiftCardInput): Promise<GiftCard>;
   deleteGiftCardByID(id: string): Promise<void>;
 };
 
@@ -19,14 +23,13 @@ export function createGiftCardService(
   userDAO: UserDAO,
   businessDAO: BusinessDAO,
   giftCardEventService: GiftCardEventService,
-  pool: Pool
+  pool: Pool,
 ): GiftCardService {
   return {
-    async createGiftCard(
-      fields: CreateGiftCardRequestBody ): Promise<GiftCard> {
+    async createGiftCard(fields: CreateGiftCardRequestBody): Promise<GiftCard> {
       // check required card create fields
       // location_id optional: card create can happen away from a location (ie at home instead of a business)
-      requireFields(fields, ['user_id', 'business_id', 'currency', 'amount', 'request_id'])
+      requireFields(fields, ['user_id', 'business_id', 'currency', 'amount', 'request_id']);
 
       // validate user_id, business_id
       validateUUID(fields.user_id);
@@ -34,43 +37,36 @@ export function createGiftCardService(
 
       const { amount, location_id, request_id, ...cardFields } = fields;
 
-      await assertExists(
-        () => userDAO.getUserByID(fields.user_id),
-        'User not found'
-      );
+      await assertExists(() => userDAO.getUserByID(fields.user_id), 'User not found');
       await assertExists(
         () => businessDAO.getBusinessByID(fields.business_id),
-        'Business not found'
+        'Business not found',
       );
 
       return withTransaction(pool, async (client) => {
         const newCard = await giftCardDAO.createGiftCard(
-          { ...cardFields, 
-            status: 'active' },
-          client
+          { ...cardFields, status: 'active' },
+          client,
         );
-  
+
         await giftCardEventService.createGiftCardEvent(
-          { 
-            gift_card_id: newCard.id, 
+          {
+            gift_card_id: newCard.id,
             user_id: fields.user_id,
             location_id: location_id ?? null,
             request_id,
-            type: 'balance_added' ,
+            type: 'balance_added',
             amount,
           },
-          client
-        );  
+          client,
+        );
 
         // current_balance set to amount as card creation only has one event: balance_added. Does not need to be derived from another request.
-        return {... newCard, current_balance: amount};
-      })
+        return { ...newCard, current_balance: amount };
+      });
     },
 
-    async getAllGiftCardsByUserId(
-      user_id: string,
-      includeDeleted = false
-    ): Promise<GiftCard[]> {
+    async getAllGiftCardsByUserId(user_id: string, includeDeleted = false): Promise<GiftCard[]> {
       validateUUID(user_id);
       await assertExists(() => userDAO.getUserByID(user_id), 'User not found');
 
@@ -89,10 +85,7 @@ export function createGiftCardService(
       return fetchedGiftCard;
     },
 
-    async updateGiftCardByID(
-      id: string,
-      updates: UpdateGiftCardInput
-    ): Promise<GiftCard> {
+    async updateGiftCardByID(id: string, updates: UpdateGiftCardInput): Promise<GiftCard> {
       validateUUID(id);
 
       const safeUpdates: UpdateGiftCardInput = {

@@ -1,3 +1,3 @@
-import { Pool, PoolClient } from "pg";
+import { Pool, PoolClient } from 'pg';
 
 export type Executor = Pool | PoolClient;

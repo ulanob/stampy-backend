@@ -30,9 +30,7 @@ describe('notifications routes', () => {
 
     test('returns 404 for a non-existent notification', async () => {
       // no notificationNonExistent in TEST_IDS; a random UUID is equivalent
-      await request(BASE_URL)
-        .get(`/api/v1/notifications/${crypto.randomUUID()}`)
-        .expect(404);
+      await request(BASE_URL).get(`/api/v1/notifications/${crypto.randomUUID()}`).expect(404);
     });
   });
 
@@ -46,7 +44,7 @@ describe('notifications routes', () => {
         expect.arrayContaining([
           expect.objectContaining({ id: TEST_IDS.notification1 }),
           expect.objectContaining({ id: TEST_IDS.notification2 }),
-        ])
+        ]),
       );
     });
 
@@ -113,9 +111,7 @@ describe('notifications routes', () => {
     });
 
     test('returns 404 for a non-existent notification', async () => {
-      await request(BASE_URL)
-        .post(`/api/v1/notifications/${crypto.randomUUID()}/read`)
-        .expect(404);
+      await request(BASE_URL).post(`/api/v1/notifications/${crypto.randomUUID()}/read`).expect(404);
     });
   });
 });
@@ -128,19 +124,18 @@ describe('notification status: TS enum <-> SQL CHECK constraint', () => {
   const notificationDAO = createNotificationDAO(pool);
 
   test.each(NOTIFICATION_STATUSES)('DAO accepts status %s', async (status) => {
-    const updated = await notificationDAO.updateNotificationByID(
-      TEST_IDS.notification2,
-      { status }
-    );
+    const updated = await notificationDAO.updateNotificationByID(TEST_IDS.notification2, {
+      status,
+    });
     expect(updated?.status).toBe(status);
   });
 
   test('database rejects a status outside the enum', async () => {
     await expect(
-      pool.query(
-        'UPDATE notifications SET status = $1 WHERE id = $2',
-        ['banana', TEST_IDS.notification2]
-      )
+      pool.query('UPDATE notifications SET status = $1 WHERE id = $2', [
+        'banana',
+        TEST_IDS.notification2,
+      ]),
     ).rejects.toThrow();
   });
 });

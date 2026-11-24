@@ -11,19 +11,11 @@ export interface Location {
   updated_at: Date;
 }
 
-export type CreateLocationInput = Omit<Location,
-  "id"
-  | "created_at"
-  | "updated_at"
-  | "deleted"
-  | "deleted_at"
->
+export type CreateLocationInput = Omit<
+  Location,
+  'id' | 'created_at' | 'updated_at' | 'deleted' | 'deleted_at'
+>;
 
-type LocationUpdateableFields = Pick<Location,
-  "address"
-  | "lat"
-  | "lng"
-  | "geofence_radius"
->
+type LocationUpdateableFields = Pick<Location, 'address' | 'lat' | 'lng' | 'geofence_radius'>;
 
-export type UpdateLocationInput = Partial<LocationUpdateableFields>
+export type UpdateLocationInput = Partial<LocationUpdateableFields>;

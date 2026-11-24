@@ -1,7 +1,7 @@
-import { Pool } from "pg";
-import { Business, CreateBusinessInput, UpdateBusinessInput } from "../models/business.model";
+import { Pool } from 'pg';
+import { Business, CreateBusinessInput, UpdateBusinessInput } from '../models/business.model';
 
-const businessTableName = "businesses"
+const businessTableName = 'businesses';
 
 export type BusinessDAO = {
   createBusiness(fields: CreateBusinessInput): Promise<Business>;
@@ -9,7 +9,7 @@ export type BusinessDAO = {
   getBusinessByID(id: string, includeDeleted?: boolean): Promise<Business | null>;
   updateBusinessByID(id: string, updates: UpdateBusinessInput): Promise<Business | null>;
   deleteBusinessByID(id: string): Promise<void>;
-}
+};
 
 export function createBusinessDAO(pool: Pool): BusinessDAO {
   return {
@@ -20,12 +20,9 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
         type)
       VALUES ($1, $2)
       RETURNING
-        ${businessColumns}`
+        ${businessColumns}`;
 
-      const inputs = [
-        fields.name,
-        fields.type
-      ]
+      const inputs = [fields.name, fields.type];
 
       const result = await pool.query(sqlString, inputs);
 
@@ -37,15 +34,13 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
       SELECT
         ${businessColumns}
       FROM ${businessTableName}
-      ${includeDeleted ? '' :
-          'WHERE deleted = false'}
-      ORDER BY created_at DESC;`
+      ${includeDeleted ? '' : 'WHERE deleted = false'}
+      ORDER BY created_at DESC;`;
 
       const result = await pool.query(sqlString);
       const rows = result.rows;
 
-      return rows.map(row => mapDbRowToBusiness(row));
-
+      return rows.map((row) => mapDbRowToBusiness(row));
     },
 
     async getBusinessByID(id: string, includeDeleted: boolean = false): Promise<Business | null> {
@@ -57,8 +52,8 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
           ${includeDeleted ? '' : 'AND deleted = false'}
           `;
 
-      const result = await pool.query(sqlString, [id])
-      const row = result.rows[0]
+      const result = await pool.query(sqlString, [id]);
+      const row = result.rows[0];
       if (!row) return null;
 
       return mapDbRowToBusiness(row);
@@ -67,7 +62,7 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
     async updateBusinessByID(id: string, updates: UpdateBusinessInput) {
       const setArgs: string[] = [];
       const values: (string | number | boolean | Date | null)[] = [];
-      
+
       let i = 1;
 
       // Safe: keys are derived from typed UpdateBusinessInput, not raw user input
@@ -80,12 +75,12 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
       }
 
       if (setArgs.length === 0) {
-        throw new Error("No fields to update");
+        throw new Error('No fields to update');
       }
 
       const sqlString = `
           UPDATE ${businessTableName}
-          SET ${setArgs.join(", ")},
+          SET ${setArgs.join(', ')},
           updated_at = NOW()
           WHERE id = $${i}
           RETURNING *;
@@ -105,11 +100,11 @@ export function createBusinessDAO(pool: Pool): BusinessDAO {
       SET
         deleted = true,
         deleted_at = NOW()
-      WHERE id = $1;`
+      WHERE id = $1;`;
 
-      await pool.query(sqlString, [id])
-    }
-  }
+      await pool.query(sqlString, [id]);
+    },
+  };
 }
 
 const businessColumns = `
@@ -120,7 +115,7 @@ const businessColumns = `
   deleted_at,
   created_at,
   updated_at
-`
+`;
 
 function mapDbRowToBusiness(row: Business): Business {
   return {

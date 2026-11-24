@@ -1,21 +1,26 @@
-import { Pool } from "pg";
-import { GiftCardEvent, CreateGiftCardEventInput } from "@/src/models/index.model";
-import { Executor } from "./types";
+import { Pool } from 'pg';
+import { GiftCardEvent, CreateGiftCardEventInput } from '@/src/models/index.model';
+import { Executor } from './types';
 
-const giftCardEventTableName = "gift_card_events"
+const giftCardEventTableName = 'gift_card_events';
 
 export type GiftCardEventDAO = {
   createGiftCardEvent(fields: CreateGiftCardEventInput, executor: Executor): Promise<GiftCardEvent>;
   getAllGiftCardEvents(limit?: number, offset?: number): Promise<GiftCardEvent[]>;
   getGiftCardEventsByGiftCardID(gift_card_id: string): Promise<GiftCardEvent[]>;
-  getGiftCardEventByRequestID(request_id: string, executor?: Executor):Promise<GiftCardEvent | null>;
-  getAllGiftCardEventsByUserID(user_id: string): Promise<GiftCardEvent[]>
-}
+  getGiftCardEventByRequestID(
+    request_id: string,
+    executor?: Executor,
+  ): Promise<GiftCardEvent | null>;
+  getAllGiftCardEventsByUserID(user_id: string): Promise<GiftCardEvent[]>;
+};
 
 export function createGiftCardEventDAO(pool: Pool): GiftCardEventDAO {
   return {
-    async createGiftCardEvent(fields: CreateGiftCardEventInput, executor: Executor): Promise<GiftCardEvent> {
-
+    async createGiftCardEvent(
+      fields: CreateGiftCardEventInput,
+      executor: Executor,
+    ): Promise<GiftCardEvent> {
       const sqlString = `
       INSERT INTO ${giftCardEventTableName}
         (user_id,
@@ -26,7 +31,7 @@ export function createGiftCardEventDAO(pool: Pool): GiftCardEventDAO {
         amount)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING
-        ${giftCardEventColumns}`
+        ${giftCardEventColumns}`;
 
       const inputs = [
         fields.user_id,
@@ -34,10 +39,10 @@ export function createGiftCardEventDAO(pool: Pool): GiftCardEventDAO {
         fields.location_id,
         fields.request_id,
         fields.type,
-        fields.amount
-      ]
+        fields.amount,
+      ];
 
-      const result = await executor.query(sqlString, inputs)
+      const result = await executor.query(sqlString, inputs);
       return mapDbRowToGiftCardEvent(result.rows[0]);
     },
 
@@ -46,12 +51,12 @@ export function createGiftCardEventDAO(pool: Pool): GiftCardEventDAO {
         SELECT ${giftCardEventColumns}
         FROM ${giftCardEventTableName}
         ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2;`
+        LIMIT $1 OFFSET $2;`;
 
-      const result = await pool.query(sqlString, [limit, offset])
+      const result = await pool.query(sqlString, [limit, offset]);
       const rows = result.rows;
 
-      return rows.map(row => mapDbRowToGiftCardEvent(row));
+      return rows.map((row) => mapDbRowToGiftCardEvent(row));
     },
 
     async getGiftCardEventsByGiftCardID(gift_card_id: string): Promise<GiftCardEvent[]> {
@@ -62,12 +67,14 @@ export function createGiftCardEventDAO(pool: Pool): GiftCardEventDAO {
         ORDER BY created_at DESC
       `;
 
-      const result = await pool.query(sqlString, [gift_card_id])
-      return result.rows.map(row => mapDbRowToGiftCardEvent(row))
-
+      const result = await pool.query(sqlString, [gift_card_id]);
+      return result.rows.map((row) => mapDbRowToGiftCardEvent(row));
     },
 
-    async getGiftCardEventByRequestID(request_id: string, executor: Executor = pool): Promise<GiftCardEvent | null> {
+    async getGiftCardEventByRequestID(
+      request_id: string,
+      executor: Executor = pool,
+    ): Promise<GiftCardEvent | null> {
       const sqlString = `
         SELECT ${giftCardEventColumns}
         FROM ${giftCardEventTableName}
@@ -87,10 +94,10 @@ export function createGiftCardEventDAO(pool: Pool): GiftCardEventDAO {
         ORDER BY created_at DESC
       `;
 
-      const result = await pool.query(sqlString, [user_id])
-      return result.rows.map(row => mapDbRowToGiftCardEvent(row))
-    }
-  }
+      const result = await pool.query(sqlString, [user_id]);
+      return result.rows.map((row) => mapDbRowToGiftCardEvent(row));
+    },
+  };
 }
 
 const giftCardEventColumns = `
@@ -102,7 +109,7 @@ const giftCardEventColumns = `
   type,
   amount,
   created_at
-`
+`;
 
 function mapDbRowToGiftCardEvent(row: GiftCardEvent): GiftCardEvent {
   return {
@@ -113,6 +120,6 @@ function mapDbRowToGiftCardEvent(row: GiftCardEvent): GiftCardEvent {
     request_id: row.request_id,
     type: row.type,
     amount: row.amount,
-    created_at: new Date(row.created_at)
+    created_at: new Date(row.created_at),
   };
 }

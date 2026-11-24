@@ -10,18 +10,11 @@ export interface User {
   deleted_at: Date | null;
 }
 
-export type CreateUserInput = Omit<User,
-  "id"
-  | "created_at"
-  | "updated_at"
-  | "deleted"
-  | "deleted_at"
+export type CreateUserInput = Omit<
+  User,
+  'id' | 'created_at' | 'updated_at' | 'deleted' | 'deleted_at'
+>;
 
->
-
-type UserUpdateableFields = Pick<User,
-  "display_name"
-  | "timezone"
->
+type UserUpdateableFields = Pick<User, 'display_name' | 'timezone'>;
 
 export type UpdateUserInput = Partial<UserUpdateableFields>;

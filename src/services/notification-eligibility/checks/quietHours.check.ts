@@ -1,5 +1,5 @@
-import { EligibilityCheck } from "../types";
-import { getLocalDayAndMinutes, postgresTimeToMinutes } from "./utils";
+import { EligibilityCheck } from '../types';
+import { getLocalDayAndMinutes, postgresTimeToMinutes } from './utils';
 
 // start > end means the window wraps past midnight
 // start === end is treated as "no window" - eligible
@@ -7,12 +7,12 @@ function isWithinWindow(start: number, end: number, now: number): boolean {
   if (start === end) return false;
 
   return start < end
-    ? now >= start && now < end   // same-day window
-    : now >= start || now < end;  // overnight window
+    ? now >= start && now < end // same-day window
+    : now >= start || now < end; // overnight window
 }
 
 export const quietHoursCheck: EligibilityCheck = {
-  name: "quietHoursCheck",
+  name: 'quietHoursCheck',
   check(_notifiable, preferences, context) {
     const { quiet_hours_start, quiet_hours_end } = preferences;
 
@@ -27,7 +27,7 @@ export const quietHoursCheck: EligibilityCheck = {
     if (isWithinWindow(start, end, minutes)) {
       return {
         eligible: false,
-        reason: "within_user_quiet_window",
+        reason: 'within_user_quiet_window',
         detail: `Within user's quiet window of ${quiet_hours_start} and ${quiet_hours_end}`,
       };
     }

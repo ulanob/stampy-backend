@@ -23,15 +23,13 @@ afterAll(async () => {
 
 describe('locations', () => {
   test('GET /api/v1/locations returns a list of locations', async () => {
-    const response = await request(BASE_URL)
-      .get('/api/v1/locations')
-      .expect(200);
+    const response = await request(BASE_URL).get('/api/v1/locations').expect(200);
 
     expect(response.body).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: TEST_IDS.location1 }),
         expect.objectContaining({ id: TEST_IDS.location2 }),
-      ])
+      ]),
     );
   });
 
@@ -41,7 +39,7 @@ describe('locations', () => {
       .expect(200);
 
     expect(response.body).toEqual(
-      expect.arrayContaining([expect.objectContaining({ business_id: TEST_IDS.business1 })])
+      expect.arrayContaining([expect.objectContaining({ business_id: TEST_IDS.business1 })]),
     );
     for (const location of response.body) {
       expect(location.business_id).toBe(TEST_IDS.business1);
@@ -49,9 +47,7 @@ describe('locations', () => {
   });
 
   test('GET /api/v1/locations?business_id= returns 400 for a malformed business_id', async () => {
-    await request(BASE_URL)
-      .get('/api/v1/locations?business_id=not-a-uuid')
-      .expect(400);
+    await request(BASE_URL).get('/api/v1/locations?business_id=not-a-uuid').expect(400);
   });
 
   test('GET /api/v1/locations?business_id= returns 404 for a non-existent business', async () => {
@@ -80,21 +76,15 @@ describe('locations', () => {
       .get(`/api/v1/locations/${TEST_IDS.location1}`)
       .expect(200);
 
-    expect(response.body).toEqual(
-      expect.objectContaining({ id: TEST_IDS.location1 })
-    );
+    expect(response.body).toEqual(expect.objectContaining({ id: TEST_IDS.location1 }));
   });
 
   test('GET /api/v1/locations/:id returns 400 for invalid ID format', async () => {
-    await request(BASE_URL)
-      .get('/api/v1/locations/999999')
-      .expect(400);
+    await request(BASE_URL).get('/api/v1/locations/999999').expect(400);
   });
 
   test('GET /api/v1/locations/:id returns 404 for location not found', async () => {
-    await request(BASE_URL)
-      .get(`/api/v1/locations/${TEST_IDS.locationNonExistent}`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/locations/${TEST_IDS.locationNonExistent}`).expect(404);
   });
 
   test('GET /api/v1/locations/:id returns 404 for already deleted location', async () => {
@@ -130,15 +120,12 @@ describe('locations', () => {
         lat: 80,
         lng: 170,
         geofence_radius: 127,
-      })
+      }),
     );
   });
 
   test('POST /api/v1/locations rejects invalid payload', async () => {
-    const response = await request(BASE_URL)
-      .post('/api/v1/locations')
-      .send({})
-      .expect(400);
+    const response = await request(BASE_URL).post('/api/v1/locations').send({}).expect(400);
 
     expect(response.body.error).toBeDefined();
   });
@@ -154,9 +141,7 @@ describe('locations', () => {
       .send({ lat: 45.5, lng: -122.6 })
       .expect(200);
 
-    expect(response.body).toEqual(
-      expect.objectContaining({ lat: 45.5, lng: -122.6 })
-    );
+    expect(response.body).toEqual(expect.objectContaining({ lat: 45.5, lng: -122.6 }));
   });
 
   test('PATCH /api/v1/locations/:id rejects updating lat without lng', async () => {
@@ -188,10 +173,7 @@ describe('locations', () => {
   });
 
   test('PATCH /api/v1/locations/:id returns 400 for invalid ID format', async () => {
-    await request(BASE_URL)
-      .patch('/api/v1/locations/999999')
-      .send({ lat: 500 })
-      .expect(400);
+    await request(BASE_URL).patch('/api/v1/locations/999999').send({ lat: 500 }).expect(400);
   });
 
   test('PATCH /api/v1/locations/:id returns 404 for location not found', async () => {
@@ -209,9 +191,7 @@ describe('locations', () => {
       .send(tempLocation)
       .expect(201);
 
-    await request(BASE_URL)
-      .delete(`/api/v1/locations/${created.id}`)
-      .expect(204);
+    await request(BASE_URL).delete(`/api/v1/locations/${created.id}`).expect(204);
   });
 
   test('DELETE /api/v1/locations/:id returns 404 for location not found', async () => {
@@ -230,9 +210,7 @@ describe('locations', () => {
 
     await request(BASE_URL).delete(`/api/v1/locations/${created.id}`).expect(204);
 
-    const response = await request(BASE_URL)
-      .delete(`/api/v1/locations/${created.id}`)
-      .expect(400);
+    const response = await request(BASE_URL).delete(`/api/v1/locations/${created.id}`).expect(400);
 
     expect(response.body.error).toBeDefined();
   });

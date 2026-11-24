@@ -1,21 +1,20 @@
-import { Pool } from "pg";
-import { User, CreateUserInput, UpdateUserInput } from "@/src/models/index.model";
-import { Executor } from "./types";
+import { Pool } from 'pg';
+import { User, CreateUserInput, UpdateUserInput } from '@/src/models/index.model';
+import { Executor } from './types';
 
-const userTableName = "users"
+const userTableName = 'users';
 
 export type UserDAO = {
   createUser(fields: CreateUserInput, executor: Executor): Promise<User>;
   getAllUsers(includeDeleted?: boolean): Promise<User[]>;
   getUserByID(id: string, includeDeleted?: boolean): Promise<User | null>;
   updateUserByID(id: string, updates: UpdateUserInput): Promise<User | null>;
-  deleteUserByID(id: string): Promise<void>
-}
+  deleteUserByID(id: string): Promise<void>;
+};
 
 export function createUserDAO(pool: Pool): UserDAO {
   return {
     async createUser(fields: CreateUserInput, executor: Executor = pool): Promise<User> {
-
       const sqlString = `
       INSERT INTO ${userTableName}
         (display_name,
@@ -24,17 +23,12 @@ export function createUserDAO(pool: Pool): UserDAO {
         timezone)
       VALUES ($1, $2, $3, $4)
       RETURNING
-        ${userColumns}`
+        ${userColumns}`;
 
-      const inputs = [
-        fields.display_name,
-        fields.email,
-        fields.auth_provider_id,
-        fields.timezone
-      ]
+      const inputs = [fields.display_name, fields.email, fields.auth_provider_id, fields.timezone];
 
-      const result = await executor.query(sqlString, inputs)
-      
+      const result = await executor.query(sqlString, inputs);
+
       return mapDbRowToUser(result.rows[0]);
     },
 
@@ -42,14 +36,13 @@ export function createUserDAO(pool: Pool): UserDAO {
       const sqlString = `
         SELECT ${userColumns}
         FROM ${userTableName}
-        ${includeDeleted ? '' :
-          'WHERE deleted = false'}
-        ORDER BY created_at DESC;`
+        ${includeDeleted ? '' : 'WHERE deleted = false'}
+        ORDER BY created_at DESC;`;
 
-      const result = await pool.query(sqlString)
-      const rows = result.rows
+      const result = await pool.query(sqlString);
+      const rows = result.rows;
 
-      return rows.map(row => mapDbRowToUser(row));
+      return rows.map((row) => mapDbRowToUser(row));
     },
 
     async getUserByID(id: string, includeDeleted: boolean = false): Promise<User | null> {
@@ -60,11 +53,11 @@ export function createUserDAO(pool: Pool): UserDAO {
         ${includeDeleted ? '' : 'AND deleted = false'}
       `;
 
-      const result = await pool.query(sqlString, [id])
-      const row = result.rows[0]
+      const result = await pool.query(sqlString, [id]);
+      const row = result.rows[0];
       if (!row) return null;
 
-      return mapDbRowToUser(row)
+      return mapDbRowToUser(row);
     },
 
     async updateUserByID(id: string, updates: UpdateUserInput) {
@@ -83,12 +76,12 @@ export function createUserDAO(pool: Pool): UserDAO {
       }
 
       if (setArgs.length === 0) {
-        throw new Error("No fields to update");
+        throw new Error('No fields to update');
       }
 
       const sqlString = `
       UPDATE ${userTableName}
-      SET ${setArgs.join(", ")},
+      SET ${setArgs.join(', ')},
       updated_at = NOW()
       WHERE id = $${i}
       RETURNING *;
@@ -109,11 +102,11 @@ export function createUserDAO(pool: Pool): UserDAO {
         deleted = true,
         updated_at = NOW(),
         deleted_at = NOW()
-      WHERE id = $1;`
+      WHERE id = $1;`;
 
-      await pool.query(sqlString, [id])
-    }
-  }
+      await pool.query(sqlString, [id]);
+    },
+  };
 }
 
 const userColumns = `
@@ -126,7 +119,7 @@ const userColumns = `
   updated_at,
   deleted,
   deleted_at
-`
+`;
 
 function mapDbRowToUser(row: User): User {
   return {

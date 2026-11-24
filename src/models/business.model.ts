@@ -9,20 +9,13 @@ export interface Business {
 }
 
 export const VALID_TYPES = ['restaurant', 'cafe', 'retail', 'other'] as const;
-export type BusinessType = typeof VALID_TYPES[number];
+export type BusinessType = (typeof VALID_TYPES)[number];
 
+export type CreateBusinessInput = Omit<
+  Business,
+  'id' | 'created_at' | 'updated_at' | 'deleted' | 'deleted_at'
+>;
 
-export type CreateBusinessInput = Omit<Business,
-  "id"
-  | "created_at"
-  | "updated_at"
-  | "deleted"
-  | "deleted_at"
->
+type BusinessUpdateableFields = Pick<Business, 'name' | 'type'>;
 
-type BusinessUpdateableFields = Pick<Business,
-  "name"
-  | "type"
->
-
-export type UpdateBusinessInput = Partial<BusinessUpdateableFields>
+export type UpdateBusinessInput = Partial<BusinessUpdateableFields>;

@@ -22,7 +22,7 @@ describe('gift-cards routes', () => {
     const response = await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.business1,
-      amount: 30.00,
+      amount: 30.0,
       currency: 'CAD',
       request_id: crypto.randomUUID(),
     }).expect(201);
@@ -31,15 +31,15 @@ describe('gift-cards routes', () => {
       expect.objectContaining({
         user_id: TEST_IDS.user1,
         business_id: TEST_IDS.business1,
-        current_balance: 30.00,
-      })
+        current_balance: 30.0,
+      }),
     );
   });
 
   test('POST rejects missing required field', async () => {
     const response = await createGiftCard({
       business_id: TEST_IDS.business1,
-      amount: 30.00,
+      amount: 30.0,
       request_id: crypto.randomUUID(),
     }).expect(400);
 
@@ -64,7 +64,7 @@ describe('gift-cards routes', () => {
     await createGiftCard({
       user_id: TEST_IDS.userNonExistent,
       business_id: TEST_IDS.business1,
-      amount: 30.00,
+      amount: 30.0,
       currency: 'CAD',
       request_id: crypto.randomUUID(),
     }).expect(404);
@@ -74,7 +74,7 @@ describe('gift-cards routes', () => {
     await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.businessNonExistent,
-      amount: 30.00,
+      amount: 30.0,
       currency: 'CAD',
       request_id: crypto.randomUUID(),
     }).expect(404);
@@ -86,7 +86,7 @@ describe('gift-cards routes', () => {
     const first = await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.business1,
-      amount: 20.00,
+      amount: 20.0,
       currency: 'CAD',
       request_id,
     }).expect(201);
@@ -102,7 +102,7 @@ describe('gift-cards routes', () => {
         location_id: null,
         request_id,
         type: 'balance_added',
-        amount: 20.00,
+        amount: 20.0,
       });
 
     // Same request_id should return the original event, not create a second one.
@@ -119,9 +119,7 @@ describe('gift-cards routes', () => {
   });
 
   test('GET /:id returns 404 for a non-existent gift card', async () => {
-    await request(BASE_URL)
-      .get(`/api/v1/gift-cards/${TEST_IDS.giftCardNonExistent}`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/gift-cards/${TEST_IDS.giftCardNonExistent}`).expect(404);
   });
 
   test('PATCH /:id updates a gift card', async () => {
@@ -160,25 +158,21 @@ describe('gift-cards routes', () => {
     const created = await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.business1,
-      amount: 10.00,
+      amount: 10.0,
       currency: 'CAD',
       request_id: crypto.randomUUID(),
     }).expect(201);
 
-    await request(BASE_URL)
-      .delete(`/api/v1/gift-cards/${created.body.id}`)
-      .expect(204);
+    await request(BASE_URL).delete(`/api/v1/gift-cards/${created.body.id}`).expect(204);
 
-    await request(BASE_URL)
-      .get(`/api/v1/gift-cards/${created.body.id}`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/gift-cards/${created.body.id}`).expect(404);
   });
 
   test('DELETE /:id returns 400 for already-deleted card', async () => {
     const created = await createGiftCard({
       user_id: TEST_IDS.user1,
       business_id: TEST_IDS.business1,
-      amount: 10.00,
+      amount: 10.0,
       currency: 'CAD',
       request_id: crypto.randomUUID(),
     }).expect(201);
@@ -201,8 +195,6 @@ describe('gift-cards routes', () => {
   });
 
   test('GET /users/:userId/gift-cards returns 404 for a non-existent user', async () => {
-    await request(BASE_URL)
-      .get(`/api/v1/users/${TEST_IDS.userNonExistent}/gift-cards`)
-      .expect(404);
+    await request(BASE_URL).get(`/api/v1/users/${TEST_IDS.userNonExistent}/gift-cards`).expect(404);
   });
 });
