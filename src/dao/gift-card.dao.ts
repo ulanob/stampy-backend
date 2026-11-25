@@ -13,7 +13,11 @@ export type GiftCardDAO = {
     includeDeleted?: boolean,
     executor?: Executor,
   ): Promise<GiftCard | null>;
-  getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean, executor?: Executor): Promise<GiftCard[]>;
+  getAllGiftCardsByUserID(
+    user_id: string,
+    includeDeleted?: boolean,
+    executor?: Executor,
+  ): Promise<GiftCard[]>;
   updateGiftCardByID(
     id: string,
     updates: UpdateGiftCardInput,
@@ -113,7 +117,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
     async getAllGiftCardsByUserID(
       user_id: string,
       includeDeleted: boolean = false,
-      executor: Executor
+      executor: Executor = pool,
     ): Promise<GiftCard[]> {
       const sqlString = `
         SELECT ${giftCardColumns}, ${currentBalanceExpr}

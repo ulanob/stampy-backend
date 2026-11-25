@@ -18,7 +18,11 @@ export type StampCardDAO = {
     includeDeleted?: boolean,
     executor?: Executor,
   ): Promise<StampCard | null>;
-  getAllStampCardsByUserID(user_id: string, includeDeleted?: boolean, executor?: Executor): Promise<StampCard[]>;
+  getAllStampCardsByUserID(
+    user_id: string,
+    includeDeleted?: boolean,
+    executor?: Executor,
+  ): Promise<StampCard[]>;
   updateStampCardByID(
     id: string,
     updates: UpdateStampCardInput,
@@ -114,7 +118,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
     async getAllStampCardsByUserID(
       user_id: string,
       includeDeleted: boolean = false,
-      executor: Executor
+      executor: Executor = pool,
     ): Promise<StampCard[]> {
       const sqlString = `
         SELECT ${stampCardColumns}, ${stampsAcquiredExpr}

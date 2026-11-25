@@ -50,3 +50,7 @@ export function postgresTimeToMinutes(timeStr: string): number {
   // 3. Return total minutes from midnight
   return hours * 60 + minutes;
 }
+
+export function isSameLocalDay(a: Date, b: Date, timezone: string): boolean {
+  return toLocalDateKey(a, timezone) === toLocalDateKey(b, timezone);
+}

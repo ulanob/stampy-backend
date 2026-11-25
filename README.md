@@ -11,9 +11,11 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 ---
 
 ## Status & Roadmap
+
 > 🚧 Active development - learning project
 
 **Done:**
+
 - [x] Database schema design
 - [x] CRUD API (users, businesses, locations, stamp cards, gift cards)
 - [x] Event-sourced business logic layer (stamp progression via `stamp_card_events`, gift card balance via `gift_card_events`)
