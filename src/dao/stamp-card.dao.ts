@@ -18,7 +18,7 @@ export type StampCardDAO = {
     includeDeleted?: boolean,
     executor?: Executor,
   ): Promise<StampCard | null>;
-  getAllStampCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<StampCard[]>;
+  getAllStampCardsByUserID(user_id: string, includeDeleted?: boolean, executor?: Executor): Promise<StampCard[]>;
   updateStampCardByID(
     id: string,
     updates: UpdateStampCardInput,
@@ -114,6 +114,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
     async getAllStampCardsByUserID(
       user_id: string,
       includeDeleted: boolean = false,
+      executor: Executor
     ): Promise<StampCard[]> {
       const sqlString = `
         SELECT ${stampCardColumns}, ${stampsAcquiredExpr}
@@ -126,7 +127,7 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
 
       `;
 
-      const result = await pool.query(sqlString, [user_id]);
+      const result = await executor.query(sqlString, [user_id]);
       return result.rows.map((row) => mapDbRowToStampCard(row));
     },
 
