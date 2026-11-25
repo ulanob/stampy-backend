@@ -25,6 +25,12 @@ export type StampCardDAO = {
     executor?: Executor,
   ): Promise<StampCard | null>;
   deleteStampCardByID(id: string): Promise<void>;
+  claimNotification(
+    id: string,
+    observed: Date | null,
+    now: Date,
+    executor: Executor,
+  ): Promise<boolean>;
 };
 
 export function createStampCardDAO(pool: Pool): StampCardDAO {
@@ -174,6 +180,26 @@ export function createStampCardDAO(pool: Pool): StampCardDAO {
       WHERE id = $1;`;
 
       await pool.query(sqlString, [id]);
+    },
+
+    // Compare-and-swap on notification_time_sent. Returns true only if this
+    // caller won the claim (stored value still equals what it observed).
+    async claimNotification(
+      id: string,
+      observed: Date | null,
+      now: Date,
+      executor: Executor,
+    ): Promise<boolean> {
+      const sqlString = `
+        UPDATE ${stampCardTableName}
+        SET notification_time_sent = $2,
+            updated_at = NOW()
+        WHERE id = $1
+          AND notification_time_sent IS NOT DISTINCT FROM $3::timestamptz
+      `;
+
+      const result = await executor.query(sqlString, [id, now, observed]);
+      return result.rowCount === 1;
     },
   };
 }

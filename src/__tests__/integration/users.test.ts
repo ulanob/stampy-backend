@@ -2,7 +2,7 @@ import request from 'supertest';
 import { seed, clearAll, TEST_IDS } from '../../scripts/testSeed';
 import { CreateUserInput } from '../../models/user.model';
 import { createUserService } from '../../services/user.service';
-import { createUserDAO } from '../../dao';
+import { createUserDAO, createUserNotificationPreferencesDAO } from '../../dao';
 import pool from '../../lib/db';
 import type { UserNotificationPreferencesDAO } from '../../dao';
 
@@ -249,11 +249,10 @@ describe('users', () => {
     test('does not persist a user when the preferences insert fails', async () => {
       const userDAO = createUserDAO(pool);
       const brokenPreferencesDAO: UserNotificationPreferencesDAO = {
+        ...createUserNotificationPreferencesDAO(pool),
         createUserNotificationPreferences: async () => {
           throw new Error('forced failure');
         },
-        getUserNotificationPreferencesByUserID: async () => null,
-        updateUserNotificationPreferencesByUserID: async () => null,
       };
       const service = createUserService(userDAO, brokenPreferencesDAO, pool);
 
