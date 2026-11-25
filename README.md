@@ -11,11 +11,9 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 ---
 
 ## Status & Roadmap
-
 > 🚧 Active development - learning project
 
 **Done:**
-
 - [x] Database schema design
 - [x] CRUD API (users, businesses, locations, stamp cards, gift cards)
 - [x] Event-sourced business logic layer (stamp progression via `stamp_card_events`, gift card balance via `gift_card_events`)
@@ -26,28 +24,9 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [x] Notification eligibility pipeline (Chain of Responsibility) — eight independent checks, `evaluateEligibility` pipeline, unit tests per check
 - [x] Notification status (`pending` / `sent` / `failed` / `read`) typed in the model and enforced by a matching SQL CHECK constraint
 - [x] Notification service: fetch by id, list by user, mark as read (`POST /notifications/:id/read`)
+- [x] Concurrency primitives for notifications: compare-and-swap claim on cards, row lock on user preferences
 
-**In progress / not started:**
-
-- [ ] Client-side timezone capture at signup (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and lazy drift-correction wiring at geofence check-in (`geo-tz`) — column and DAO exist, the capture/correction call sites don't yet
-- [ ] Check-in service and endpoint (`POST /locations/:id/check-in`): loads the user's cards and preferences for the location's business, runs `evaluateEligibility` per card, and creates notifications for cards that pass
-- [ ] Location-based notifications end-to-end (geofence check-in → eligibility → send)
-- [ ] Shared transaction/idempotency helper (deferred — revisit if a third event-creation flow emerges; currently held at two call sites)
-- [ ] Authentication - evaluating Amazon Cognito
-- [ ] React web app
-- [ ] React Native (Expo) mobile app (iOS + Android)
-- [ ] Docker Compose refinements for local dev
-- [ ] AWS deployment pipeline (RDS, EventBridge, Lambda, SNS)
-
-**Backlog:**
-
-- [ ] Only allow `sent → read` once the pipeline sets `sent`
-- [ ] `read_at` timestamp column (split from the status enum)
-- [ ] Allowlist request bodies in the business, location, and notification-preferences services (the DAOs build SQL column names from update keys)
-- [ ] Scope all resources to the authenticated user (with Cognito)
-- [ ] Direct unit tests for the remaining validators
-
----
+**Next up, backlog, and the full plan:** see [ROADMAP.md](./ROADMAP.md).
 
 ## Tech Stack
 
