@@ -112,6 +112,18 @@ describe('stamp-cards routes', () => {
 
     expect(response.body.business_id).toBe(before.body.business_id);
   });
+  test('PATCH ignores notification_time_sent even if included in the body', async () => {
+    const before = await request(BASE_URL)
+      .get(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}`)
+      .expect(200);
+
+    const response = await request(BASE_URL)
+      .patch(`/api/v1/stamp-cards/${TEST_IDS.stampCard1}`)
+      .send({ notification_time_sent: '2026-01-01T00:00:00.000Z', nickname: 'Still updating' })
+      .expect(200);
+
+    expect(response.body.notification_time_sent).toBe(before.body.notification_time_sent);
+  });
   test('DELETE /:id deletes a stamp card', async () => {
     const created = await createCard({
       user_id: TEST_IDS.user1,

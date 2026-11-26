@@ -198,17 +198,19 @@ describe('stampCardService', () => {
         service.updateStampCardByID(validCardId, { nickname: 'New name' } as any),
       ).rejects.toThrow(NotFoundError);
     });
-    it('strips stamps_needed and status from the update even if provided — safeUpdates only forwards a fixed allowlist', async () => {
+    it('strips stamps_needed, status and notification_time_sent from the update — safeUpdates only forwards a fixed allowlist', async () => {
       const service = createStampCardService(stampCardDAO, userDAO, businessDAO, mockPool as Pool);
       await service.updateStampCardByID(validCardId, {
         nickname: 'New name',
         stamps_needed: 999,
         status: 'cancelled',
+        notification_time_sent: new Date(),
       } as any);
 
       const passedUpdates = (stampCardDAO.updateStampCardByID as any).mock.calls[0][1];
       expect(passedUpdates).not.toHaveProperty('stamps_needed');
       expect(passedUpdates).not.toHaveProperty('status');
+      expect(passedUpdates).not.toHaveProperty('notification_time_sent');
     });
   });
 

@@ -216,6 +216,18 @@ describe('giftCardService', () => {
         service().updateGiftCardByID(validGiftCardId, { nickname: 'New name' }),
       ).rejects.toThrow(NotFoundError);
     });
+
+    it('strips status and notification_time_sent from the update', async () => {
+      await service().updateGiftCardByID(validGiftCardId, {
+        nickname: 'New name',
+        status: 'cancelled',
+        notification_time_sent: new Date(),
+      } as any);
+
+      const passedUpdates = (giftCardDAO.updateGiftCardByID as any).mock.calls[0][1];
+      expect(passedUpdates).not.toHaveProperty('status');
+      expect(passedUpdates).not.toHaveProperty('notification_time_sent');
+    });
   });
 
   describe('deleteGiftCardByID', () => {

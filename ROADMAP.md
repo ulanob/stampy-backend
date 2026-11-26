@@ -25,21 +25,22 @@ _Last updated: 2026-11-24_
 
 Branch: `feat/check-in`
 
-- [ ] **Notify transaction (step 3).** One `withTransaction`:
+- [x] **Notify transaction.** One `withTransaction`:
   1. Lock the user's preferences row (`FOR UPDATE`).
   2. Resolve the location's business and load the user's stamp and gift cards for it.
   3. Run `evaluateEligibility` per card.
   4. `claimNotification` per eligible card; on a win, include it in the message.
   5. `createNotification` (one per business per check-in), then `recordNotificationsSent`.
-- [ ] Pure `buildCheckInMessage` listing only eligible cards (e.g. "1 stamp card ready to be redeemed / 1 gift card with $2.54")
-- [ ] `POST /locations/:id/check-in`: location from the path, `user_id` from the body (until auth)
-- [ ] Remove `notification_time_sent` from `safeUpdates` in the stamp and gift card services, plus a test that `PATCH` ignores it
+- [x] Pure `buildCheckInMessage` listing only eligible cards (e.g. "1 stamp card ready to be redeemed / 1 gift card with $2.54")
+- [x] `POST /locations/:id/check-in`: location from the path, `user_id` from the body (until auth)
+- [x] Remove `notification_time_sent` from `safeUpdates` in the stamp and gift card services, plus a test that `PATCH` ignores it
 - [ ] Timezone capture at signup and lazy drift correction at check-in with `geo-tz`
 
 **Decisions to hold to**
 
-- Counter reset: a different local day (user's timezone) starts the counter at 0, matching `dailyCapCheck`.
-- Cap within one run: track a running count in the loop so one check-in can't exceed the cap.
+- The counter moves once per check-in, not once per card. A different local day (user's timezone) starts it at 0, matching `dailyCapCheck`.
+- The preferences lock serializes check-ins but doesn't dedupe them. Dedupe comes from the card cooldown seeing the committed `notification_time_sent`, so a card with no cooldown notifies on every check-in.
+- The notification row's card ids are set only when exactly one card is included.
 - Write `notification_time_sent` from the JS `Date` used as `now`, never SQL `NOW()` (ms vs. µs precision breaks the compare-and-swap).
 - Check-in stays synchronous for now (no EventBridge).
 

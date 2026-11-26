@@ -59,4 +59,6 @@ export const checkInService = createCheckInService(
   stampCardDAO,
   giftCardDAO,
   userNotificationPreferencesDAO,
+  notificationDAO,
+  pool,
 );
