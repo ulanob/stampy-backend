@@ -104,6 +104,7 @@ Small and known, deliberately off the current branch.
 - Reward field on `stamp_cards`; completion unlocks the reward but never auto-redeems it
 - Docker Compose refinements for local dev
 - README: replace the "Status & Roadmap" section with a link here; remove the React web app item
+- Allowlist create bodies in the stamp and gift card services (POST currently forwards `notification_time_sent` to the INSERT)
 
 ## Deferred (revisit only with a trigger)
 
