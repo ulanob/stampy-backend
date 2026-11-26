@@ -20,6 +20,7 @@ import {
   selectRelevantCards,
 } from './notification-eligibility';
 import { isSameLocalDay } from './notification-eligibility/checks/utils';
+import type { TimezoneService } from './timezone.service';
 
 export type RejectedCard = {
   notifiable: NotifiableCard;
@@ -45,6 +46,7 @@ export function createCheckInService(
   giftCardDAO: GiftCardDAO,
   userNotificationPreferencesDAO: UserNotificationPreferencesDAO,
   notificationDAO: NotificationDAO,
+  timezoneService: TimezoneService,
   pool: Pool,
 ): CheckInService {
   function claimCard(notifiable: NotifiableCard, now: Date, client: PoolClient): Promise<boolean> {
@@ -66,7 +68,13 @@ export function createCheckInService(
       const location = await locationDAO.getLocationByID(location_id);
       if (!location) throw new NotFoundError('Location not found');
 
-      const context: EligibilityContext = { now, location_id, timezone: user.timezone };
+      const timezone = await timezoneService.correctUserTimezone(
+        user_id,
+        location.lat,
+        location.lng,
+      );
+
+      const context: EligibilityContext = { now, location_id: location.id, timezone };
 
       return withTransaction(pool, async (client) => {
         // Lock first: concurrent check-ins for this user queue here, and every
@@ -138,7 +146,7 @@ export function createCheckInService(
 
         const sameLocalDay =
           preferences.last_notified_date !== null &&
-          isSameLocalDay(preferences.last_notified_date, now, user.timezone);
+          isSameLocalDay(preferences.last_notified_date, now, timezone);
 
         await userNotificationPreferencesDAO.recordNotificationsSent(
           user_id,

@@ -34,7 +34,7 @@ Branch: `feat/check-in`
 - [x] Pure `buildCheckInMessage` listing only eligible cards (e.g. "1 stamp card ready to be redeemed / 1 gift card with $2.54")
 - [x] `POST /locations/:id/check-in`: location from the path, `user_id` from the body (until auth)
 - [x] Remove `notification_time_sent` from `safeUpdates` in the stamp and gift card services, plus a test that `PATCH` ignores it
-- [ ] Timezone capture at signup and lazy drift correction at check-in with `geo-tz`
+- [x] Timezone capture at signup and lazy drift correction at check-in with `geo-tz`
 
 **Decisions to hold to**
 

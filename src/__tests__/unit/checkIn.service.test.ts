@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Pool, PoolClient } from 'pg';
 import { createCheckInService } from '../../services/checkIn.service';
+import type { TimezoneService } from '../../services/timezone.service';
 import type {
   LocationDAO,
   UserDAO,
@@ -24,6 +25,7 @@ describe('checkInService.checkIn', () => {
   let giftCardDAO: GiftCardDAO;
   let notificationDAO: NotificationDAO;
   let prefsDAO: UserNotificationPreferencesDAO;
+  let timezoneService: TimezoneService;
 
   const validLocationId = 'b1b2c3d4-0000-0000-0000-000000000001';
   const validUserId = 'a1b2c3d4-0000-0000-0000-000000000005';
@@ -33,7 +35,12 @@ describe('checkInService.checkIn', () => {
   // Monday, 12:00 UTC
   const now = new Date('2026-06-15T12:00:00Z');
 
-  const baseLocation = { id: validLocationId, business_id: businessId };
+  const baseLocation = {
+    id: validLocationId,
+    business_id: businessId,
+    lat: 49.2827,
+    lng: -123.1207,
+  };
   const baseUser = { id: validUserId, timezone: 'UTC' };
   const createdNotification = { id: 'notification-1' };
 
@@ -134,6 +141,10 @@ describe('checkInService.checkIn', () => {
       getUserNotificationPreferencesForUpdate: vi.fn().mockResolvedValue(basePreferences),
       recordNotificationsSent: vi.fn().mockResolvedValue(basePreferences),
     } as unknown as UserNotificationPreferencesDAO;
+
+    timezoneService = {
+      correctUserTimezone: vi.fn().mockResolvedValue(baseUser.timezone), // 'UTC'
+    };
   });
 
   afterEach(() => {
@@ -148,6 +159,7 @@ describe('checkInService.checkIn', () => {
       giftCardDAO,
       prefsDAO,
       notificationDAO,
+      timezoneService,
       mockPool as Pool,
     );
   }
@@ -228,10 +240,7 @@ describe('checkInService.checkIn', () => {
 
   describe('result context', () => {
     it('returns the now, location_id and user timezone used for evaluation', async () => {
-      (userDAO.getUserByID as any).mockResolvedValue({
-        ...baseUser,
-        timezone: 'America/Vancouver',
-      });
+      (timezoneService.correctUserTimezone as any).mockResolvedValue('America/Vancouver');
       (stampCardDAO.getAllStampCardsByUserID as any).mockResolvedValue([relevantStampCard]);
 
       const result = await service().checkIn(validLocationId, validUserId, now);
@@ -599,10 +608,7 @@ describe('checkInService.checkIn', () => {
     it("compares the last notification day in the user's timezone, not UTC", async () => {
       // Tuesday 05:00 UTC = Monday 22:00 Vancouver; last sent Monday 13:00 Vancouver
       const vancouverNow = new Date('2026-06-16T05:00:00Z');
-      (userDAO.getUserByID as any).mockResolvedValue({
-        ...baseUser,
-        timezone: 'America/Vancouver',
-      });
+      (timezoneService.correctUserTimezone as any).mockResolvedValue('America/Vancouver');
       (prefsDAO.getUserNotificationPreferencesForUpdate as any).mockResolvedValue({
         ...basePreferences,
         daily_notification_counter: 2,
@@ -669,10 +675,7 @@ describe('checkInService.checkIn', () => {
     });
 
     it("evaluates in the user's timezone, not UTC", async () => {
-      (userDAO.getUserByID as any).mockResolvedValue({
-        ...baseUser,
-        timezone: 'America/Vancouver',
-      });
+      (timezoneService.correctUserTimezone as any).mockResolvedValue('America/Vancouver');
 
       const result = await service().checkIn(
         validLocationId,

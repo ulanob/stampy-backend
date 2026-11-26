@@ -1,6 +1,7 @@
 import { seed, clearAll, TEST_IDS } from '../../scripts/testSeed';
 import pool from '../../lib/db';
 import { createCheckInService } from '../../services/checkIn.service';
+import { createTimezoneService } from '../../services/timezone.service';
 import {
   createLocationDAO,
   createUserDAO,
@@ -53,6 +54,7 @@ describe('check-in service — real DAOs feeding selectRelevantCards and the eli
   const businessDAO = createBusinessDAO(pool);
   const notificationDAO = createNotificationDAO(pool);
   const prefsDAO = createUserNotificationPreferencesDAO(pool);
+  const timezoneService = createTimezoneService(userDAO, async () => []);
   const service = createCheckInService(
     locationDAO,
     userDAO,
@@ -60,6 +62,7 @@ describe('check-in service — real DAOs feeding selectRelevantCards and the eli
     giftCardDAO,
     prefsDAO,
     notificationDAO,
+    timezoneService,
     pool,
   );
 
