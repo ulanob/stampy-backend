@@ -26,7 +26,7 @@ Stampy solves this with a simple idea: track your cards in one place, and get no
 - [x] Notification eligibility pipeline (Chain of Responsibility) — eight independent checks, `evaluateEligibility` pipeline, unit tests per check
 - [x] Notification status (`pending` / `sent` / `failed` / `read`) typed in the model and enforced by a matching SQL CHECK constraint
 - [x] Notification service: fetch by id, list by user, mark as read (`POST /notifications/:id/read`)
-- [x] Concurrency primitives for notifications: compare-and-swap claim on cards, row lock on user preferences
+- [x] Check-in service and endpoint (`POST /locations/:id/check-in`): transactional, concurrency-tested, creates notifications for cards that pass eligibility
 
 **Next up, backlog, and the full plan:** see [ROADMAP.md](./ROADMAP.md).
 

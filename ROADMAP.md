@@ -2,7 +2,7 @@
 
 The full picture, from the current branch through to a deployed v1. Phases are sequential; items inside a phase are roughly ordered. Anything not in the current phase goes to the Backlog, not into the branch.
 
-_Last updated: 2026-11-24_
+_Last updated: 2026-11-26_
 
 **v1 goal:** walk near a saved vendor on an Android phone and receive a push notification about the cards you have there, backed by a deployed AWS stack.
 
@@ -21,7 +21,7 @@ _Last updated: 2026-11-24_
 
 ---
 
-## Phase 1: Check-in and notification core (current)
+## Phase 1: Check-in and notification core (done)
 
 Branch: `feat/check-in`
 
@@ -49,13 +49,26 @@ Branch: `feat/check-in`
 
 ---
 
-## Phase 2: Authentication
+## Phase 2: Authentication (current)
 
-- [ ] AWS Cognito User Pools (email/password, built-in email verification) plus federated Google/Apple login
-- [ ] JWT verification middleware (`aws-jwt-verify`) so services don't handle per-provider logic
-- [ ] Take `user_id` from the token, not the request body
-- [ ] Scope every resource to the authenticated user
-- [ ] Replace the `// TODO: set from Cognito` placeholders (user creation)
+Branches: `feat/auth-jwt` first, then one branch per remaining step.
+
+- [ ] **Stampy AWS account:** dedicated account, root MFA, admin identity (IAM Identity Center), budget alert before creating anything, AWS CLI configured. Region `ca-central-1`.
+- [ ] **Cognito user pool:**
+  - Email is the sign-in identifier and a required attribute (both are fixed after creation); self-registration on.
+  - Hosted domain, plus a public app client (no secret): SRP and refresh flows, `USER_PASSWORD_AUTH` for dev only, OAuth authorization code grant with PKCE, scopes `openid email profile`.
+  - Add `COGNITO_REGION`, `COGNITO_USER_POOL_ID` and `COGNITO_APP_CLIENT_ID` to `.env.example`.
+- [ ] **JWT verification middleware** (`aws-jwt-verify`, access tokens, verifier injected so tests can fake it). No route changes in the first commit.
+- [ ] **Lazy user creation:** on the first authenticated request, create the `users` row with the Cognito `sub` in `auth_provider_id`. Replaces the `// TODO: set from Cognito` placeholders.
+- [ ] **Take `user_id` from the token, not the request body** (including `POST /locations/:id/check-in`), and scope every resource to the authenticated user.
+- [ ] **Google federated login:** Google identity provider on the pool, plus a pre-sign-up Lambda that links a federated identity to an existing email/password user.
+
+**Decisions to hold to**
+
+- Verify access tokens only. The `sub` claim is the identity, never the email.
+- One person has one `sub`. Federated sign-ins are linked to the existing user, not stored as duplicates.
+- Token verification is local (cached JWKS), with no per-request call to Cognito.
+- Apple login is not in this phase. It waits for the Apple Developer account in Phase 4.
 
 ---
 
@@ -82,6 +95,8 @@ Branch: `feat/check-in`
 - [ ] Google Places API (New): resolve `place_id` at location creation, store our own data (address, hours, business, participation)
 - [ ] Core screens: cards, events, notifications, preferences
 - [ ] Timezone capture at signup (`Intl.DateTimeFormat().resolvedOptions().timeZone`)
+- [ ] Expo OAuth redirect: register the app's custom scheme as a callback and sign-out URL on the Cognito app client
+- [ ] Apple federated login (needs the Apple Developer account; ships with the iOS build)
 
 ---
 
@@ -107,6 +122,7 @@ Small and known, deliberately off the current branch.
 - Docker Compose refinements for local dev
 - README: replace the "Status & Roadmap" section with a link here; remove the React web app item
 - Allowlist create bodies in the stamp and gift card services (POST currently forwards `notification_time_sent` to the INSERT)
+- Switch Cognito's built-in email sender to SES before launch
 
 ## Deferred (revisit only with a trigger)
 
