@@ -123,6 +123,7 @@ Small and known, deliberately off the current branch.
 - README: replace the "Status & Roadmap" section with a link here; remove the React web app item
 - Allowlist create bodies in the stamp and gift card services (POST currently forwards `notification_time_sent` to the INSERT)
 - Switch Cognito's built-in email sender to SES before launch
+- Disable `ALLOW_USER_PASSWORD_AUTH` on the Cognito app client before launch
 
 ## Deferred (revisit only with a trigger)
 
