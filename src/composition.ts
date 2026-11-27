@@ -22,6 +22,7 @@ import { createNotificationService } from './services/notification.service';
 import { createCheckInService } from './services/checkIn.service';
 import { resolveTimezones } from './lib/timezone';
 import { createTimezoneService } from './services/timezone.service';
+import { createCognitoTokenVerifier } from './lib/auth/token-verifier';
 
 export const stampCardDAO = createStampCardDAO(pool);
 export const stampCardEventDAO = createStampCardEventDAO(pool);
@@ -66,3 +67,14 @@ export const checkInService = createCheckInService(
   timezoneService,
   pool,
 );
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var: ${name}`);
+  return value;
+}
+
+export const tokenVerifier = createCognitoTokenVerifier({
+  userPoolId: requireEnv('COGNITO_USER_POOL_ID'),
+  clientId: requireEnv('COGNITO_APP_CLIENT_ID'),
+});
