@@ -20,6 +20,8 @@ import { createUserNotificationPreferencesService } from './services/userNotific
 import { createGiftCardEventService } from './services/giftCardEvent.service';
 import { createNotificationService } from './services/notification.service';
 import { createCheckInService } from './services/checkIn.service';
+import { resolveTimezones } from './lib/timezone';
+import { createTimezoneService } from './services/timezone.service';
 
 export const stampCardDAO = createStampCardDAO(pool);
 export const stampCardEventDAO = createStampCardEventDAO(pool);
@@ -53,4 +55,14 @@ export const userNotificationPreferencesService = createUserNotificationPreferen
   pool,
 );
 export const notificationService = createNotificationService(notificationDAO, userDAO);
-export const checkInService = createCheckInService(locationDAO, userDAO, stampCardDAO, giftCardDAO);
+export const timezoneService = createTimezoneService(userDAO, resolveTimezones);
+export const checkInService = createCheckInService(
+  locationDAO,
+  userDAO,
+  stampCardDAO,
+  giftCardDAO,
+  userNotificationPreferencesDAO,
+  notificationDAO,
+  timezoneService,
+  pool,
+);

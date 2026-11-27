@@ -21,6 +21,15 @@ export type UserNotificationPreferencesDAO = {
     user_id: string,
     updates: UpdateUserNotificationPreferencesInput,
   ): Promise<UserNotificationPreferences | null>;
+  getUserNotificationPreferencesForUpdate(
+    user_id: string,
+    executor: Executor,
+  ): Promise<UserNotificationPreferences | null>;
+  recordNotificationsSent(
+    user_id: string,
+    sent: { counter: number; last_notified_date: Date },
+    executor: Executor,
+  ): Promise<UserNotificationPreferences | null>;
 };
 
 export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificationPreferencesDAO {
@@ -103,6 +112,50 @@ export function createUserNotificationPreferencesDAO(pool: Pool): UserNotificati
       values.push(user_id);
 
       const result = await pool.query(sqlString, values);
+      const row = result.rows[0];
+      if (!row) return null;
+
+      return mapDbRowToUserNotificationPreferences(row);
+    },
+
+    // Executor is required: FOR UPDATE only means something inside a transaction.
+    async getUserNotificationPreferencesForUpdate(
+      user_id: string,
+      executor: Executor,
+    ): Promise<UserNotificationPreferences | null> {
+      const sqlString = `
+        SELECT ${userNotificationPreferencesColumns}
+        FROM ${userNotificationPreferencesTableName}
+        WHERE user_id = $1
+        FOR UPDATE
+      `;
+
+      const result = await executor.query(sqlString, [user_id]);
+      const row = result.rows[0];
+      if (!row) return null;
+
+      return mapDbRowToUserNotificationPreferences(row);
+    },
+
+    async recordNotificationsSent(
+      user_id: string,
+      sent: { counter: number; last_notified_date: Date },
+      executor: Executor,
+    ): Promise<UserNotificationPreferences | null> {
+      const sqlString = `
+        UPDATE ${userNotificationPreferencesTableName}
+        SET daily_notification_counter = $1,
+            last_notified_date = $2,
+            updated_at = NOW()
+        WHERE user_id = $3
+        RETURNING ${userNotificationPreferencesColumns}
+      `;
+
+      const result = await executor.query(sqlString, [
+        sent.counter,
+        sent.last_notified_date,
+        user_id,
+      ]);
       const row = result.rows[0];
       if (!row) return null;
 

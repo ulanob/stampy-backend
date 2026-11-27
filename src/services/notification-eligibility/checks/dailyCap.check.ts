@@ -1,9 +1,5 @@
 import { EligibilityCheck } from '../types';
-import { toLocalDateKey } from './utils';
-
-function isSameLocalDay(dateA: Date, dateB: Date, timezone: string): boolean {
-  return toLocalDateKey(dateA, timezone) === toLocalDateKey(dateB, timezone);
-}
+import { isSameLocalDay } from './utils';
 
 export const dailyCapCheck: EligibilityCheck = {
   name: 'dailyCapCheck',

@@ -5,11 +5,12 @@ import {
   UpdateNotificationInput,
   NotificationStatus,
 } from '@/src/models/index.model';
+import { Executor } from './types';
 
 const notificationTableName = 'notifications';
 
 export type NotificationDAO = {
-  createNotification(fields: CreateNotificationInput): Promise<Notification>;
+  createNotification(fields: CreateNotificationInput, executor: Executor): Promise<Notification>;
   getNotificationByID(id: string): Promise<Notification | null>;
   getAllNotificationsByUserID(user_id: string): Promise<Notification[]>;
   updateNotificationByID(
@@ -20,7 +21,10 @@ export type NotificationDAO = {
 
 export function createNotificationDAO(pool: Pool): NotificationDAO {
   return {
-    async createNotification(fields: CreateNotificationInput): Promise<Notification> {
+    async createNotification(
+      fields: CreateNotificationInput,
+      executor: Executor,
+    ): Promise<Notification> {
       const sqlString = `
       INSERT INTO ${notificationTableName}
         (
@@ -46,7 +50,7 @@ export function createNotificationDAO(pool: Pool): NotificationDAO {
         fields.body,
       ];
 
-      const result = await pool.query(sqlString, inputs);
+      const result = await executor.query(sqlString, inputs);
 
       return mapDbRowToNotification(result.rows[0]);
     },

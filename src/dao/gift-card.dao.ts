@@ -13,13 +13,23 @@ export type GiftCardDAO = {
     includeDeleted?: boolean,
     executor?: Executor,
   ): Promise<GiftCard | null>;
-  getAllGiftCardsByUserID(user_id: string, includeDeleted?: boolean): Promise<GiftCard[]>;
+  getAllGiftCardsByUserID(
+    user_id: string,
+    includeDeleted?: boolean,
+    executor?: Executor,
+  ): Promise<GiftCard[]>;
   updateGiftCardByID(
     id: string,
     updates: UpdateGiftCardInput,
     executor?: Executor,
   ): Promise<GiftCard | null>;
   deleteGiftCardByID(id: string): Promise<void>;
+  claimNotification(
+    id: string,
+    observed: Date | null,
+    now: Date,
+    executor: Executor,
+  ): Promise<boolean>;
 };
 
 export function createGiftCardDAO(pool: Pool): GiftCardDAO {
@@ -107,6 +117,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
     async getAllGiftCardsByUserID(
       user_id: string,
       includeDeleted: boolean = false,
+      executor: Executor = pool,
     ): Promise<GiftCard[]> {
       const sqlString = `
         SELECT ${giftCardColumns}, ${currentBalanceExpr}
@@ -118,7 +129,7 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
         ORDER BY ${giftCardTableName}.created_at DESC
       `;
 
-      const result = await pool.query(sqlString, [user_id]);
+      const result = await executor.query(sqlString, [user_id]);
       return result.rows.map((row) => mapDbRowToGiftCard(row));
     },
 
@@ -166,6 +177,26 @@ export function createGiftCardDAO(pool: Pool): GiftCardDAO {
       WHERE id = $1;`;
 
       await pool.query(sqlString, [id]);
+    },
+
+    // Compare-and-swap on notification_time_sent. Returns true only if this
+    // caller won the claim (stored value still equals what it observed).
+    async claimNotification(
+      id: string,
+      observed: Date | null,
+      now: Date,
+      executor: Executor,
+    ): Promise<boolean> {
+      const sqlString = `
+        UPDATE ${giftCardTableName}
+        SET notification_time_sent = $2,
+            updated_at = NOW()
+        WHERE id = $1
+          AND notification_time_sent IS NOT DISTINCT FROM $3::timestamptz
+      `;
+
+      const result = await executor.query(sqlString, [id, now, observed]);
+      return result.rowCount === 1;
     },
   };
 }

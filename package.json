@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "dotenv": "^17.4.2",
-    "next": "16.1.6",
+    "geo-tz": "^8.1.11",
+    "next": "^16.4.6",
     "pg": "^8.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -33,11 +34,16 @@
     "@types/react-dom": "^19",
     "@types/supertest": "^7.2.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^16.4.6",
+    "prettier": "3.10.1",
     "supertest": "^7.2.2",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.1.6"
+  },
+  "allowScripts": {
+    "esbuild@0.27.2": true,
+    "unrs-resolver@1.11.1": true
   }
 }

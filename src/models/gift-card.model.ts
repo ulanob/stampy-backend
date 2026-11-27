@@ -45,7 +45,6 @@ type GiftCardUpdateableFields = Pick<
   | 'notify_window_days'
   | 'notify_window_start_time'
   | 'notify_window_end_time'
-  | 'notification_time_sent'
   | 'notification_cooldown_seconds'
   | 'expiration_date'
 >;

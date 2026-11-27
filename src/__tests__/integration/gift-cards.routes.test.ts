@@ -141,6 +141,19 @@ describe('gift-cards routes', () => {
     expect(response.body.current_balance).not.toBe(999999);
   });
 
+  test('PATCH ignores notification_time_sent even if included in the body', async () => {
+    const before = await request(BASE_URL)
+      .get(`/api/v1/gift-cards/${TEST_IDS.giftCard1}`)
+      .expect(200);
+
+    const response = await request(BASE_URL)
+      .patch(`/api/v1/gift-cards/${TEST_IDS.giftCard1}`)
+      .send({ notification_time_sent: '2026-01-01T00:00:00.000Z', nickname: 'Still updating' })
+      .expect(200);
+
+    expect(response.body.notification_time_sent).toBe(before.body.notification_time_sent);
+  });
+
   test('PATCH ignores status even if included in the body', async () => {
     const before = await request(BASE_URL)
       .get(`/api/v1/gift-cards/${TEST_IDS.giftCard1}`)
