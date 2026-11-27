@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   display_name: string | null;
-  email: string;
+  email: string | null;
   auth_provider_id: string | null;
   timezone: string;
   created_at: Date;
@@ -12,8 +12,10 @@ export interface User {
 
 export type CreateUserInput = Omit<
   User,
-  'id' | 'created_at' | 'updated_at' | 'deleted' | 'deleted_at'
->;
+  'id' | 'created_at' | 'updated_at' | 'deleted' | 'deleted_at' | 'email'
+> & {
+  email?: string | null;
+};
 
 type UserUpdateableFields = Pick<User, 'display_name' | 'timezone'>;
 

@@ -28,8 +28,12 @@ export function createUserService(
   return {
     async createUser(fields): Promise<User> {
       // TODO: set from Cognito
-      requireFields(fields, ['email', 'timezone']);
-      validateEmail(fields.email);
+      requireFields(fields, ['timezone']);
+
+      if (fields.email != null) {
+        validateEmail(fields.email);
+      }
+
       validateTimezone(fields.timezone);
 
       return withTransaction(pool, async (client) => {

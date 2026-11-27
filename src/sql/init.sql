@@ -21,6 +21,9 @@ CREATE TABLE users (
     deleted_at TIMESTAMP WITH TIME ZONE NULL
 );
 
+CREATE UNIQUE INDEX users_auth_provider_id_idx
+  ON users (auth_provider_id) WHERE auth_provider_id IS NOT NULL;
+
 -- USER NOTIFICATION PREFERENCES (one-to-one)
 CREATE TABLE user_notification_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
