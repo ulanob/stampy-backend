@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     display_name TEXT NULL,
-    email TEXT NOT NULL UNIQUE,
+    email TEXT NULL UNIQUE,
     auth_provider_id TEXT NULL,
     timezone TEXT NOT NULL DEFAULT 'UTC',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),

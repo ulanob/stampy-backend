@@ -27,7 +27,6 @@ export function createUserService(
 ): UserService {
   return {
     async createUser(fields): Promise<User> {
-      // TODO: set from Cognito
       requireFields(fields, ['timezone']);
 
       if (fields.email != null) {

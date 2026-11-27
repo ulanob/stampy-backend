@@ -107,10 +107,41 @@ describe('users', () => {
     );
   });
 
-  test('POST /api/v1/users rejects missing email', async () => {
-    const response = await request(BASE_URL).post('/api/v1/users').send({}).expect(400);
+  test('POST /api/v1/users rejects missing timezone', async () => {
+    const response = await request(BASE_URL)
+      .post('/api/v1/users')
+      .send({ email: 'no-timezone@example.com', display_name: null, auth_provider_id: null })
+      .expect(400);
 
     expect(response.body.error).toBeDefined();
+  });
+
+  test('POST /api/v1/users creates a user without an email', async () => {
+    const response = await request(BASE_URL)
+      .post('/api/v1/users')
+      .send({
+        display_name: null,
+        auth_provider_id: 'cognito-sub-no-email',
+        timezone: 'America/Vancouver',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({ email: null, auth_provider_id: 'cognito-sub-no-email' }),
+    );
+  });
+
+  test('POST /api/v1/users allows multiple users with a null email (UNIQUE permits multiple NULLs)', async () => {
+    const payload = { display_name: null, timezone: 'America/Vancouver' };
+
+    await request(BASE_URL)
+      .post('/api/v1/users')
+      .send({ ...payload, auth_provider_id: 'sub-null-email-1' })
+      .expect(201);
+    await request(BASE_URL)
+      .post('/api/v1/users')
+      .send({ ...payload, auth_provider_id: 'sub-null-email-2' })
+      .expect(201);
   });
 
   test('POST /api/v1/users returns 400 for invalid email', async () => {

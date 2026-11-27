@@ -25,7 +25,12 @@ export function createUserDAO(pool: Pool): UserDAO {
       RETURNING
         ${userColumns}`;
 
-      const inputs = [fields.display_name, fields.email, fields.auth_provider_id, fields.timezone];
+      const inputs = [
+        fields.display_name,
+        fields.email ?? null,
+        fields.auth_provider_id,
+        fields.timezone,
+      ];
 
       const result = await executor.query(sqlString, inputs);
 
