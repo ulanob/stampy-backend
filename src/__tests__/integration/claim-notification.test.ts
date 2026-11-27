@@ -69,6 +69,18 @@ describe.each(cases)('claimNotification — $name', ({ name, id, claim }) => {
     expect(await claim(id, null, T2, pool)).toBe(false);
   });
 
+  test('concurrent claims with the same observed produce exactly one winner', async () => {
+    const results = await Promise.all([claim(id, null, T1, pool), claim(id, null, T2, pool)]);
+
+    expect(results.filter((result) => result)).toHaveLength(1);
+
+    // The database must contain the timestamp from whichever claim won.
+    const winnerIndex = results.findIndex((result) => result);
+    const expectedTimestamp = [T1, T2][winnerIndex];
+
+    expect((await stored())?.getTime()).toBe(expectedTimestamp.getTime());
+  });
+
   test('writes the value it was given', async () => {
     await claim(id, null, T1, pool);
     expect((await stored())?.getTime()).toBe(T1.getTime());

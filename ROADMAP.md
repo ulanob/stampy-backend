@@ -34,7 +34,7 @@ Branch: `feat/check-in`
 - [x] Pure `buildCheckInMessage` listing only eligible cards (e.g. "1 stamp card ready to be redeemed / 1 gift card with $2.54")
 - [x] `POST /locations/:id/check-in`: location from the path, `user_id` from the body (until auth)
 - [x] Remove `notification_time_sent` from `safeUpdates` in the stamp and gift card services, plus a test that `PATCH` ignores it
-- [x] Timezone capture at signup and lazy drift correction at check-in with `geo-tz`
+- [x] Lazy drift correction at check-in with `geo-tz`
 
 **Decisions to hold to**
 
@@ -43,6 +43,7 @@ Branch: `feat/check-in`
 - The notification row's card ids are set only when exactly one card is included.
 - Write `notification_time_sent` from the JS `Date` used as `now`, never SQL `NOW()` (ms vs. µs precision breaks the compare-and-swap).
 - Check-in stays synchronous for now (no EventBridge).
+- Check-in resolves the timezone first, from the location's coordinates, and uses that single value for both eligibility and the daily counter's same-day check. Reading user.timezone after that point reintroduces the stale-zone bug a test caught earlier.
 
 **Tests:** unit tests with mocked DAOs (cap stops the loop, ineligible cards skipped, lost claim adds nothing); an integration test with `Promise.all` of parallel check-ins proving one notification set and one counter increment.
 
@@ -80,6 +81,7 @@ Branch: `feat/check-in`
 - [ ] User-owned geofence radius; `user_location_preferences` (sparse: per-location opt-out and radius override only; opt-out affects geofencing and notifications, not stamp collection)
 - [ ] Google Places API (New): resolve `place_id` at location creation, store our own data (address, hours, business, participation)
 - [ ] Core screens: cards, events, notifications, preferences
+- [ ] Timezone capture at signup (`Intl.DateTimeFormat().resolvedOptions().timeZone`)
 
 ---
 
