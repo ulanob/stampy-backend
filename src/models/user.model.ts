@@ -20,3 +20,17 @@ export type CreateUserInput = Omit<
 type UserUpdateableFields = Pick<User, 'display_name' | 'timezone'>;
 
 export type UpdateUserInput = Partial<UserUpdateableFields>;
+
+// What the API returns to the user about themselves. Internal fields stay server-side.
+export type UserResponse = Omit<User, 'auth_provider_id' | 'deleted' | 'deleted_at'>;
+
+export function toUserResponse(user: User): UserResponse {
+  return {
+    id: user.id,
+    display_name: user.display_name,
+    email: user.email,
+    timezone: user.timezone,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
+  };
+}

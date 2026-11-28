@@ -41,12 +41,20 @@ describe('authenticate', () => {
     },
   );
 
-  it('maps any verifier failure to a generic UnauthorizedError', async () => {
-    const verifier: TokenVerifier = {
-      verify: vi.fn().mockRejectedValue(new Error('JWT expired')),
-    };
+  it('lets an UnauthorizedError from the verifier propagate with its message', async () => {
+    const rejection = new UnauthorizedError('Invalid or expired token');
+    const verifier: TokenVerifier = { verify: vi.fn().mockRejectedValue(rejection) };
+
     const err = await authenticate(requestWith('Bearer abc'), verifier).catch((e) => e);
-    expect(err).toBeInstanceOf(UnauthorizedError);
-    expect(err.message).toBe('Invalid or expired token');
+    expect(err).toBe(rejection);
+  });
+
+  it('does not convert unexpected verifier failures into 401s (the verifier owns 401 vs 500)', async () => {
+    const outage = new Error('JWKS fetch failed');
+    const verifier: TokenVerifier = { verify: vi.fn().mockRejectedValue(outage) };
+
+    const err = await authenticate(requestWith('Bearer abc'), verifier).catch((e) => e);
+    expect(err).toBe(outage);
+    expect(err).not.toBeInstanceOf(UnauthorizedError);
   });
 });

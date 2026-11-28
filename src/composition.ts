@@ -24,6 +24,7 @@ import { resolveTimezones } from './lib/timezone';
 import { createTimezoneService } from './services/timezone.service';
 import { createCognitoTokenVerifier } from './lib/auth/token-verifier';
 import { cognitoConfig } from './lib/config';
+import { createRequireAuth } from './lib/auth/require-auth';
 
 export const stampCardDAO = createStampCardDAO(pool);
 export const stampCardEventDAO = createStampCardEventDAO(pool);
@@ -70,3 +71,4 @@ export const checkInService = createCheckInService(
 );
 
 export const tokenVerifier = createCognitoTokenVerifier(cognitoConfig);
+export const requireAuth = createRequireAuth(tokenVerifier, userService);

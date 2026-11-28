@@ -15,11 +15,8 @@ export async function authenticate(
     throw new UnauthorizedError('Malformed Authorization header');
   }
 
-  try {
-    const { sub } = await verifier.verify(token);
-    return { sub };
-  } catch {
-    // Deliberately generic: don't reveal why verification failed.
-    throw new UnauthorizedError('Invalid or expired token');
-  }
+  // The verifier decides 401 (bad token) vs anything else (our problem);
+  // errors pass through untouched.
+  const { sub } = await verifier.verify(token);
+  return { sub };
 }
