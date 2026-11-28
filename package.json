@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "dev:test": "NODE_ENV=test next dev -p 3001",
-    "seed": "tsx --env-file=.env.local src/scripts/seed.ts",
+    "seed": "tsx --env-file=.env.development src/scripts/seed.ts",
     "db:reset": "docker compose down -v && docker compose up -d --wait && npm run seed",
+    "db:up": "docker compose up -d --wait",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -28,6 +29,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1179.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",

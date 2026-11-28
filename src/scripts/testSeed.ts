@@ -55,12 +55,15 @@ export async function seed() {
     );
 
     // --- USER ---
+    const testSub = process.env.TEST_COGNITO_SUB;
+    if (!testSub) throw new Error('TEST_COGNITO_SUB must be set to seed the test user');
+
     await client.query(
       `
-      INSERT INTO users (id, email)
-      VALUES ($1, 'testuser@example.com')
-    `,
-      [TEST_IDS.user1],
+  INSERT INTO users (id, email, auth_provider_id)
+  VALUES ($1, 'testuser@example.com', $2)
+`,
+      [TEST_IDS.user1, testSub],
     );
 
     // --- USER NOTIFICATION PREFERENCES ---
