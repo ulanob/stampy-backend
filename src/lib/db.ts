@@ -33,4 +33,13 @@ export async function withTransaction<T>(
   }
 }
 
+export const USERS_AUTH_PROVIDER_ID_INDEX = 'users_auth_provider_id_idx';
+
+// pg's DatabaseError exposes `code` (SQLSTATE) and `constraint` (index/constraint name)
+export function isUniqueViolation(err: unknown, constraint?: string): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  const { code, constraint: name } = err as { code?: string; constraint?: string };
+  return code === '23505' && (constraint === undefined || name === constraint);
+}
+
 export default pool;

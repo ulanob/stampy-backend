@@ -54,6 +54,12 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+export class AccountDeletedError extends AppError {
+  constructor(message = 'Account has been deleted') {
+    super(message, 403);
+  }
+}
+
 export function validateUUID(id: string): void {
   const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   if (!uuidRegex.test(id)) {

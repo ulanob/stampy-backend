@@ -1,4 +1,5 @@
-import { NotFoundError, ValidationError } from '../utils/validators';
+import { NotFoundError, ValidationError, AccountDeletedError } from '../utils/validators';
+import type { User } from '../models/user.model';
 
 export async function assertExists(
   getter: () => Promise<unknown | null>,
@@ -6,6 +7,11 @@ export async function assertExists(
 ): Promise<void> {
   const result = await getter();
   if (!result) throw new NotFoundError(errorMessage);
+}
+
+export function assertUserNotDeleted(user: User): User {
+  if (user.deleted) throw new AccountDeletedError();
+  return user;
 }
 
 export function requireFields<T extends object>(fields: T, required: (keyof T)[]): void {

@@ -8,6 +8,7 @@ export type UserDAO = {
   createUser(fields: CreateUserInput, executor: Executor): Promise<User>;
   getAllUsers(includeDeleted?: boolean): Promise<User[]>;
   getUserByID(id: string, includeDeleted?: boolean): Promise<User | null>;
+  getUserByAuthProviderID(auth_provider_id: string, includeDeleted?: boolean): Promise<User | null>;
   updateUserByID(id: string, updates: UpdateUserInput): Promise<User | null>;
   deleteUserByID(id: string): Promise<void>;
 };
@@ -59,6 +60,24 @@ export function createUserDAO(pool: Pool): UserDAO {
       `;
 
       const result = await pool.query(sqlString, [id]);
+      const row = result.rows[0];
+      if (!row) return null;
+
+      return mapDbRowToUser(row);
+    },
+
+    async getUserByAuthProviderID(
+      auth_provider_id: string,
+      includeDeleted: boolean = false,
+    ): Promise<User | null> {
+      const sqlString = `
+        SELECT ${userColumns}
+        FROM ${userTableName}
+        WHERE auth_provider_id = $1
+        ${includeDeleted ? '' : 'AND deleted = false'}
+      `;
+
+      const result = await pool.query(sqlString, [auth_provider_id]);
       const row = result.rows[0];
       if (!row) return null;
 
