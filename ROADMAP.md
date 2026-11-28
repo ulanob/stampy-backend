@@ -55,12 +55,17 @@ Branches: `feat/auth-jwt` first, then one branch per remaining step.
 
 - [x] **Stampy AWS account:** dedicated `stampy-dev` account, region `ca-central-1`. <!-- confirm root MFA, budget alert, CLI are all done -->
 - [x] **Cognito user pool:** email sign-in, public app client (SRP/refresh, `USER_PASSWORD_AUTH` dev only, code grant + PKCE).
-  - [ ] Confirm `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_APP_CLIENT_ID` are all in `.env.example` (only the pool ID and client ID are wired in `cognitoConfig` today)
+  - [x] `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_APP_CLIENT_ID` are in `.env.example` (`cognitoConfig` reads only the pool ID and client ID; the region is read by the test helper)
 - [x] **JWT verification** (`aws-jwt-verify`, access tokens, verifier injected so tests can fake it)
   - `token-verifier.ts` maps only token errors to 401 (allowlist). Infra failures (e.g. JWKS fetch) surface as 500s.
 - [x] **Lazy user creation:** `getOrCreateUserByAuthId(sub)`, race-safe, rejects soft-deleted users with 403. `users.email` is nullable; `auth_provider_id` has a partial unique index.
 - [x] **`requireAuth(request)` helper + `GET /api/v1/me`:** bearer parse, verify, get-or-create user, trimmed `UserResponse` (no `auth_provider_id`). Applied to `/me` only.
-- [ ] **Take `user_id` from the token, not the request body** (including `POST /locations/:id/check-in`), and scope every resource to the authenticated user.
+- [x] **Authenticated integration tests:** `authHeader()` in `src/__tests__/helpers/auth.ts` signs in a dedicated Cognito test user (`USER_PASSWORD_AUTH`) and caches the access token per test file. `testSeed` gives `user1` that user's `sub` as `auth_provider_id`.
+- [ ] **Take `user_id` from the token, not the request body**, and scope every resource to the authenticated user. One commit per slice:
+  - [ ] `POST /locations/:id/check-in` (newest route, clearest need)
+  - [ ] `/users/:userId/...` routes (also fixes the `auth_provider_id` exposure)
+  - [ ] Cards and events, then notifications
+  - [ ] Businesses and locations: decide explicitly whether they're public or admin-only
 - [ ] **Google federated login:** Google identity provider on the pool, plus a pre-sign-up Lambda that links a federated identity to an existing email/password user.
 
 **Decisions to hold to**
@@ -73,17 +78,19 @@ Branches: `feat/auth-jwt` first, then one branch per remaining step.
 - A soft-deleted user is rejected on login (403). Reactivation is a documented future option.
 - API responses about a user go through `toUserResponse` (allowlist), so internal fields don't leak by default.
 - Apple login is not in this phase. It waits for the Apple Developer account in Phase 4.
+- Integration tests use a real Cognito token, not a fake verifier, so the real verification path (JWKS, client ID, token use) is exercised. The `TEST_COGNITO_*` values live only in `.env.test`.
 
 **Backlog (from this phase)**
 
 - Apply `toUserResponse` to existing `/users` routes (they still return `auth_provider_id` and are unauthenticated).
 - `WWW-Authenticate: Bearer` header on 401 responses.
-- 403 integration test (needs a real Cognito token or a test seam).
+- 403 integration test (soft-deleted user): now possible with a second Cognito test user whose row is soft-deleted.
 - `getOrCreateUserByAuthId` uses a placeholder `timezone: 'UTC'` and skips `validateTimezone`.
 - `cognitoConfig` evaluates at import time. If `next build` fails on missing env vars, switch to a lazy `getCognitoConfig()`.
 - `updateUserByID` with all-undefined updates surfaces a plain `Error` as a 500, not a 400.
 - `lib/db.ts` still reads `process.env` directly (move it into config).
-- No CI yet. Run `npm run check` before each commit.
+- Unify `seed.ts` (dev) and `testSeed.ts` into one seed. `seed()` also swallows errors, so it exits 0 on failure.
+- No CI yet. Run `npm run check` (format, typecheck, lint, tests) before each commit.
 
 ## Phase 3: Push delivery (backend)
 
@@ -152,7 +159,6 @@ Small and known, deliberately off the current branch.
 - One branch per step, rebased on `main` (solo, so no merge commits).
 - Single-line Conventional Commits (`feat:`, `refactor:`, `test:`, `docs:`).
 - `npm run check` (typecheck, lint, tests) passes before every commit.
-- Plan first, then write the code yourself; Claude plans and reviews.
 - YAGNI and Rule of Three: no abstraction until a real need or a third call site.
 - The service layer owns validation; DAOs are pure data access.
 - Gift cards and stamp cards mirror each other structurally.
