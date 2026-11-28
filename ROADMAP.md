@@ -53,13 +53,13 @@ Branch: `feat/check-in`
 
 Branches: `feat/auth-jwt` first, then one branch per remaining step.
 
-- [ ] **Stampy AWS account:** dedicated account, root MFA, admin identity (IAM Identity Center), budget alert before creating anything, AWS CLI configured. Region `ca-central-1`.
-- [ ] **Cognito user pool:**
-  - Email is the sign-in identifier and a required attribute (both are fixed after creation); self-registration on.
-  - Hosted domain, plus a public app client (no secret): SRP and refresh flows, `USER_PASSWORD_AUTH` for dev only, OAuth authorization code grant with PKCE, scopes `openid email profile`.
-  - Add `COGNITO_REGION`, `COGNITO_USER_POOL_ID` and `COGNITO_APP_CLIENT_ID` to `.env.example`.
-- [ ] **JWT verification middleware** (`aws-jwt-verify`, access tokens, verifier injected so tests can fake it). No route changes in the first commit.
-- [ ] **Lazy user creation:** on the first authenticated request, create the `users` row with the Cognito `sub` in `auth_provider_id`. Replaces the `// TODO: set from Cognito` placeholders.
+- [x] **Stampy AWS account:** dedicated `stampy-dev` account, region `ca-central-1`. <!-- confirm root MFA, budget alert, CLI are all done -->
+- [x] **Cognito user pool:** email sign-in, public app client (SRP/refresh, `USER_PASSWORD_AUTH` dev only, code grant + PKCE).
+  - [ ] Confirm `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_APP_CLIENT_ID` are all in `.env.example` (only the pool ID and client ID are wired in `cognitoConfig` today)
+- [x] **JWT verification** (`aws-jwt-verify`, access tokens, verifier injected so tests can fake it)
+  - `token-verifier.ts` maps only token errors to 401 (allowlist). Infra failures (e.g. JWKS fetch) surface as 500s.
+- [x] **Lazy user creation:** `getOrCreateUserByAuthId(sub)`, race-safe, rejects soft-deleted users with 403. `users.email` is nullable; `auth_provider_id` has a partial unique index.
+- [x] **`requireAuth(request)` helper + `GET /api/v1/me`:** bearer parse, verify, get-or-create user, trimmed `UserResponse` (no `auth_provider_id`). Applied to `/me` only.
 - [ ] **Take `user_id` from the token, not the request body** (including `POST /locations/:id/check-in`), and scope every resource to the authenticated user.
 - [ ] **Google federated login:** Google identity provider on the pool, plus a pre-sign-up Lambda that links a federated identity to an existing email/password user.
 
@@ -68,9 +68,22 @@ Branches: `feat/auth-jwt` first, then one branch per remaining step.
 - Verify access tokens only. The `sub` claim is the identity, never the email.
 - One person has one `sub`. Federated sign-ins are linked to the existing user, not stored as duplicates.
 - Token verification is local (cached JWKS), with no per-request call to Cognito.
+- Auth is a `requireAuth` helper called from routes, not Next.js middleware (handlers need the resolved `User`, and auth is checked where data is accessed).
+- 401 means a bad token; anything else the verifier hits (e.g. JWKS outage) is a 500, so clients don't log users out during an AWS incident.
+- A soft-deleted user is rejected on login (403). Reactivation is a documented future option.
+- API responses about a user go through `toUserResponse` (allowlist), so internal fields don't leak by default.
 - Apple login is not in this phase. It waits for the Apple Developer account in Phase 4.
 
----
+**Backlog (from this phase)**
+
+- Apply `toUserResponse` to existing `/users` routes (they still return `auth_provider_id` and are unauthenticated).
+- `WWW-Authenticate: Bearer` header on 401 responses.
+- 403 integration test (needs a real Cognito token or a test seam).
+- `getOrCreateUserByAuthId` uses a placeholder `timezone: 'UTC'` and skips `validateTimezone`.
+- `cognitoConfig` evaluates at import time. If `next build` fails on missing env vars, switch to a lazy `getCognitoConfig()`.
+- `updateUserByID` with all-undefined updates surfaces a plain `Error` as a 500, not a 400.
+- `lib/db.ts` still reads `process.env` directly (move it into config).
+- No CI yet. Run `npm run check` before each commit.
 
 ## Phase 3: Push delivery (backend)
 
